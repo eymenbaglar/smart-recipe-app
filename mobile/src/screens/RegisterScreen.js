@@ -14,7 +14,7 @@ import {
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = '192.168.1.56'; // Kendi IP adresinizi yazın
+const API_URL = 'http://192.168.1.104:3000'; // Kendi IP adresinizi yazın
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
