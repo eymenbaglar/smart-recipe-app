@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ProfileScreen from './src/screens/ProfileScreen'; 
+import SettingsScreen from './src/screens/SettingsScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -110,6 +111,11 @@ export default function App() {
                 <ProfileScreen {...props} onLogout={handleLogout} />
               )}
             </Stack.Screen>
+            <Stack.Screen 
+              name="Settings" 
+              component={SettingsScreen} 
+              options={{ title: 'Ayarlar' }}
+            />
           </>
         )}
       </Stack.Navigator>

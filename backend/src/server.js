@@ -4,6 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('./config/database');
+const auth = require('./middleware/auth');
 
 const app = express();
 app.use(cors());
@@ -91,7 +92,7 @@ app.post('/auth/login', async (req, res) => {
 
         const token = jwt.sign(
             { userId: user.id, email: user.email },
-            'secret-key', 
+            process.env.JWT_SECRET, 
             { expiresIn: '7d' }
         );
 
@@ -114,6 +115,34 @@ app.post('/auth/login', async (req, res) => {
 // Get recipes
 app.get('/api/recipes', (req, res) => {
   res.json(recipes);
+});
+
+//kullanıcı bilgilerini değiştirme
+app.patch('/api/profile', auth, async (req, res) => {
+  //req'den gelen kullanıcı
+  const userId = req.user.id;
+  const { username, email } = req.body;
+
+  try {
+    //email kontrol kısmı
+    const emailCheck = await db.query('SELECT * FROM users WHERE email = $1 AND id != $2', [email, userId]);
+    if (emailCheck.rows.length > 0) {
+      return res.status(400).json({ error: 'This email is already used.' });
+    }
+
+    //güncelle
+    const result = await db.query(
+      'UPDATE users SET username = $1, email = $2 WHERE id = $3 RETURNING id, username, email',
+      [username, email, userId]
+    );
+
+    const updatedUser = result.rows[0];
+    res.json({ message: 'Profile updated succesfully.', user: updatedUser });
+
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 app.listen(3000, () => {

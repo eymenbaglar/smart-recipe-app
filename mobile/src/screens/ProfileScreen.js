@@ -66,11 +66,12 @@ export default function ProfileScreen({ navigation, onLogout }) {
   }
 
   const menuItems = [
-    { icon: 'heart-outline', title: 'Favori Tariflerim', count: 12 },
-    { icon: 'book-outline', title: 'Tariflerim', count: 5 },
-    { icon: 'time-outline', title: 'Geçmiş', count: null },
-    { icon: 'settings-outline', title: 'Ayarlar', count: null },
-    { icon: 'help-circle-outline', title: 'Yardım', count: null },
+    { icon: 'share-outline', title: 'Share A Recipe', count: null },
+    { icon: 'book-outline', title: 'My Recipes', count: null },
+    { icon: 'time-outline', title: 'Meal History', count: null },
+    { icon: 'star-outline', title: 'My Reviews', count: null },
+    { icon: 'settings-outline', title: 'Settings', count: null,screen: 'Settings' },
+
   ];
 
   return (
@@ -99,7 +100,8 @@ export default function ProfileScreen({ navigation, onLogout }) {
 
       <View style={styles.menuContainer}>
         {menuItems.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.menuItem}>
+          <TouchableOpacity key={index} style={styles.menuItem} onPress={() => item.screen ? navigation.navigate(item.screen) : null}
+            disabled={!item.screen}>
             <View style={styles.menuItemLeft}>
               <Ionicons name={item.icon} size={24} color="#666" />
               <Text style={styles.menuItemText}>{item.title}</Text>
@@ -108,7 +110,9 @@ export default function ProfileScreen({ navigation, onLogout }) {
               {item.count && (
                 <Text style={styles.menuItemCount}>{item.count}</Text>
               )}
-              <Ionicons name="chevron-forward" size={20} color="#ccc" />
+              {item.screen && (
+                <Ionicons name="chevron-forward" size={20} color="#ccc" />
+              )}
             </View>
           </TouchableOpacity>
         ))}
