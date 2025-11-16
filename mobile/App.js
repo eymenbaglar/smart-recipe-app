@@ -8,10 +8,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
-import ProfileScreen from './src/screens/ProfileScreen'; // Profil ekranını buraya alıyoruz
+import ProfileScreen from './src/screens/ProfileScreen'; 
 
 // Navigator
-import TabNavigator from './src/navigation/tabNavigator'; // Yeni TabNavigator'ı import et
+import TabNavigator from './src/navigation/tabNavigator'; 
 
 const Stack = createStackNavigator();
 
@@ -29,7 +29,7 @@ const HeaderRightButton = () => {
 };
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] =useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -47,14 +47,26 @@ export default function App() {
     }
   };
 
+  // 1. GİRİŞ YAP FONKSİYONU
   const handleLoginSuccess = () => {
-  setIsLoggedIn(true);
-};
+    setIsLoggedIn(true);
+  };
+
+  // 2. ÇIKIŞ YAP FONKSİYONU
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user'); // Kullanıcı verisini de temizle
+      setIsLoggedIn(false); // State'i güncelle (Otomatik Login'e atar)
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   if (isLoading) {
-    return null; // Splash screen gösterilebilir
+    return null; // Splash screen
   }
-
+  
   return (
     <NavigationContainer>
       <Stack.Navigator>
@@ -90,12 +102,14 @@ export default function App() {
                 headerRight: () => <HeaderRightButton />, // Profil ikonu
               }}
             />
-            {/* Profil İkonuna basınca açılacak ekran */}
             <Stack.Screen 
-              name="Profile" 
-              component={ProfileScreen} 
+              name="Profile"
               options={{ title: 'Profilim' }}
-            />
+            >
+              {(props) => (
+                <ProfileScreen {...props} onLogout={handleLogout} />
+              )}
+            </Stack.Screen>
           </>
         )}
       </Stack.Navigator>

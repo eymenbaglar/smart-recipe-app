@@ -41,22 +41,40 @@ export default function RegisterScreen({ navigation }) {
     }
 
     setLoading(true);
-    try {
+try {
       const response = await axios.post(`${API_URL}/auth/register`, {
         username,
         email,
         password
       });
 
-      await AsyncStorage.setItem('token', response.data.token);
-      await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+      if (response.status === 201 && response.data.user) {
+        
+        Alert.alert(
+          'Başarıyla Kayıt Olundu!',
+          'Hesabınız oluşturuldu. Lütfen giriş yapın.',
+          [
+            
+            { 
+              text: 'Tamam', 
+              onPress: () => navigation.replace('Login') 
+            }
+          ]
+        );
 
-      Alert.alert('Başarılı', 'Kayıt başarıyla tamamlandı!', [
-        { text: 'Tamam', onPress: () => navigation.replace('Main') }
-      ]);
+      } else {
+        throw new Error('Sunucudan beklenen yanıt alınamadı.');
+      }
+
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Kayıt başarısız. Lütfen tekrar deneyin.';
-      Alert.alert('Hata', errorMessage);
+      console.error("Kayıt hatası:", error.response ? error.response.data : error.message);
+      
+      if (error.response && error.response.data.error) {
+         Alert.alert('Hata', error.response.data.error);
+      } else {
+         Alert.alert('Hata', 'Kayıt başarısız oldu. Lütfen tekrar deneyin.');
+      }
+
     } finally {
       setLoading(false);
     }

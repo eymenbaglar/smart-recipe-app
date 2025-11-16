@@ -1,4 +1,3 @@
-// mobile/src/screens/ProfileScreen.js
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -7,19 +6,23 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  ScrollView
+  ScrollView,
+  ActivityIndicator // Yükleme animasyonu için eklendi
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function ProfileScreen({ navigation }) {
+// 1. App.js'den gelen 'onLogout' prop'unu al
+export default function ProfileScreen({ navigation, onLogout }) { 
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // Yükleme durumunu burada tanımladık
 
   useEffect(() => {
     loadUserData();
   }, []);
 
   const loadUserData = async () => {
+    setIsLoading(true); // Yüklemeyi başlat
     try {
       const userData = await AsyncStorage.getItem('user');
       if (userData) {
@@ -27,28 +30,40 @@ export default function ProfileScreen({ navigation }) {
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+    } finally {
+      setIsLoading(false); // Yüklemeyi bitir
     }
   };
-
-  const handleLogout = () => {
+  // 2. 'handleLogoutPress' fonksiyonu App.js'den gelen 'onLogout'u çağıracak
+  const handleLogoutPress = () => {
     Alert.alert(
-      'Çıkış Yap',
-      'Çıkış yapmak istediğinize emin misiniz?',
+      "Çıkış Yap",
+      "Çıkış yapmak istediğinizden emin misiniz?",
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: "İptal", style: "cancel" },
         { 
-          text: 'Çıkış Yap', 
-          style: 'destructive',
-          onPress: async () => {
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('user');
-            // Uygulamayı yeniden başlat veya login ekranına yönlendir
-            navigation.replace('Login');
+          text: "Evet", 
+          onPress: () => {
+            // App.js'ye haber ver, o çıkışı yapsın
+            if (onLogout) {
+              onLogout();
+            } else {
+              Alert.alert("Hata", "Çıkış fonksiyonu bulunamadı.");
+            }
           }
         }
       ]
     );
   };
+
+  // 3. 'isLoading' kontrolü artık bu dosyadaki state'e bakıyor
+  if (isLoading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+      </View>
+    );
+  }
 
   const menuItems = [
     { icon: 'heart-outline', title: 'Favori Tariflerim', count: 12 },
@@ -63,7 +78,7 @@ export default function ProfileScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.profileImageContainer}>
           <Image 
-            source={{ uri: 'https://via.placeholder.com/150' }}
+            source={{ uri: 'https://placehold.co/150x150/E0E0E0/B0B0B0?text=Profil' }} 
             style={styles.profileImage}
           />
           <TouchableOpacity style={styles.editButton}>
@@ -99,7 +114,8 @@ export default function ProfileScreen({ navigation }) {
         ))}
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+      {/* 4. Logout butonunun 'onPress'i düzeltildi */}
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogoutPress}>
         <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
         <Text style={styles.logoutText}>Çıkış Yap</Text>
       </TouchableOpacity>
