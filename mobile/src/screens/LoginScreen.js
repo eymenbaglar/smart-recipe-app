@@ -14,8 +14,7 @@ import {
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Backend URL - değiştirin
-const API_URL = 'http://192.168.1.104:3000'; // Kendi IP adresinizi yazın
+const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -23,7 +22,6 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
 const handleLogin = async () => {
-    // Boşluk kontrolü (trim eklemek iyidir)
     if (!email.trim() || !password.trim()) {
       Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
       return;
@@ -36,19 +34,8 @@ try {
         password
       });
 
-      console.log("------------------------------------------------");
-      console.log("🟢 1. SUNUCU CEVABI GELDİ!");
-      console.log("🟢 2. RAW DATA:", JSON.stringify(response.data, null, 2)); 
-      console.log("------------------------------------------------");
-
-      // Token'ı farklı yerlerde arayalım (Yedekli sistem)
-      // 1. İhtimal: Direkt ana dizinde mi? (response.data.token)
-      // 2. İhtimal: response.data.data.token içinde mi?
-      // 3. İhtimal: Adı accessToken olabilir mi?
       const token = response.data.token || response.data.data?.token || response.data.accessToken;
       const user = response.data.user || response.data.data?.user;
-
-      console.log("🟡 3. BULUNAN TOKEN:", token ? "✅ DOLU" : "❌ BOŞ (UNDEFINED)");
 
       if (token) {
         await AsyncStorage.setItem('token', token);
@@ -57,34 +44,26 @@ try {
           await AsyncStorage.setItem('user', JSON.stringify(user));
         }
 
-        // ... token kayıt işlemleri bittikten sonraki kısım ...
-
 Alert.alert('Başarılı', 'Giriş yapıldı!', [
   { 
     text: 'Tamam', 
-    onPress: () => navigation.replace('Home') // <-- 'Main' yerine 'Home' yazdık
+    onPress: () => navigation.replace('Main') 
   }
 ]);
       } else {
-        // Eğer token hala yoksa, JSON yapısında bir gariplik vardır.
         Alert.alert("Hata", "Sunucu cevap verdi ama token bulunamadı. Lütfen terminal loglarını kontrol et.");
       }
 
     } catch (error) {
-        // ... catch bloğun aynı kalsıncatch (error) {
-      // --- HATA AYIKLAMA KISMI ---
       console.log("HATA OLUŞTU!");
       if (error.response) {
-        // Sunucu cevap verdi ama kod 2xx değil (Örn: 401, 404, 500)
         console.log("Sunucu Hatası Verisi:", error.response.data);
         console.log("Sunucu Hatası Statüsü:", error.response.status);
         Alert.alert('Hata', error.response.data.message || 'Sunucu hatası');
       } else if (error.request) {
-        // İstek gitti ama sunucudan hiç cevap gelmedi (Ağ hatası)
         console.log("Sunucuya ulaşılamıyor. İstek:", error.request);
         Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamıyor. İnternetini veya IP adresini kontrol et.');
       } else {
-        // İstek oluşturulurken hata çıktı
         console.log("Hata Mesajı:", error.message);
         Alert.alert('Hata', error.message);
       }

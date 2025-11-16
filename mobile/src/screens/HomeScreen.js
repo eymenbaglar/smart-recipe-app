@@ -12,7 +12,7 @@ import {
 import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 
-const API_URL = 'http://192.168.1.104:3000'; // Kendi IP adresinizi yazın
+const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
 
 export default function HomeScreen() {
   const [recipes, setRecipes] = useState([]);
