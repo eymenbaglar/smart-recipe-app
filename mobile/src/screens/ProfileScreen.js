@@ -79,16 +79,6 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.statNumber}>28</Text>
             <Text style={styles.statLabel}>Tarif</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>156</Text>
-            <Text style={styles.statLabel}>Takipçi</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>89</Text>
-            <Text style={styles.statLabel}>Takip</Text>
-          </View>
         </View>
       </View>
 

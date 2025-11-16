@@ -1,126 +1,78 @@
-// mobile/src/screens/HomeScreen.js
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
-import axios from 'axios';
-import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
-const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
-
-export default function HomeScreen() {
-  const [recipes, setRecipes] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    fetchRecipes();
-  }, []);
-
-  const fetchRecipes = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/recipes`);
-      setRecipes(response.data);
-    } catch (error) {
-      console.error('Error fetching recipes:', error);
-    }
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchRecipes();
-    setRefreshing(false);
-  };
-
-  const renderRecipeCard = ({ item }) => (
-    <TouchableOpacity style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
-      <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardDescription}>{item.description}</Text>
-        
-        <View style={styles.cardInfo}>
-          <View style={styles.infoItem}>
-            <Ionicons name="time-outline" size={16} color="#666" />
-            <Text style={styles.infoText}>{item.prepTime} dk</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Ionicons name="flame-outline" size={16} color="#666" />
-            <Text style={styles.infoText}>{item.calories} kcal</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
+export default function HomeScreen({ navigation }) {
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={recipes}
-        renderItem={renderRecipeCard}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
-    </View>
+    <ScrollView style={styles.container}>
+      {/* Başlık Mesajı */}
+      <Text style={styles.title}>Hello, User!</Text>
+      <Text style={styles.subtitle}>What we gonna cook today?</Text>
+
+      {/* Recipe Wizard Butonu */}
+      <TouchableOpacity 
+        style={styles.wizardButton}
+        onPress={() => { /* Recipe Wizard'a git */ }}
+      >
+        <Text style={styles.wizardButtonText}>Recipe Wizard</Text>
+      </TouchableOpacity>
+
+      {/* Popüler Tarifler Alanı */}
+      <Text style={styles.popularTitle}>Take a look to popular recipes!</Text>
+      
+      {/* Tarifler için Placeholder */}
+      <View style={styles.recipePlaceholder}>
+        <Text style={styles.placeholderText}>Popüler tarifler buraya gelecek</Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
-  listContent: {
-    padding: 15,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    marginBottom: 15,
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  cardImage: {
-    width: '100%',
-    height: 200,
-  },
-  cardContent: {
-    padding: 15,
-  },
-  cardTitle: {
-    fontSize: 20,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 5,
   },
-  cardDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
+  subtitle: {
+    fontSize: 16,
+    color: 'gray',
+    marginBottom: 20,
   },
-  cardInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  infoItem: {
-    flexDirection: 'row',
+  wizardButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#000',
     alignItems: 'center',
+    marginBottom: 30,
   },
-  infoText: {
-    marginLeft: 5,
-    fontSize: 14,
-    color: '#666',
+  wizardButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  popularTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  recipePlaceholder: {
+    height: 200,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderText: {
+    color: 'gray',
+    fontSize: 16,
   },
 });

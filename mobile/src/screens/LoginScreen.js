@@ -14,58 +14,62 @@ import {
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-const handleLogin = async () => {
+  const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
       return;
     }
 
     setLoading(true);
-try {
+    try {
       const response = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password
+        email: email.trim(),
+        password: password.trim()
       });
 
-      const token = response.data.token || response.data.data?.token || response.data.accessToken;
-      const user = response.data.user || response.data.data?.user;
+      const { token, user } = response.data;
 
+      // Token geldiyse kaydet
       if (token) {
         await AsyncStorage.setItem('token', token);
-        
         if (user) {
           await AsyncStorage.setItem('user', JSON.stringify(user));
         }
 
-Alert.alert('Başarılı', 'Giriş yapıldı!', [
-  { 
-    text: 'Tamam', 
-    onPress: () => navigation.replace('Main') 
-  }
-]);
+        // 2. App.js'ye "Giriş yaptım" haberini yolla
+        // Bu, isLoggedIn state'ini 'true' yapacak
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
+
+        // 3. Başarılı uyarısı (Bu, yönlendirmeden önce görünmeyebilir, normaldir)
+        Alert.alert('Başarılı', 'Giriş yapıldı!');
+
+        // 4. Manuel yönlendirmeyi SİLİYORUZ.
+        // navigation.replace('Main') // <- BU SATIR HATA VERİYORDU, SİLDİK.
+
       } else {
-        Alert.alert("Hata", "Sunucu cevap verdi ama token bulunamadı. Lütfen terminal loglarını kontrol et.");
+        // Bu log'u önceki hatadan dolayı ekliyorum (Token gelmezse)
+        console.error("Sunucu yanıt döndü ama token içermiyor.");
+        Alert.alert("Hata", "Kimlik doğrulama anahtarı (token) alınamadı.");
       }
 
     } catch (error) {
-      console.log("HATA OLUŞTU!");
-      if (error.response) {
-        console.log("Sunucu Hatası Verisi:", error.response.data);
-        console.log("Sunucu Hatası Statüsü:", error.response.status);
-        Alert.alert('Hata', error.response.data.message || 'Sunucu hatası');
+      console.log("Login hatası:", error.response ? error.response.data : error.message);
+      if (error.response && error.response.status === 401) {
+        Alert.alert('Hata', 'E-posta veya şifre hatalı.');
       } else if (error.request) {
-        console.log("Sunucuya ulaşılamıyor. İstek:", error.request);
-        Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamıyor. İnternetini veya IP adresini kontrol et.');
+        Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamıyor.');
       } else {
-        console.log("Hata Mesajı:", error.message);
-        Alert.alert('Hata', error.message);
+        Alert.alert('Hata', 'Giriş başarısız. Bilgilerinizi kontrol edin.');
       }
     } finally {
       setLoading(false);
