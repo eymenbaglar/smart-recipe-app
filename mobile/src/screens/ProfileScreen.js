@@ -7,22 +7,21 @@ import {
   Image,
   Alert,
   ScrollView,
-  ActivityIndicator // Yükleme animasyonu için eklendi
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 1. App.js'den gelen 'onLogout' prop'unu al
 export default function ProfileScreen({ navigation, onLogout }) { 
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Yükleme durumunu burada tanımladık
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadUserData();
   }, []);
 
   const loadUserData = async () => {
-    setIsLoading(true); // Yüklemeyi başlat
+    setIsLoading(true);
     try {
       const userData = await AsyncStorage.getItem('user');
       if (userData) {
@@ -31,24 +30,23 @@ export default function ProfileScreen({ navigation, onLogout }) {
     } catch (error) {
       console.error('Error loading user data:', error);
     } finally {
-      setIsLoading(false); // Yüklemeyi bitir
+      setIsLoading(false);
     }
   };
-  // 2. 'handleLogoutPress' fonksiyonu App.js'den gelen 'onLogout'u çağıracak
+
   const handleLogoutPress = () => {
     Alert.alert(
-      "Çıkış Yap",
-      "Çıkış yapmak istediğinizden emin misiniz?",
+      "Log out",
+      "Are you sure you want to log out?",
       [
-        { text: "İptal", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         { 
-          text: "Evet", 
+          text: "Yes", 
           onPress: () => {
-            // App.js'ye haber ver, o çıkışı yapsın
             if (onLogout) {
               onLogout();
             } else {
-              Alert.alert("Hata", "Çıkış fonksiyonu bulunamadı.");
+              Alert.alert("Error", "The exit function could not be found.");
             }
           }
         }
@@ -56,7 +54,6 @@ export default function ProfileScreen({ navigation, onLogout }) {
     );
   };
 
-  // 3. 'isLoading' kontrolü artık bu dosyadaki state'e bakıyor
   if (isLoading) {
     return (
       <View style={styles.center}>
@@ -93,7 +90,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>28</Text>
-            <Text style={styles.statLabel}>Tarif</Text>
+            <Text style={styles.statLabel}>Recipes</Text>
           </View>
         </View>
       </View>
@@ -118,10 +115,9 @@ export default function ProfileScreen({ navigation, onLogout }) {
         ))}
       </View>
 
-      {/* 4. Logout butonunun 'onPress'i düzeltildi */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogoutPress}>
         <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
-        <Text style={styles.logoutText}>Çıkış Yap</Text>
+        <Text style={styles.logoutText}>Log out</Text>
       </TouchableOpacity>
     </ScrollView>
   );

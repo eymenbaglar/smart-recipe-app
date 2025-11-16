@@ -6,23 +6,23 @@ import { Ionicons } from '@expo/vector-icons';
 // Ekranlarımızı import edelim
 import HomeScreen from '../screens/HomeScreen';
 import MyStockScreen from '../screens/MyStockScreen';
-import ProfileScreen from '../screens/ProfileScreen'; // Bunu App.js'den buraya taşıdım
+import ProfileScreen from '../screens/ProfileScreen'; 
 
-// Diğer ekranlar henüz yoksa, geçici olarak oluşturalım
+//geçici ekranlar
 function SocialScreen() {
   return <View style={styles.center}><Text>Social Screen</Text></View>;
 }
 function FavoritesScreen() {
   return <View style={styles.center}><Text>Favorites Screen</Text></View>;
 }
-// Recipe Wizard için boş bir ekran (butona basınca gider)
+
 function RecipeWizardScreen() {
   return <View style={styles.center}><Text>Recipe Wizard Screen</Text></View>;
 }
 
 const Tab = createBottomTabNavigator();
 
-// Ortadaki Özel Buton
+// Wizard butonu
 const CustomTabBarButton = ({ children, onPress }) => (
   <TouchableOpacity
     style={styles.customButtonContainer}
@@ -38,7 +38,7 @@ export default function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarShowLabel: false, // İsimleri gizle
+        tabBarShowLabel: false, 
         tabBarStyle: {
           backgroundColor: '#ffffff',
           height: 70,
@@ -47,7 +47,7 @@ export default function TabNavigator() {
         },
         tabBarActiveTintColor: '#000',
         tabBarInactiveTintColor: 'gray',
-        headerShown: false, // Header'ı App.js'den alacağız
+        headerShown: false, 
       }}
     >
       {/* 1. Home */}

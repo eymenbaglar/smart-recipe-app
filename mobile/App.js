@@ -10,18 +10,19 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ProfileScreen from './src/screens/ProfileScreen'; 
 import SettingsScreen from './src/screens/SettingsScreen';
+import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
 
 const Stack = createStackNavigator();
 
-// Header'daki Profil İkonu için yardımcı bileşen
+// Profil ikonu
 const HeaderRightButton = () => {
   const navigation = useNavigation();
   return (
     <TouchableOpacity 
-      onPress={() => navigation.navigate('Profile')} // Profile ekranına git
+      onPress={() => navigation.navigate('Profile')} 
       style={{ marginRight: 15 }}
     >
       <Ionicons name="person-circle-outline" size={32} color="#000" />
@@ -57,15 +58,15 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user'); // Kullanıcı verisini de temizle
-      setIsLoggedIn(false); // State'i güncelle (Otomatik Login'e atar)
+      await AsyncStorage.removeItem('user'); 
+      setIsLoggedIn(false); 
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
 
   if (isLoading) {
-    return null; // Splash screen
+    return null; 
   }
   
   return (
@@ -89,7 +90,7 @@ export default function App() {
           </>
         ) : (
           <>
-            {/* Giriş Yapan Kullanıcının Ana Ekranı (Tab'ları içerir) */}
+            {/* Giriş Yapan Kullanıcının Ana Ekranı*/}
             <Stack.Screen 
               name="Main" 
               component={TabNavigator} 
@@ -100,12 +101,12 @@ export default function App() {
                   fontWeight: 'bold',
                   fontSize: 20,
                 },
-                headerRight: () => <HeaderRightButton />, // Profil ikonu
+                headerRight: () => <HeaderRightButton />, 
               }}
             />
             <Stack.Screen 
               name="Profile"
-              options={{ title: 'Profilim' }}
+              options={{ title: 'My Profile' }}
             >
               {(props) => (
                 <ProfileScreen {...props} onLogout={handleLogout} />
@@ -114,7 +115,12 @@ export default function App() {
             <Stack.Screen 
               name="Settings" 
               component={SettingsScreen} 
-              options={{ title: 'Ayarlar' }}
+              options={{ title: 'Settings' }}
+            />
+            <Stack.Screen 
+              name="ChangePassword" 
+              component={ChangePasswordScreen} 
+              options={{ title: 'Change Password' }}
             />
           </>
         )}

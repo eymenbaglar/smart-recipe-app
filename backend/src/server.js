@@ -145,6 +145,34 @@ app.patch('/api/profile', auth, async (req, res) => {
   }
 });
 
+app.patch('/api/profile/change-password', auth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const user = req.user; //authdan kullanıcıyı al
+
+  try {
+    //mevcut şifrenin doğruluğunu kontrol et
+    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Your current password is incorrect.' });
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+    //veritabanını güncelle
+    await db.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [newHashedPassword, user.id]
+    );
+
+    res.json({ message: 'Your password has been successfully updated.' });
+
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });

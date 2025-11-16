@@ -123,6 +123,14 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.buttonText}>Save Changes</Text>
         )}
       </TouchableOpacity>
+
+      <View style={styles.divider} />
+      <TouchableOpacity 
+        style={styles.linkButton} 
+        onPress={() => navigation.navigate('ChangePassword')}
+      >
+        <Text style={styles.linkButtonText}>Change Password</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -168,4 +176,25 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+
+  divider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    width: '100%',
+    marginVertical: 30,
+  },
+  linkButton: {
+    width: '100%',
+    height: 50,
+    backgroundColor: '#f0f0f0', 
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  linkButtonText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
+
