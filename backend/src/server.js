@@ -331,6 +331,78 @@ app.patch('/api/refrigerator/update/:itemId', auth, async (req, res) => {
   }
 });
 
+//Smart Recipe Algroithm
+app.get('/api/recipes/match', auth, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    // 1. user'ın mystockdaki itemların id'lerini al
+    // 2. recipelerin malzemelerine bak
+    // 3. is_staple false'sa oran algoritmasına kat
+    // 4. yüzdesini hesapla
+    
+    const query = `
+      WITH UserInventory AS (
+        -- user ingredientlearı
+        SELECT ingredient_id 
+        FROM refrigerator_items ri
+        JOIN virtual_refrigerator vr ON ri.virtual_refrigerator_id = vr.id
+        WHERE vr.user_id = $1
+      ),
+      RecipeStats AS (
+        -- her tarif için önemli malzeme(is_staple) sayısı
+        SELECT 
+          r.id AS recipe_id,
+          COUNT(ri.ingredient_id) AS total_required
+        FROM recipes r
+        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.is_staple = FALSE
+        GROUP BY r.id
+      ),
+      Matches AS (
+        -- kullanıcının elindeki malzemelerle tariflerin çakışması
+        SELECT 
+          r.id AS recipe_id,
+          COUNT(ri.ingredient_id) AS matching_count
+        FROM recipes r
+        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.is_staple = FALSE 
+          AND ri.ingredient_id IN (SELECT ingredient_id FROM UserInventory)
+        GROUP BY r.id
+      )
+      SELECT 
+        r.id,
+        r.title,
+        r.description,
+        r.image_url,
+        r.prep_time,
+        r.calories,
+        COALESCE(rs.total_required, 0) AS total_ingredients,
+        COALESCE(m.matching_count, 0) AS have_ingredients,
+        ROUND(
+          (COALESCE(m.matching_count, 0)::decimal / NULLIF(rs.total_required, 0)) * 100
+        ) AS match_percentage
+      FROM recipes r
+      JOIN RecipeStats rs ON r.id = rs.recipe_id
+      LEFT JOIN Matches m ON r.id = m.recipe_id
+      WHERE 
+        -- eşleşme oranı %30 veya daha fazla olanları getir
+        (COALESCE(m.matching_count, 0)::decimal / NULLIF(rs.total_required, 0)) * 100 >= 30
+      ORDER BY match_percentage DESC;
+    `;
+
+    const result = await db.query(query, [userId]);
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('Matching Error', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
