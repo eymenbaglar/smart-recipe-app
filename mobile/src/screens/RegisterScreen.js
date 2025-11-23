@@ -26,17 +26,17 @@ export default function RegisterScreen({ navigation }) {
   const handleRegister = async () => {
     // Validasyon
     if (!username || !email || !password || !confirmPassword) {
-      Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
+      Alert.alert('Error', 'Pleace fill all in fields.');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Hata', 'Şifreler eşleşmiyor');
+      Alert.alert('Error', 'Passwords does not match.');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Hata', 'Şifre en az 6 karakter olmalıdır');
+      Alert.alert('Error', 'The password must be at least 6 characters long.');
       return;
     }
 
@@ -51,28 +51,28 @@ try {
       if (response.status === 201 && response.data.user) {
         
         Alert.alert(
-          'Başarıyla Kayıt Olundu!',
-          'Hesabınız oluşturuldu. Lütfen giriş yapın.',
+          'You have successfully registered!',
+          'Your account has been created. Please log in.',
           [
             
             { 
-              text: 'Tamam', 
+              text: 'Okay', 
               onPress: () => navigation.replace('Login') 
             }
           ]
         );
 
       } else {
-        throw new Error('Sunucudan beklenen yanıt alınamadı.');
+        throw new Error('The expected response was not received from the server.');
       }
 
     } catch (error) {
       console.error("Kayıt hatası:", error.response ? error.response.data : error.message);
       
       if (error.response && error.response.data.error) {
-         Alert.alert('Hata', error.response.data.error);
+         Alert.alert('Error', error.response.data.error);
       } else {
-         Alert.alert('Hata', 'Kayıt başarısız oldu. Lütfen tekrar deneyin.');
+         Alert.alert('Error', 'Registration failed. Please try again.');
       }
 
     } finally {
@@ -91,14 +91,14 @@ try {
       >
         <View style={styles.headerContainer}>
           <Text style={styles.logo}>👨‍🍳</Text>
-          <Text style={styles.title}>Kayıt Ol</Text>
-          <Text style={styles.subtitle}>Smart Recipe'ye hoş geldiniz!</Text>
+          <Text style={styles.title}>Sign Up</Text>
+          <Text style={styles.subtitle}>Welcome to Smart Recipe!</Text>
         </View>
 
         <View style={styles.formContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Kullanıcı Adı"
+            placeholder="Username"
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
@@ -107,7 +107,7 @@ try {
 
           <TextInput
             style={styles.input}
-            placeholder="E-posta"
+            placeholder="E-mail"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -117,7 +117,7 @@ try {
 
           <TextInput
             style={styles.input}
-            placeholder="Şifre"
+            placeholder="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -126,7 +126,7 @@ try {
 
           <TextInput
             style={styles.input}
-            placeholder="Şifre Tekrar"
+            placeholder="Password again"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -139,7 +139,7 @@ try {
             disabled={loading}
           >
             <Text style={styles.buttonText}>
-              {loading ? 'Kayıt yapılıyor...' : 'Kayıt Ol'}
+              {loading ? 'Registering...' : 'Sign Up'}
             </Text>
           </TouchableOpacity>
 
@@ -147,7 +147,7 @@ try {
             style={styles.linkButton}
             onPress={() => navigation.navigate('Login')}
           >
-            <Text style={styles.linkText}>Zaten hesabınız var mı? Giriş Yapın</Text>
+            <Text style={styles.linkText}>Do you already have an account? Log In</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

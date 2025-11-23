@@ -24,7 +24,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
+      Alert.alert('Error', 'Please fill all fields.');
       return;
     }
 
@@ -45,19 +45,15 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
         }
 
         // 2. App.js'ye "Giriş yaptım" haberini yolla
-        // Bu, isLoggedIn state'ini 'true' yapacak
         if (onLoginSuccess) {
           onLoginSuccess();
         }
 
-        // 3. Başarılı uyarısı (Bu, yönlendirmeden önce görünmeyebilir, normaldir)
-        Alert.alert('Başarılı', 'Giriş yapıldı!');
-
-        // 4. Manuel yönlendirmeyi SİLİYORUZ.
-        // navigation.replace('Main') // <- BU SATIR HATA VERİYORDU, SİLDİK.
+        // 3. Başarılı uyarısı
+        Alert.alert('Success', 'You have loged in!');
 
       } else {
-        // Bu log'u önceki hatadan dolayı ekliyorum (Token gelmezse)
+        // Token gelmeme hatası
         console.error("Sunucu yanıt döndü ama token içermiyor.");
         Alert.alert("Hata", "Kimlik doğrulama anahtarı (token) alınamadı.");
       }
@@ -65,11 +61,11 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
     } catch (error) {
       console.log("Login hatası:", error.response ? error.response.data : error.message);
       if (error.response && error.response.status === 401) {
-        Alert.alert('Hata', 'E-posta veya şifre hatalı.');
+        Alert.alert('Error', 'E-mail or password is wrong');
       } else if (error.request) {
-        Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamıyor.');
+        Alert.alert('Connection Error', 'The server cannot be reached.');
       } else {
-        Alert.alert('Hata', 'Giriş başarısız. Bilgilerinizi kontrol edin.');
+        Alert.alert('Error.', 'Login is failed please check your login informations.');
       }
     } finally {
       setLoading(false);
@@ -84,7 +80,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
       <View style={styles.logoContainer}>
         <Text style={styles.logo}>🍳</Text>
         <Text style={styles.title}>Smart Recipe</Text>
-        <Text style={styles.subtitle}>Malzemelerinle lezzetli tarifler keşfet!</Text>
+        <Text style={styles.subtitle}>Discover delicious recipes with your ingredients!</Text>
       </View>
 
       <View style={styles.formContainer}>
@@ -113,7 +109,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
           disabled={loading}
         >
           <Text style={styles.buttonText}>
-            {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+            {loading ? 'Logging in...' : 'Log In'}
           </Text>
         </TouchableOpacity>
 
@@ -121,7 +117,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
           style={styles.linkButton}
           onPress={() => navigation.navigate('Register')}
         >
-          <Text style={styles.linkText}>Hesabınız yok mu? Kayıt Olun</Text>
+          <Text style={styles.linkText}>Don't have an account? Sign up</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

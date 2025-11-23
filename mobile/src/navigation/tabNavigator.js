@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
-// Ekranlarımızı import edelim
+// screens
 import HomeScreen from '../screens/HomeScreen';
 import MyStockScreen from '../screens/MyStockScreen';
 import ProfileScreen from '../screens/ProfileScreen'; 

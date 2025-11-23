@@ -49,12 +49,12 @@ export default function App() {
     }
   };
 
-  // 1. GİRİŞ YAP FONKSİYONU
+  // Giriş yap
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
   };
 
-  // 2. ÇIKIŞ YAP FONKSİYONU
+  // Çıkış yap
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('token');
@@ -90,7 +90,7 @@ export default function App() {
           </>
         ) : (
           <>
-            {/* Giriş Yapan Kullanıcının Ana Ekranı*/}
+            {/* Ana ekran(giriş yapmış)*/}
             <Stack.Screen 
               name="Main" 
               component={TabNavigator} 

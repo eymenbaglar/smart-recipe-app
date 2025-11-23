@@ -14,16 +14,16 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function MyStockScreen() {
   const [inventory, setInventory] = useState([
-    { id: 1, name: 'Domates', quantity: 500, unit: 'gram' },
-    { id: 2, name: 'Soğan', quantity: 3, unit: 'adet' },
-    { id: 3, name: 'Sarımsak', quantity: 5, unit: 'diş' },
+    { id: 1, name: 'Tomato', quantity: 500, unit: 'gram' },
+    { id: 2, name: 'Onion', quantity: 3, unit: 'piece' },
+    { id: 3, name: 'Garlic', quantity: 5, unit: 'piece' },
   ]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', quantity: '', unit: 'gram' });
 
   const addItem = () => {
     if (!newItem.name || !newItem.quantity) {
-      Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
@@ -41,12 +41,12 @@ export default function MyStockScreen() {
 
   const deleteItem = (id) => {
     Alert.alert(
-      'Silme Onayı',
-      'Bu malzemeyi silmek istediğinize emin misiniz?',
+      'Delete Confirmation',
+      'Are you sure you want to delete this ingredient?',
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Sil', 
+          text: 'Delete', 
           style: 'destructive',
           onPress: () => setInventory(inventory.filter(item => item.id !== id))
         }
@@ -69,7 +69,7 @@ export default function MyStockScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Malzemelerim</Text>
+        <Text style={styles.headerTitle}>My Stock</Text>
         <TouchableOpacity 
           style={styles.addButton}
           onPress={() => setModalVisible(true)}
@@ -85,8 +85,8 @@ export default function MyStockScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Henüz malzeme eklemediniz</Text>
-            <Text style={styles.emptySubtext}>+ butonuna tıklayarak başlayın</Text>
+            <Text style={styles.emptyText}>You haven't added any materials yet.</Text>
+            <Text style={styles.emptySubtext}>Start by clicking the + button</Text>
           </View>
         }
       />
@@ -99,11 +99,11 @@ export default function MyStockScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Yeni Malzeme Ekle</Text>
+            <Text style={styles.modalTitle}>Add New Ingredient</Text>
             
             <TextInput
               style={styles.modalInput}
-              placeholder="Malzeme adı"
+              placeholder="Ingredient Name"
               value={newItem.name}
               onChangeText={(text) => setNewItem({...newItem, name: text})}
               placeholderTextColor="#999"
@@ -111,7 +111,7 @@ export default function MyStockScreen() {
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Miktar"
+              placeholder="Amount"
               value={newItem.quantity}
               onChangeText={(text) => setNewItem({...newItem, quantity: text})}
               keyboardType="numeric"
@@ -119,7 +119,7 @@ export default function MyStockScreen() {
             />
 
             <View style={styles.unitContainer}>
-              {['gram', 'kg', 'adet', 'litre', 'ml'].map((unit) => (
+              {['gram', 'kg', 'piece', 'litre', 'ml'].map((unit) => (
                 <TouchableOpacity
                   key={unit}
                   style={[
@@ -141,14 +141,14 @@ export default function MyStockScreen() {
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.cancelButtonText}>İptal</Text>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={[styles.modalButton, styles.saveButton]}
                 onPress={addItem}
               >
-                <Text style={styles.saveButtonText}>Ekle</Text>
+                <Text style={styles.saveButtonText}>Add</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   addButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#333',
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -268,8 +268,8 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   unitButtonActive: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: '#333',
+    borderColor: '#333',
   },
   unitText: {
     color: '#666',
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   saveButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#333',
     marginLeft: 10,
   },
   cancelButtonText: {
