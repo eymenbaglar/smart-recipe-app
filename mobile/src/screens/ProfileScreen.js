@@ -7,14 +7,20 @@ import {
   Image,
   Alert,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform // Platform eklendi
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker'; // EKLENDİ
+import axios from 'axios'; // EKLENDİ
+
+const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function ProfileScreen({ navigation, onLogout }) { 
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [uploading, setUploading] = useState(false); // EKLENDİ: Yükleme durumu
 
   useEffect(() => {
     loadUserData();
@@ -32,6 +38,77 @@ export default function ProfileScreen({ navigation, onLogout }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // --- EKLENDİ: RESİM SEÇME FONKSİYONU ---
+  const handlePickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Required", "You need to allow access to photos to upload a profile picture.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      uploadProfilePhoto(result.assets[0]);
+    }
+  };
+
+  // --- EKLENDİ: RESİM YÜKLEME FONKSİYONU ---
+  const uploadProfilePhoto = async (imageAsset) => {
+    setUploading(true);
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+
+      const formData = new FormData();
+      const filename = imageAsset.uri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image`;
+
+      formData.append('photo', {
+        uri: Platform.OS === 'android' ? imageAsset.uri : imageAsset.uri.replace('file://', ''),
+        name: filename,
+        type: type,
+      });
+
+      const response = await axios.post(`${API_URL}/api/profile/upload-photo`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Yerel veriyi güncelle
+      const updatedPath = response.data.filePath;
+      const updatedUser = { ...user, profile_picture: updatedPath };
+      setUser(updatedUser);
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+
+      Alert.alert("Success", "Profile picture updated.");
+
+    } catch (error) {
+      console.error("Upload Error:", error);
+      Alert.alert("Error", "Failed to upload image.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // --- EKLENDİ: RESİM URL BELİRLEME ---
+  const getProfileImage = () => {
+    if (user?.profile_picture) {
+      const cleanPath = user.profile_picture.replace(/\\/g, '/');
+      return { uri: `${API_URL}/${cleanPath}` };
+    }
+    return { uri: 'https://placehold.co/150x150/E0E0E0/B0B0B0?text=Profil' };
   };
 
   const handleLogoutPress = () => {
@@ -63,26 +140,35 @@ export default function ProfileScreen({ navigation, onLogout }) {
   }
 
   const menuItems = [
-    { icon: 'share-outline', title: 'Share A Recipe', count: null },
+    { icon: 'share-social-outline', title: 'Share A Recipe', count: null }, // share-outline bazen hata verir, share-social-outline daha güvenli
     { icon: 'book-outline', title: 'My Recipes', count: null },
     { icon: 'time-outline', title: 'Meal History', count: null },
     { icon: 'star-outline', title: 'My Reviews', count: null },
-    { icon: 'settings-outline', title: 'Settings', count: null,screen: 'Settings' },
-
+    { icon: 'settings-outline', title: 'Settings', count: null, screen: 'Settings' },
   ];
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
+        
+        {/* --- GÜNCELLENDİ: PROFİL FOTOĞRAFI ALANI --- */}
         <View style={styles.profileImageContainer}>
-          <Image 
-            source={{ uri: 'https://placehold.co/150x150/E0E0E0/B0B0B0?text=Profil' }} 
-            style={styles.profileImage}
-          />
-          <TouchableOpacity style={styles.editButton}>
+          {uploading ? (
+            <View style={[styles.profileImage, styles.center]}>
+              <ActivityIndicator color="#4CAF50" />
+            </View>
+          ) : (
+            <Image 
+              source={getProfileImage()} 
+              style={styles.profileImage}
+            />
+          )}
+          
+          <TouchableOpacity style={styles.editButton} onPress={handlePickImage}>
             <Ionicons name="camera-outline" size={20} color="white" />
           </TouchableOpacity>
         </View>
+        {/* ------------------------------------------- */}
         
         <Text style={styles.username}>{user?.username || 'Kullanıcı'}</Text>
         <Text style={styles.email}>{user?.email || 'email@example.com'}</Text>
@@ -127,6 +213,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  center: { // EKLENDİ: Ortalamak için
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     backgroundColor: 'white',
@@ -187,11 +278,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 5,
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: '#e0e0e0',
   },
   menuContainer: {
     backgroundColor: 'white',

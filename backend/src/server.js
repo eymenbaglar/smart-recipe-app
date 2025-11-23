@@ -5,10 +5,26 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('./config/database');
 const auth = require('./middleware/auth');
+const multer = require('multer');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // Dosyalar 'uploads' klasörüne gitsin
+  },
+  filename: function (req, file, cb) {
+    // Dosya adı çakışmasın diye isminin başına tarih ekliyoruz
+    // Örn: 17654321-profil.jpg
+    cb(null, Date.now() + path.extname(file.originalname)); 
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // Register endpoint
 app.post('/auth/register', async (req, res) => {
@@ -79,7 +95,8 @@ app.post('/auth/login', async (req, res) => {
             user: {
                 id: user.id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                profile_picture: user.profile_picture
             }
         });
 
@@ -93,6 +110,36 @@ app.post('/auth/login', async (req, res) => {
 app.get('/api/recipes', (req, res) => {
   res.json(recipes);
 });
+
+//profil resmi yükleme
+app.post('/api/profile/upload-photo', auth, upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Lütfen bir resim seçin.' });
+    }
+
+    // Dosya başarıyla yüklendi, şimdi yolunu veritabanına kaydedelim
+    // Windows kullanıyorsan ters slash (\) sorun olabilir, düzelterek kaydedelim.
+    // Kaydedilecek format: 'uploads/dosya_adi.jpg'
+    const profilePicturePath = req.file.path.replace(/\\/g, "/"); 
+
+    // Veritabanını güncelle
+    await db.query(
+      'UPDATE users SET profile_picture = $1 WHERE id = $2',
+      [profilePicturePath, req.user.id]
+    );
+
+    res.json({ 
+      message: 'Profil fotoğrafı güncellendi.', 
+      filePath: profilePicturePath 
+    });
+
+  } catch (error) {
+    console.error('Fotoğraf yükleme hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
 
 //kullanıcı bilgilerini değiştirme
 app.patch('/api/profile', auth, async (req, res) => {
