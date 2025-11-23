@@ -10,29 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Basit in-memory database (test için)
-let users = [];
-let recipes = [
-  {
-    id: 1,
-    title: "Domates Çorbası",
-    description: "Lezzetli ve sıcak domates çorbası",
-    prepTime: 30,
-    calories: 150,
-    image: "https://via.placeholder.com/300x200/FF6B6B/FFFFFF?text=Domates+Corbasi",
-    ingredients: ["Domates", "Soğan", "Sarımsak", "Tuz", "Karabiber"]
-  },
-  {
-    id: 2,
-    title: "Tavuklu Salata",
-    description: "Sağlıklı ve doyurucu tavuklu salata",
-    prepTime: 20,
-    calories: 250,
-    image: "https://via.placeholder.com/300x200/4ECDC4/FFFFFF?text=Tavuklu+Salata",
-    ingredients: ["Tavuk", "Marul", "Domates", "Salatalık", "Zeytinyağı"]
-  }
-];
-
 // Register endpoint
 app.post('/auth/register', async (req, res) => {
     const { username, email, password } = req.body;
@@ -169,6 +146,140 @@ app.patch('/api/profile/change-password', auth, async (req, res) => {
 
   } catch (error) {
     console.error('Password change error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//kullanıcının MyStock add kısmında ekleme yaparken istediği ingredient'ı bulması
+app.get('/api/ingredients/search', auth, async (req, res) => {
+  const { query } = req.query; // query'i al
+
+  //min 2 harf giriyor
+  if (!query || query.length < 2) {
+    return res.status(400).json({ error: 'Please enter at least 2 letters.' });
+  }
+
+  try {
+    // databasede ara
+    const result = await db.query(
+      'SELECT id, name, unit, unit_category, calories_per_unit FROM ingredients WHERE name ILIKE $1 LIMIT 10',
+      [`%${query}%`]
+    );
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('Search Error:', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+//MyStock'a ürün ekleme
+app.post('/api/refrigerator/add', auth, async (req, res) => {
+  const userId = req.user.id;
+  const { ingredientId, quantity } = req.body; 
+
+  try {
+    let fridgeResult = await db.query('SELECT id FROM virtual_refrigerator WHERE user_id = $1', [userId]);
+    let fridgeId;
+
+    if (fridgeResult.rows.length === 0) {
+      const newFridge = await db.query(
+        'INSERT INTO virtual_refrigerator (user_id) VALUES ($1) RETURNING id',
+        [userId]
+      );
+      fridgeId = newFridge.rows[0].id;
+    } else {
+      fridgeId = fridgeResult.rows[0].id;
+    }
+
+    //dolapta aynı malzemeden var mı
+    const checkItem = await db.query(
+      'SELECT id, quantity FROM refrigerator_items WHERE virtual_refrigerator_id = $1 AND ingredient_id = $2',
+      [fridgeId, ingredientId]
+    );
+
+    if (checkItem.rows.length > 0) {
+      await db.query(
+        'UPDATE refrigerator_items SET quantity = quantity + $1, added_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [quantity, checkItem.rows[0].id]
+      );
+      res.status(200).json({ message: 'Ingredient amount updated.' });
+
+    } else {
+      await db.query(
+        'INSERT INTO refrigerator_items (virtual_refrigerator_id, ingredient_id, quantity) VALUES ($1, $2, $3)',
+        [fridgeId, ingredientId, quantity]
+      );
+      res.status(201).json({ message: 'New Ingredient added.' });
+    }
+
+  } catch (error) {
+    console.error('Stock add error', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//MyStock listesini çekme
+app.get('/api/refrigerator', auth, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    //kullancının mystock kısmını çek
+    const result = await db.query(
+      `SELECT 
+        ri.id, 
+        i.name, 
+        ri.quantity, 
+        i.unit,           
+        i.unit_category, 
+        ri.added_at 
+       FROM refrigerator_items ri
+       JOIN virtual_refrigerator vr ON ri.virtual_refrigerator_id = vr.id
+       JOIN ingredients i ON ri.ingredient_id = i.id
+       WHERE vr.user_id = $1
+       ORDER BY ri.added_at DESC`, 
+      [userId]
+    );
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('MyStock listing error:', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+//ürün silme
+app.delete('/api/refrigerator/delete/:itemId', auth, async (req, res) => {
+  const { itemId } = req.params;
+
+  try {
+    await db.query('DELETE FROM refrigerator_items WHERE id = $1', [itemId]);
+    
+    res.json({ message: 'Ingredient deleted succesfully!' });
+
+  } catch (error) {
+    console.error('Deletion Error', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+//ürünü güncelleme
+app.patch('/api/refrigerator/update/:itemId', auth, async (req, res) => {
+  const { itemId } = req.params;
+  const { quantity } = req.body; 
+
+  try {
+    await db.query(
+      'UPDATE refrigerator_items SET quantity = $1 WHERE id = $2',
+      [quantity, itemId]
+    );
+    
+    res.json({ message: 'Ingredient Updated' });
+
+  } catch (error) {
+    console.error('Editing Error', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
