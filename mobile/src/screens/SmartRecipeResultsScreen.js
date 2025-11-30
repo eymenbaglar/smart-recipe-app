@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
-export default function SmartRecipeResultsScreen({ navigation }) {
+export default function SmartRecipeResultsScreen({ navigation, route }) {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -24,12 +24,32 @@ export default function SmartRecipeResultsScreen({ navigation }) {
   const fetchSmartRecipes = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/recipes/match`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      
+      // Parametreleri kontrol et (Navigasyondan gelen veriler)
+      const type = route.params?.type || 'stock'; // Varsayılan 'stock'
+      const selectedIds = route.params?.selectedIds || [];
+
+      let response;
+
+      if (type === 'manual') {
+        // MANUEL MOD: Seçili ID'leri POST et
+        // %30 barajı olmayan, adet öncelikli endpoint
+        response = await axios.post(
+          `${API_URL}/api/recipes/match-manual`, 
+          { selectedIds: selectedIds },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        // STOK MODU (Varsayılan): Dolaptaki malzemelere göre GET et
+        response = await axios.get(
+          `${API_URL}/api/recipes/match`, 
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
       setRecipes(response.data);
     } catch (error) {
-      console.error(error);
+      console.error("Tarif çekme hatası:", error);
     } finally {
       setLoading(false);
     }

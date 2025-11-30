@@ -331,7 +331,7 @@ app.patch('/api/refrigerator/update/:itemId', auth, async (req, res) => {
   }
 });
 
-//Smart Recipe Algroithm
+//mystocktan matching
 app.get('/api/recipes/match', auth, async (req, res) => {
   const userId = req.user.id;
 
@@ -418,6 +418,214 @@ app.get('/api/recipes/match', auth, async (req, res) => {
 
   } catch (error) {
     console.error('Akıllı eşleşme hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
+//manuelden matching algoritması
+app.post('/api/recipes/match-manual', auth, async (req, res) => {
+  const { selectedIds } = req.body; // Örn: [1, 5, 23]
+
+  if (!selectedIds || selectedIds.length === 0) {
+    return res.status(400).json({ error: 'Lütfen en az bir malzeme seçin.' });
+  }
+
+  try {
+    const query = `
+      WITH SelectedIngredients AS (
+        -- Frontend'den gelen ID listesini tabloya çevir
+        SELECT unnest($1::int[]) AS ingredient_id
+      ),
+      RecipeStats AS (
+        -- Her tarifin toplam ÖNEMLİ (Staple olmayan) malzeme sayısı
+        SELECT 
+          r.id AS recipe_id,
+          COUNT(ri.ingredient_id) AS total_required
+        FROM recipes r
+        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.is_staple = FALSE 
+        GROUP BY r.id
+      ),
+      Matches AS (
+        -- Seçilen malzemelerle tariflerin çakışması
+        SELECT 
+          r.id AS recipe_id,
+          COUNT(ri.ingredient_id) AS matching_count
+        FROM recipes r
+        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.is_staple = FALSE 
+          AND ri.ingredient_id IN (SELECT ingredient_id FROM SelectedIngredients)
+        GROUP BY r.id
+      )
+      SELECT 
+        r.id,
+        r.title,
+        r.description,
+        r.instructions,
+        r.image_url,
+        r.prep_time,
+        r.calories,
+        r.serving,
+        
+        -- Eşleşme İstatistikleri
+        COALESCE(rs.total_required, 0) AS total_ingredients,
+        COALESCE(m.matching_count, 0) AS have_ingredients,
+        
+        -- Yüzde Hesabı
+        ROUND(
+          (COALESCE(m.matching_count, 0)::decimal / NULLIF(rs.total_required, 0)) * 100
+        ) AS match_percentage,
+
+        -- Eksik Malzemeler Listesi (Frontend'de göstermek için)
+        (
+          SELECT json_agg(json_build_object(
+            'name', i.name,
+            'missing_amount', ri_sub.quantity, -- Manuel modda direkt gereken miktarı gösteriyoruz
+            'unit', ri_sub.unit_type
+          ))
+          FROM recipe_ingredients ri_sub
+          JOIN ingredients i ON ri_sub.ingredient_id = i.id
+          WHERE ri_sub.recipe_id = r.id 
+            AND i.is_staple = FALSE
+            AND ri_sub.ingredient_id NOT IN (SELECT ingredient_id FROM SelectedIngredients)
+        ) AS missing_ingredients
+
+      FROM recipes r
+      JOIN RecipeStats rs ON r.id = rs.recipe_id
+      JOIN Matches m ON r.id = m.recipe_id -- Sadece eşleşmesi olanları getir (INNER JOIN)
+      
+      -- SIRALAMA MANTIĞI:
+      -- 1. Önce kaç tane malzeme tutturduğuna bak (Çoktan aza)
+      -- 2. Eşitlik varsa, yüzdeye bak (Çoktan aza)
+      ORDER BY 
+        m.matching_count DESC, 
+        match_percentage DESC;
+    `;
+
+    const result = await db.query(query, [selectedIds]);
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('Manuel eşleşme hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
+//favori eşleşmeleri
+app.post('/api/favorites/toggle', auth, async (req, res) => {
+  const userId = req.user.id;
+  const { recipeId } = req.body;
+
+  try {
+    // 1. Önce bu tarif favorilerde var mı diye bak
+    const check = await db.query(
+      'SELECT * FROM favorites WHERE user_id = $1 AND recipe_id = $2',
+      [userId, recipeId]
+    );
+
+    if (check.rows.length > 0) {
+      // VARSA -> SİL (Çıkar)
+      await db.query(
+        'DELETE FROM favorites WHERE user_id = $1 AND recipe_id = $2',
+        [userId, recipeId]
+      );
+      res.json({ message: 'Favorilerden çıkarıldı.', isFavorite: false });
+    } else {
+      // YOKSA -> EKLE
+      await db.query(
+        'INSERT INTO favorites (user_id, recipe_id) VALUES ($1, $2)',
+        [userId, recipeId]
+      );
+      res.json({ message: 'Favorilere eklendi.', isFavorite: true });
+    }
+
+  } catch (error) {
+    console.error('Favori işlem hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
+//favoriler
+app.get('/api/favorites', auth, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const query = `
+      WITH UserInventory AS (
+        SELECT ingredient_id, quantity
+        FROM refrigerator_items ri
+        JOIN virtual_refrigerator vr ON ri.virtual_refrigerator_id = vr.id
+        WHERE vr.user_id = $1
+      ),
+      RecipeStats AS (
+        SELECT 
+          r.id AS recipe_id,
+          COUNT(ri.ingredient_id) AS total_required
+        FROM recipes r
+        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.is_staple = FALSE 
+        GROUP BY r.id
+      ),
+      Matches AS (
+        SELECT 
+          r.id AS recipe_id,
+          COUNT(ri.ingredient_id) AS matching_count
+        FROM recipes r
+        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.is_staple = FALSE 
+          AND ri.ingredient_id IN (SELECT ingredient_id FROM UserInventory)
+        GROUP BY r.id
+      )
+      SELECT 
+        r.id,
+        r.title,
+        r.description,
+        r.image_url,
+        r.prep_time,
+        r.calories,
+        r.serving,
+        f.added_at, -- Ekleme tarihi (Sıralama için)
+        
+        -- Eşleşme Oranı Hesabı
+        COALESCE(ROUND(
+          (COALESCE(m.matching_count, 0)::decimal / NULLIF(rs.total_required, 0)) * 100
+        ), 0) AS match_percentage,
+
+        -- Eksik Malzemeleri JSON Listesi Olarak Getir
+        (
+          SELECT json_agg(json_build_object(
+            'name', i.name,
+            'missing_amount', (ri_sub.quantity - COALESCE(ui.quantity, 0)),
+            'unit', ri_sub.unit_type
+          ))
+          FROM recipe_ingredients ri_sub
+          JOIN ingredients i ON ri_sub.ingredient_id = i.id
+          LEFT JOIN UserInventory ui ON ri_sub.ingredient_id = ui.ingredient_id
+          WHERE ri_sub.recipe_id = r.id 
+            AND (ri_sub.quantity - COALESCE(ui.quantity, 0)) > 0 
+            AND i.is_staple = FALSE
+        ) AS missing_ingredients
+
+      FROM favorites f
+      JOIN recipes r ON f.recipe_id = r.id
+      LEFT JOIN RecipeStats rs ON r.id = rs.recipe_id
+      LEFT JOIN Matches m ON r.id = m.recipe_id
+      
+      WHERE f.user_id = $1
+      
+      -- SENİN İSTEĞİN: Ekleme Tarihine Göre Sırala (En yeni en üstte)
+      ORDER BY f.added_at DESC;
+    `;
+
+    const result = await db.query(query, [userId]);
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('Favori listeleme hatası:', error);
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity 
+  View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, Alert 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -13,10 +13,48 @@ export default function RecipeDetailsScreen({ route, navigation }) {
   
   const [fullIngredients, setFullIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // --- YENİ: FAVORİ STATE ---
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     fetchIngredients();
+    checkIfFavorite(); // Sayfa açılınca kontrol et
   }, []);
+
+  // --- YENİ: FAVORİ KONTROLÜ ---
+  const checkIfFavorite = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      // Basit bir yöntem: Tüm favorileri çekip içinde bu ID var mı diye bakıyoruz
+      // (İleride sadece tek bir ID kontrol eden endpoint yazılabilir ama bu da çalışır)
+      const response = await axios.get(`${API_URL}/api/favorites`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const found = response.data.find(fav => fav.id === recipe.id);
+      setIsFavorite(!!found);
+    } catch (error) {
+      console.log("Favori kontrol hatası", error);
+    }
+  };
+
+  // --- YENİ: FAVORİ TOGGLE (EKLE/ÇIKAR) ---
+  const toggleFavorite = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/api/favorites/toggle`, 
+        { recipeId: recipe.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Backend'den gelen yeni durumu ayarla
+      setIsFavorite(response.data.isFavorite);
+      
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Hata", "İşlem yapılamadı.");
+    }
+  };
 
   const fetchIngredients = async () => {
     try {
@@ -32,21 +70,12 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
-  // --- RENK, DURUM VE FORMATLAMA MANTIĞI ---
   const renderIngredientItem = (item, index) => {
-    // 1. ÖNCE FORMATLAMA (İstediğin düzeltmeler burada)
-    // parseFloat: "100.00" -> 100 yapar, "2.50" -> 2.5 yapar. Gereksiz sıfırları atar.
     const displayQty = parseFloat(item.quantity);
-    
-    // "qty" ise "adet" yaz, değilse olduğu gibi (gram, ml) yaz.
     const displayUnit = item.unit_type === 'qty' ? 'adet' : item.unit_type;
+    const missingData = recipe.missing_ingredients?.find((missing) => missing.name === item.name);
 
-    // 2. EKSİK KONTROLÜ
-    const missingData = recipe.missing_ingredients?.find(
-      (missing) => missing.name === item.name
-    );
-
-    let statusColor = "#4CAF50"; // Yeşil (Tamam)
+    let statusColor = "#4CAF50"; 
     let statusIcon = "checkmark-circle";
     let statusText = "";
 
@@ -55,36 +84,26 @@ export default function RecipeDetailsScreen({ route, navigation }) {
       const missingQty = parseFloat(missingData.missing_amount);
 
       if (missingQty >= requiredQty) {
-        statusColor = "#FF3B30"; // Kırmızı (Hiç yok)
+        statusColor = "#FF3B30"; 
         statusIcon = "close-circle";
         statusText = `(Tamamı eksik)`;
       } else {
-        statusColor = "#FF9500"; // Turuncu (Az var)
+        statusColor = "#FF9500"; 
         statusIcon = "alert-circle";
-        // Eksik miktarını da aynı mantıkla temizle
-        const displayMissingQty = parseFloat(missingQty.toFixed(2)); // Uzun küsuratları engelle
+        const displayMissingQty = parseFloat(missingQty.toFixed(2));
         statusText = `(Eksik: ${displayMissingQty} ${displayUnit})`;
       }
     }
 
     return (
       <View key={index} style={styles.ingredientRow}>
-        <Ionicons 
-          name={statusIcon} 
-          size={22} 
-          color={statusColor} 
-        />
+        <Ionicons name={statusIcon} size={22} color={statusColor} />
         <View style={{flex: 1, marginLeft: 10}}>
           <Text style={[styles.ingredientText, { color: '#333' }]}>
-            {/* Düzeltilmiş Miktar ve Birim */}
             {displayQty} {displayUnit} {item.name}
           </Text>
-          
-          {/* Durum Metni (Kırmızı/Turuncu Uyarılar) */}
           {statusText !== "" && (
-            <Text style={{ fontSize: 12, color: statusColor, fontWeight: '600', marginTop: 2 }}>
-              {statusText}
-            </Text>
+            <Text style={{ fontSize: 12, color: statusColor, fontWeight: '600', marginTop: 2 }}>{statusText}</Text>
           )}
         </View>
       </View>
@@ -97,9 +116,20 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         
         <Image source={{ uri: recipe.image_url }} style={styles.image} />
         
+        {/* GERİ BUTONU */}
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
+
+        {/* --- YENİ: FAVORİ BUTONU --- */}
+        <TouchableOpacity style={styles.favButton} onPress={toggleFavorite}>
+          <Ionicons 
+            name={isFavorite ? "heart" : "heart-outline"} 
+            size={28} 
+            color={isFavorite ? "#FF3B30" : "white"} 
+          />
+        </TouchableOpacity>
+        {/* --------------------------- */}
 
         <View style={styles.content}>
           <Text style={styles.title}>{recipe.title}</Text>
@@ -121,7 +151,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>Malzemeler</Text>
+          <Text style={styles.sectionTitle}>Ingredients</Text>
           {loading ? (
             <ActivityIndicator size="small" color="#000" />
           ) : (
@@ -132,7 +162,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>Hazırlanışı</Text>
+          <Text style={styles.sectionTitle}>Instructions</Text>
           <Text style={styles.instructionsText}>
             {recipe.instructions ? recipe.instructions : "Tarif detayları hazırlanıyor..."}
           </Text>
@@ -146,21 +176,25 @@ export default function RecipeDetailsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { paddingBottom: 40 },
   image: { width: '100%', height: 300, resizeMode: 'cover' },
+  
   backButton: {
-    position: 'absolute',
-    top: 40, left: 20,
-    width: 40, height: 40,
-    borderRadius: 20,
+    position: 'absolute', top: 40, left: 20,
+    width: 40, height: 40, borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center', alignItems: 'center'
   },
+  
+  // --- FAVORİ BUTONU STİLİ ---
+  favButton: {
+    position: 'absolute', top: 40, right: 20,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center'
+  },
+
   content: {
-    flex: 1,
-    marginTop: -20, 
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    padding: 25,
+    flex: 1, marginTop: -20, backgroundColor: '#fff',
+    borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 25,
   },
   title: { fontSize: 26, fontWeight: 'bold', color: '#333', marginBottom: 15 },
   metaContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
@@ -168,18 +202,8 @@ const styles = StyleSheet.create({
   metaText: { marginLeft: 5, color: '#555', fontWeight: '600', fontSize: 13 },
   divider: { height: 1, backgroundColor: '#EEE', marginVertical: 20 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 15 },
-  
-  // Malzeme Listesi
   ingredientsList: { marginTop: 5 },
-  ingredientRow: { 
-    flexDirection: 'row', 
-    alignItems: 'flex-start', // İkon yukarıda kalsın, metin uzarsa hizası bozulmasın
-    marginBottom: 15 
-  },
-  ingredientText: { 
-    fontSize: 16, 
-    fontWeight: '500',
-    lineHeight: 22
-  },
+  ingredientRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },
+  ingredientText: { fontSize: 16, fontWeight: '500', lineHeight: 22 },
   instructionsText: { fontSize: 16, lineHeight: 26, color: '#444' }
 });

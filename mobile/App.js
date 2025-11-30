@@ -13,6 +13,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 import SmartRecipeResultsScreen from './src/screens/SmartRecipeResultsScreen';
 import RecipeDetailsScreen from './src/screens/RecipeDetailsScreen';
+import ManualInputScreen from './src/screens/ManualInputScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -133,6 +134,11 @@ export default function App() {
               name="RecipeDetails" 
               component={RecipeDetailsScreen} 
               options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+              name="ManualInput" 
+              component={ManualInputScreen} 
+              options={{ title: 'Manuel Seçim' }}
             />
           </>
         )}

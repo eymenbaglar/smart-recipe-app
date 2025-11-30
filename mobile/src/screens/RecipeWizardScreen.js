@@ -14,7 +14,7 @@ export default function RecipeWizardScreen({ navigation }) {
   // 2. Seçenek: Manuel Malzeme Seçimi
   const handleManualInput = () => {
     // Buraya daha sonra manuel seçim sayfasına yönlendirme kodunu yazacağız.
-    console.log("Manuel seçim seçildi");
+    navigation.navigate('ManualInput');
     // Örn: navigation.navigate('ManualRecipeInput');
   };
 
