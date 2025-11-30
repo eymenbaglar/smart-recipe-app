@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
 import MyStockScreen from '../screens/MyStockScreen';
 import ProfileScreen from '../screens/ProfileScreen'; 
+import RecipeWizardScreen from '../screens/RecipeWizardScreen';
 
 //geçici ekranlar
 function SocialScreen() {
@@ -14,10 +15,6 @@ function SocialScreen() {
 }
 function FavoritesScreen() {
   return <View style={styles.center}><Text>Favorites Screen</Text></View>;
-}
-
-function RecipeWizardScreen() {
-  return <View style={styles.center}><Text>Recipe Wizard Screen</Text></View>;
 }
 
 const Tab = createBottomTabNavigator();

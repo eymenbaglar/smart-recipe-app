@@ -336,70 +336,107 @@ app.get('/api/recipes/match', auth, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // 1. user'ın mystockdaki itemların id'lerini al
-    // 2. recipelerin malzemelerine bak
-    // 3. is_staple false'sa oran algoritmasına kat
-    // 4. yüzdesini hesapla
-    
     const query = `
       WITH UserInventory AS (
-        -- user ingredientlearı
-        SELECT ingredient_id 
+        SELECT ingredient_id, quantity
         FROM refrigerator_items ri
         JOIN virtual_refrigerator vr ON ri.virtual_refrigerator_id = vr.id
         WHERE vr.user_id = $1
       ),
-      RecipeStats AS (
-        -- her tarif için önemli malzeme(is_staple) sayısı
+      RecipeDetails AS (
         SELECT 
           r.id AS recipe_id,
-          COUNT(ri.ingredient_id) AS total_required
+          i.name AS ingredient_name,
+          i.unit AS unit,
+          ri.quantity AS amount_needed,
+          COALESCE(ui.quantity, 0) AS amount_have,
+          i.is_staple
         FROM recipes r
         JOIN recipe_ingredients ri ON r.id = ri.recipe_id
         JOIN ingredients i ON ri.ingredient_id = i.id
-        WHERE i.is_staple = FALSE
-        GROUP BY r.id
+        LEFT JOIN UserInventory ui ON ri.ingredient_id = ui.ingredient_id
       ),
-      Matches AS (
-        -- kullanıcının elindeki malzemelerle tariflerin çakışması
+      CalculatedScores AS (
         SELECT 
-          r.id AS recipe_id,
-          COUNT(ri.ingredient_id) AS matching_count
-        FROM recipes r
-        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-        JOIN ingredients i ON ri.ingredient_id = i.id
-        WHERE i.is_staple = FALSE 
-          AND ri.ingredient_id IN (SELECT ingredient_id FROM UserInventory)
-        GROUP BY r.id
+          recipe_id,
+          ingredient_name,
+          unit,
+          amount_needed,
+          amount_have,
+          is_staple,
+          -- Puanlama (Staple değilse hesapla)
+          CASE 
+            WHEN is_staple = TRUE THEN 0 -- Staple puanı etkilemez
+            WHEN amount_have = 0 THEN 0
+            WHEN (amount_have / amount_needed) >= 1 THEN 1.0
+            ELSE (amount_have / amount_needed)
+          END AS score,
+          -- Eksik Miktar Hesabı
+          GREATEST(amount_needed - amount_have, 0) AS missing_amount
+        FROM RecipeDetails
       )
       SELECT 
         r.id,
         r.title,
         r.description,
+        r.instructions,
         r.image_url,
         r.prep_time,
         r.calories,
-        COALESCE(rs.total_required, 0) AS total_ingredients,
-        COALESCE(m.matching_count, 0) AS have_ingredients,
+        r.serving,
+        
+        -- Eşleşme Oranı Hesabı
         ROUND(
-          (COALESCE(m.matching_count, 0)::decimal / NULLIF(rs.total_required, 0)) * 100
-        ) AS match_percentage
+          (SUM(cs.score) FILTER (WHERE cs.is_staple = FALSE) / 
+           NULLIF(COUNT(*) FILTER (WHERE cs.is_staple = FALSE), 0)) * 100
+        ) AS match_percentage,
+
+        -- Eksik Malzemeleri JSON Listesi Olarak Getir
+        (
+          SELECT json_agg(json_build_object(
+            'name', cs_sub.ingredient_name,
+            'missing_amount', cs_sub.missing_amount,
+            'unit', cs_sub.unit
+          ))
+          FROM CalculatedScores cs_sub
+          WHERE cs_sub.recipe_id = r.id AND cs_sub.missing_amount > 0 AND cs_sub.is_staple = FALSE
+        ) AS missing_ingredients
+
       FROM recipes r
-      JOIN RecipeStats rs ON r.id = rs.recipe_id
-      LEFT JOIN Matches m ON r.id = m.recipe_id
-      WHERE 
-        -- eşleşme oranı %30 veya daha fazla olanları getir
-        (COALESCE(m.matching_count, 0)::decimal / NULLIF(rs.total_required, 0)) * 100 >= 30
+      JOIN CalculatedScores cs ON r.id = cs.recipe_id
+      GROUP BY r.id
+      -- %30 Barajı
+      HAVING ROUND(
+          (SUM(cs.score) FILTER (WHERE cs.is_staple = FALSE) / 
+           NULLIF(COUNT(*) FILTER (WHERE cs.is_staple = FALSE), 0)) * 100
+        ) >= 30
       ORDER BY match_percentage DESC;
     `;
 
     const result = await db.query(query, [userId]);
-
     res.json(result.rows);
 
   } catch (error) {
-    console.error('Matching Error', error);
-    res.status(500).json({ error: 'Server Error' });
+    console.error('Akıllı eşleşme hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
+app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      `SELECT i.name, ri.quantity, ri.unit_type 
+       FROM recipe_ingredients ri
+       JOIN ingredients i ON ri.ingredient_id = i.id
+       WHERE ri.recipe_id = $1`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Tarif detay hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
   }
 });
 

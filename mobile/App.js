@@ -11,6 +11,8 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import ProfileScreen from './src/screens/ProfileScreen'; 
 import SettingsScreen from './src/screens/SettingsScreen';
 import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
+import SmartRecipeResultsScreen from './src/screens/SmartRecipeResultsScreen';
+import RecipeDetailsScreen from './src/screens/RecipeDetailsScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -121,6 +123,16 @@ export default function App() {
               name="ChangePassword" 
               component={ChangePasswordScreen} 
               options={{ title: 'Change Password' }}
+            />
+            <Stack.Screen 
+              name="SmartRecipeResults" 
+              component={SmartRecipeResultsScreen} 
+              options={{ title: 'Eşleşen Tarifler' }}
+            />
+            <Stack.Screen 
+              name="RecipeDetails" 
+              component={RecipeDetailsScreen} 
+              options={{ headerShown: false }}
             />
           </>
         )}
