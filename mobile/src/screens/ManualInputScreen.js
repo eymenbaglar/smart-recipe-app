@@ -14,10 +14,10 @@ export default function ManualInputScreen({ navigation }) {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  // Seçilen malzemelerin listesi (Array)
+  // Seçilen malzemelerin listesi
   const [selectedIngredients, setSelectedIngredients] = useState([]);
 
-  // Arama Fonksiyonu
+  // Arama fonksiyonu
   const searchIngredients = async (text) => {
     setQuery(text);
     if (text.length < 2) {
@@ -39,9 +39,8 @@ export default function ManualInputScreen({ navigation }) {
     }
   };
 
-  // Malzeme Seçme (Ekleme)
+  // Malzeme ekleme
   const handleSelect = (item) => {
-    // Zaten ekli mi kontrol et
     if (!selectedIngredients.find(i => i.id === item.id)) {
       setSelectedIngredients([...selectedIngredients, item]);
     }
@@ -50,7 +49,7 @@ export default function ManualInputScreen({ navigation }) {
     Keyboard.dismiss();
   };
 
-  // Malzeme Çıkarma (Silme)
+  // Malzeme silme
   const handleRemove = (id) => {
     setSelectedIngredients(selectedIngredients.filter(item => item.id !== id));
   };
@@ -58,36 +57,36 @@ export default function ManualInputScreen({ navigation }) {
   // Sonuçlara Git
   const handleFindRecipes = () => {
     if (selectedIngredients.length === 0) {
-      alert("Lütfen en az bir malzeme seçin.");
+      alert("Please choose at least one ingredient.");
       return;
     }
-    // Sadece ID'leri paketleyip gönderiyoruz
+    // sadece ingredient idleri yolla
     const ids = selectedIngredients.map(i => i.id);
     
     navigation.navigate('SmartRecipeResults', { 
-      type: 'manual', // Modu belirtiyoruz
+      type: 'manual',
       selectedIds: ids 
     });
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Malzemeleri Seç</Text>
-      <Text style={styles.subtitle}>Elinizdeki malzemeleri ekleyin, size en uygun tarifleri bulalım.</Text>
+      <Text style={styles.title}>Choose Ingredient</Text>
+      <Text style={styles.subtitle}>Add the ingredients you have on hand, and we'll find the recipes that suit you best.</Text>
 
       {/* ARAMA KUTUSU */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#666" style={{marginRight: 10}} />
         <TextInput
           style={styles.input}
-          placeholder="Malzeme ara (örn: Tavuk, Pirinç)..."
+          placeholder="Search for ingredients (e.g., chicken, rice)..."
           value={query}
           onChangeText={searchIngredients}
         />
         {isSearching && <ActivityIndicator size="small" color="#000" />}
       </View>
 
-      {/* ARAMA SONUÇLARI (Liste) */}
+      {/* arama sonuçları */}
       {searchResults.length > 0 && (
         <View style={styles.resultsList}>
           <FlatList
@@ -104,7 +103,7 @@ export default function ManualInputScreen({ navigation }) {
         </View>
       )}
 
-      {/* SEÇİLENLER (Chips Alanı) */}
+      {/* Seçilen malzemeler */}
       <View style={styles.chipsContainer}>
         {selectedIngredients.map((item) => (
           <View key={item.id} style={styles.chip}>
@@ -116,14 +115,14 @@ export default function ManualInputScreen({ navigation }) {
         ))}
       </View>
 
-      {/* BUTON */}
+      {/* buton */}
       <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 20}}>
         <TouchableOpacity 
           style={[styles.button, selectedIngredients.length === 0 && styles.buttonDisabled]} 
           onPress={handleFindRecipes}
           disabled={selectedIngredients.length === 0}
         >
-          <Text style={styles.buttonText}>Tarifleri Bul ({selectedIngredients.length})</Text>
+          <Text style={styles.buttonText}>Find Recipes ({selectedIngredients.length})</Text>
           <Ionicons name="arrow-forward" size={20} color="#fff" style={{marginLeft: 10}} />
         </TouchableOpacity>
       </View>

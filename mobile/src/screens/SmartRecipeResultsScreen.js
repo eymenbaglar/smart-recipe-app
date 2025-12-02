@@ -14,7 +14,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   
   const [modalVisible, setModalVisible] = useState(false);
-  // Varsayılan: Eşleşme Oranı
+  // varsayılan sort : eşleşme
   const [sortBy, setSortBy] = useState('match'); 
 
   useEffect(() => {
@@ -24,23 +24,20 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
   const fetchSmartRecipes = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      
-      // Parametreleri kontrol et (Navigasyondan gelen veriler)
-      const type = route.params?.type || 'stock'; // Varsayılan 'stock'
+      const type = route.params?.type || 'stock';
       const selectedIds = route.params?.selectedIds || [];
 
       let response;
 
       if (type === 'manual') {
-        // MANUEL MOD: Seçili ID'leri POST et
-        // %30 barajı olmayan, adet öncelikli endpoint
+        // manuel recipe önerisi
         response = await axios.post(
           `${API_URL}/api/recipes/match-manual`, 
           { selectedIds: selectedIds },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        // STOK MODU (Varsayılan): Dolaptaki malzemelere göre GET et
+        // MyStocktan recipe önerisi
         response = await axios.get(
           `${API_URL}/api/recipes/match`, 
           { headers: { Authorization: `Bearer ${token}` } }
@@ -49,30 +46,30 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
 
       setRecipes(response.data);
     } catch (error) {
-      console.error("Tarif çekme hatası:", error);
+      console.error("Recipe loading error:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // --- GELİŞMİŞ SIRALAMA MANTIĞI ---
+  //sıralama mantığı
   const sortedRecipes = useMemo(() => {
     let sorted = [...recipes];
 
     switch (sortBy) {
-      case 'calories_low': // Kalori: Azdan -> Çoğa
+      case 'calories_low': 
         sorted.sort((a, b) => a.calories - b.calories);
         break;
-      case 'calories_high': // Kalori: Çoktan -> Aza
+      case 'calories_high': 
         sorted.sort((a, b) => b.calories - a.calories);
         break;
-      case 'time_short': // Süre: Kısadan -> Uzuna
+      case 'time_short': 
         sorted.sort((a, b) => a.prep_time - b.prep_time);
         break;
-      case 'time_long': // Süre: Uzundan -> Kısaya
+      case 'time_long': 
         sorted.sort((a, b) => b.prep_time - a.prep_time);
         break;
-      default: // 'match' - Eşleşme: Yüksekten -> Düşüğe
+      default: 
         sorted.sort((a, b) => b.match_percentage - a.match_percentage);
         break;
     }
@@ -170,7 +167,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
         ListEmptyComponent={<Text style={styles.emptyText}>No matching recipes found based on your stock.</Text>}
       />
 
-      {/* --- GÜNCELLENMİŞ MODAL (5 SEÇENEK) --- */}
+      {/* modal matching */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -180,56 +177,56 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
         <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Sıralama Ölçütü</Text>
+              <Text style={styles.modalTitle}>Ranking Criterion</Text>
               
               <ScrollView>
-                {/* 1. Eşleşme Oranı */}
+                {/* eşleşme oranı */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('match'); setModalVisible(false); }}
                 >
                   <Ionicons name={sortBy === 'match' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Eşleşme Oranı (En Yüksek)</Text>
+                  <Text style={styles.optionText}>Matching Percantage (Highest)</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
 
-                {/* 2. Kalori (Azdan Çoğa) */}
+                {/* kalori (Azdan Çoğa) */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('calories_low'); setModalVisible(false); }}
                 >
                   <Ionicons name={sortBy === 'calories_low' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Kalori (Azdan Çoğa)</Text>
+                  <Text style={styles.optionText}>Calories (Low to High)</Text>
                 </TouchableOpacity>
 
-                {/* 3. Kalori (Çoktan Aza) */}
+                {/* kalori (Çoktan Aza) */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('calories_high'); setModalVisible(false); }}
                 >
                   <Ionicons name={sortBy === 'calories_high' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Kalori (Çoktan Aza)</Text>
+                  <Text style={styles.optionText}>Calories (High to Low)</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
 
-                {/* 4. Süre (Kısadan Uzuna) */}
+                {/* süre (Kısadan Uzuna) */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('time_short'); setModalVisible(false); }}
                 >
                   <Ionicons name={sortBy === 'time_short' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Süre (Hızlıdan Yavaşa)</Text>
+                  <Text style={styles.optionText}>Time (Shortest to Longest)</Text>
                 </TouchableOpacity>
 
-                {/* 5. Süre (Uzundan Kısaya) */}
+                {/* süre (Uzundan Kısaya) */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('time_long'); setModalVisible(false); }}
                 >
                   <Ionicons name={sortBy === 'time_long' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Süre (Yavaştan Hızlıya)</Text>
+                  <Text style={styles.optionText}>Time (Longest to Shortest)</Text>
                 </TouchableOpacity>
               </ScrollView>
 
@@ -289,7 +286,7 @@ const styles = StyleSheet.create({
   detailButtonText: { fontSize: 12, fontWeight: 'bold', marginRight: 2 },
   emptyText: { textAlign: 'center', color: '#999', marginTop: 50 },
 
-  // Modal Stilleri
+  // modal stil
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -302,7 +299,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
     elevation: 5,
-    maxHeight: '60%' // Çok uzun olursa scroll olsun
+    maxHeight: '60%'
   },
   modalTitle: {
     fontSize: 18,

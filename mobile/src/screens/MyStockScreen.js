@@ -52,7 +52,7 @@ export default function MyStockScreen() {
       });
       setMyStock(response.data);
     } catch (error) {
-      console.error('Stok yükleme hatası:', error);
+      console.error('Stock Loading Error', error);
     } finally {
       setLoadingStock(false);
     }
@@ -73,7 +73,7 @@ export default function MyStockScreen() {
       });
       setSearchResults(response.data);
     } catch (error) {
-      console.log('Arama hatası:', error);
+      console.log('Search Error', error);
     } finally {
       setIsSearching(false);
     }
@@ -89,23 +89,18 @@ export default function MyStockScreen() {
     setSelectedUnit(defaultUnitList[0]);
   };
 
-  // --- YENİ: DÜZENLEME MODUNU AÇAN FONKSİYON ---
+  // düzenleme modu
   const handleEditItem = (item) => {
-    // 1. Formu ürün bilgileriyle doldur
-    // Backend'den gelen 'item' objesinde 'ingredient_id' olmayabilir, join ile geldiği için id'ler karışabilir.
-    // Bu yüzden geçici bir ingredient objesi oluşturuyoruz.
     const ingredientData = {
-      id: item.id, // Bu refrigerator_item id'si (güncelleme için lazım)
+      id: item.id, // refrigerator_item id'si
       name: item.name,
       unit_category: item.unit_category
     };
 
-    setSelectedIngredient(ingredientData); // Formu aç
-    setEditingItem(item); // Düzenleme modunu aktif et
-    setQuery(item.name); // İsmi yaz
+    setSelectedIngredient(ingredientData);
+    setEditingItem(item); 
+    setQuery(item.name); 
 
-    // 2. Miktarı ve Birimi Ayarla (Akıllı Dönüşüm)
-    // Eğer veritabanında 2000 gram ise, kullanıcıya 2 kg gösterelim.
     const qty = parseFloat(item.quantity);
     let defaultUnit;
     let displayQty;
@@ -119,7 +114,7 @@ export default function MyStockScreen() {
       defaultUnit = unitList.find(u => u.value === 'lt');
       displayQty = (qty / 1000).toString();
     } else {
-      defaultUnit = unitList[0]; // Gram veya ml
+      defaultUnit = unitList[0];
       displayQty = qty.toString();
     }
 
@@ -127,10 +122,10 @@ export default function MyStockScreen() {
     setQuantity(displayQty);
   };
 
-  // --- GÜNCELLENMİŞ KAYDET FONKSİYONU (HEM EKLE HEM GÜNCELLE) ---
+  // kaydet fonksiyonu
   const handleSaveStock = async () => {
     if (!selectedIngredient || !quantity || !selectedUnit) {
-      Alert.alert('Hata', 'Lütfen miktar girin.');
+      Alert.alert('Error', 'Please enter amount.');
       return;
     }
 
@@ -139,15 +134,15 @@ export default function MyStockScreen() {
       const baseQuantity = parseFloat(quantity) * selectedUnit.factor;
 
       if (editingItem) {
-        // --- GÜNCELLEME (UPDATE) ---
+        //güncelleme
         await axios.patch(
           `${API_URL}/api/refrigerator/update/${editingItem.id}`,
           { quantity: baseQuantity },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        Alert.alert('Güncellendi', 'Ürün miktarı güncellendi.');
+        Alert.alert('Updated', 'Ingredient amount updated.');
       } else {
-        // --- YENİ EKLEME (ADD) ---
+        //yeni ekleme
         await axios.post(
           `${API_URL}/api/refrigerator/add`,
           {
@@ -156,26 +151,25 @@ export default function MyStockScreen() {
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        Alert.alert('Başarılı', 'Dolaba eklendi!');
+        Alert.alert('Successfull', 'Added to your Stock.');
       }
       
-      // Temizlik
       resetForm();
       fetchMyStock();
       
     } catch (error) {
       console.error(error);
-      Alert.alert('Hata', 'İşlem başarısız oldu.');
+      Alert.alert('Error', 'The operation failed.');
     }
   };
 
   const handleDeleteItem = (itemId) => {
     Alert.alert(
-      "Sil", "Bu ürünü dolaptan çıkarmak istiyor musun?",
+      "Delete", "Do you want to take this product out of the refrigerator?",
       [
-        { text: "Vazgeç", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         { 
-          text: "Sil", style: 'destructive',
+          text: "Delete", style: 'destructive',
           onPress: async () => {
             try {
               const token = await AsyncStorage.getItem('token');
@@ -183,7 +177,7 @@ export default function MyStockScreen() {
                 headers: { Authorization: `Bearer ${token}` }
               });
               fetchMyStock();
-            } catch (error) { Alert.alert("Hata", "Silinemedi."); }
+            } catch (error) { Alert.alert("Error", "Could not be deleted."); }
           }
         }
       ]
@@ -194,7 +188,7 @@ export default function MyStockScreen() {
     setQuery('');
     setQuantity('');
     setSelectedIngredient(null);
-    setEditingItem(null); // Düzenleme modundan çık
+    setEditingItem(null);
   };
 
   const formatQuantity = (qty, unitCategory) => {
@@ -212,7 +206,7 @@ export default function MyStockScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Malzemelerim</Text>
+      <Text style={styles.headerTitle}>My Stock</Text>
 
       {/* ARAMA KUTUSU */}
       <View style={styles.searchContainer}>
@@ -222,12 +216,12 @@ export default function MyStockScreen() {
           placeholder="Malzeme ara..."
           value={query}
           onChangeText={searchIngredients}
-          editable={!editingItem} // Düzenleme yaparken arama kilitli olsun
+          editable={!editingItem}
         />
         {isSearching && <ActivityIndicator size="small" color="#000" />}
       </View>
 
-      {/* ARAMA SONUÇLARI */}
+      {/* arama sonuçları */}
       {searchResults.length > 0 && !selectedIngredient && (
         <View style={styles.resultsList}>
           <FlatList
@@ -247,11 +241,11 @@ export default function MyStockScreen() {
         </View>
       )}
 
-      {/* DETAY KARTI (Hem Ekleme Hem Düzenleme İçin) */}
+      {/* detay kartı */}
       {selectedIngredient && (
         <View style={styles.detailCard}>
           <Text style={styles.selectedTitle}>
-            {editingItem ? 'Miktarı Düzenle' : selectedIngredient.name}
+            {editingItem ? 'Edit Amount' : selectedIngredient.name}
           </Text>
           
           {editingItem && (
@@ -292,7 +286,7 @@ export default function MyStockScreen() {
             onPress={handleSaveStock}
           >
             <Text style={styles.addButtonText}>
-              {editingItem ? 'Güncelle' : 'Dolaba Ekle'}
+              {editingItem ? 'Update' : 'Add to Stock'}
             </Text>
             <Ionicons 
               name={editingItem ? "checkmark-circle-outline" : "add-circle-outline"} 
@@ -301,15 +295,15 @@ export default function MyStockScreen() {
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.cancelButton} onPress={resetForm}>
-            <Text style={styles.cancelText}>Vazgeç</Text>
+            <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* LİSTE BAŞLIĞI */}
+      {/* liste başlığı */}
       <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>Dolabındakiler</Text>
-        <Text style={styles.listCount}>{myStock.length} ürün</Text>
+        <Text style={styles.listTitle}>Your Stock</Text>
+        <Text style={styles.listCount}>{myStock.length} Ingredient</Text>
       </View>
 
       {/* STOK LİSTESİ */}
@@ -336,7 +330,7 @@ export default function MyStockScreen() {
               </View>
 
               <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                {/* DÜZENLE BUTONU */}
+                {/* düzenle */}
                 <TouchableOpacity 
                   onPress={() => handleEditItem(item)}
                   style={{marginRight: 10, padding: 5}}
@@ -344,7 +338,7 @@ export default function MyStockScreen() {
                   <Ionicons name="pencil-outline" size={22} color="#4CAF50" />
                 </TouchableOpacity>
 
-                {/* SİL BUTONU */}
+                {/* sil */}
                 <TouchableOpacity 
                   onPress={() => handleDeleteItem(item.id)}
                   style={{padding: 5}}
@@ -357,7 +351,7 @@ export default function MyStockScreen() {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="basket-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyText}>Dolabın henüz boş.</Text>
+              <Text style={styles.emptyText}>Your stock is still empty</Text>
             </View>
           }
         />
@@ -386,7 +380,7 @@ const styles = StyleSheet.create({
   unitText: { color: '#333', fontSize: 13 },
   unitTextActive: { color: 'white', fontWeight: 'bold' },
   addButton: { backgroundColor: '#4CAF50', padding: 15, borderRadius: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
-  updateButton: { backgroundColor: '#2196F3' }, // Güncelleme için mavi renk
+  updateButton: { backgroundColor: '#2196F3' }, 
   addButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   cancelButton: { marginTop: 15, alignItems: 'center' },
   cancelText: { color: '#FF6B6B', fontSize: 14 },

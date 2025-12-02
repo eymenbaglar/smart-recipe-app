@@ -4,63 +4,59 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function RecipeWizardScreen({ navigation }) {
 
-  // 1. Seçenek: Stoktan Otomatik Eşleştirme
+  // MyStocktan eşleştirme
   const handleUseStock = () => {
-    // Buraya daha sonra "Smart Matching" sayfasına yönlendirme kodunu yazacağız.
     navigation.navigate('SmartRecipeResults');
-    // Örn: navigation.navigate('SmartRecipeResults');
   };
 
-  // 2. Seçenek: Manuel Malzeme Seçimi
+  // Manuel girişten eşleştirme
   const handleManualInput = () => {
-    // Buraya daha sonra manuel seçim sayfasına yönlendirme kodunu yazacağız.
     navigation.navigate('ManualInput');
-    // Örn: navigation.navigate('ManualRecipeInput');
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       
-      {/* BAŞLIK ALANI */}
+      {/* header */}
       <View style={styles.header}>
         <View style={styles.iconCircle}>
           <Ionicons name="sparkles" size={40} color="#FFD700" />
         </View>
         <Text style={styles.title}>Recipe Wizard</Text>
         <Text style={styles.subtitle}>
-          Bugün nasıl bir yemek pişirmek istersin?
+          What kind of meal would you like to cook today?
         </Text>
       </View>
 
-      {/* SEÇENEKLER ALANI */}
+      {/* options */}
       <View style={styles.optionsContainer}>
 
-        {/* --- SEÇENEK 1: DOLABIMDAN --- */}
+        {/* seçenek1: dolabımdan */}
         <TouchableOpacity style={[styles.card, styles.stockCard]} onPress={handleUseStock}>
           <View style={styles.cardContent}>
             <View style={[styles.cardIcon, { backgroundColor: '#E8F5E9' }]}>
               <Ionicons name="cube-outline" size={32} color="#4CAF50" />
             </View>
             <View style={styles.textContainer}>
-              <Text style={styles.cardTitle}>Dolabımdan Kullan</Text>
+              <Text style={styles.cardTitle}>Use from MyStock</Text>
               <Text style={styles.cardDescription}>
-                Sanal dolabındaki malzemelere göre sana özel tarifler önerelim.
+                Let us suggest recipes tailored to you based on the ingredients in your Stock.
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color="#4CAF50" />
           </View>
         </TouchableOpacity>
 
-        {/* --- SEÇENEK 2: MANUEL GİRİŞ --- */}
+        {/* seçenek2: manuel girişle öneri */}
         <TouchableOpacity style={[styles.card, styles.manualCard]} onPress={handleManualInput}>
           <View style={styles.cardContent}>
             <View style={[styles.cardIcon, { backgroundColor: '#F5F5F5' }]}>
               <Ionicons name="create-outline" size={32} color="#333" />
             </View>
             <View style={styles.textContainer}>
-              <Text style={styles.cardTitle}>Malzemeleri Elle Gir</Text>
+              <Text style={styles.cardTitle}>Enter Ingredients Manuel</Text>
               <Text style={styles.cardDescription}>
-                Kullanmak istediğin malzemeleri şimdi seç ve tarif bul.
+                Select the ingredients you want to use now and find a recipe.
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color="#333" />
@@ -78,7 +74,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#fff',
     padding: 20,
-    justifyContent: 'center', // Dikeyde ortala
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
@@ -88,7 +84,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#FFF8E1', // Açık sarı
+    backgroundColor: '#FFF8E1',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -126,11 +122,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   stockCard: {
-    borderColor: '#4CAF50', // Yeşil çerçeve
+    borderColor: '#4CAF50', 
     backgroundColor: '#FAFAFA',
   },
   manualCard: {
-    borderColor: '#333', // Siyah çerçeve
+    borderColor: '#333', 
     backgroundColor: '#FAFAFA',
   },
   cardContent: {

@@ -364,14 +364,14 @@ app.get('/api/recipes/match', auth, async (req, res) => {
           amount_needed,
           amount_have,
           is_staple,
-          -- Puanlama (Staple değilse hesapla)
+          -- Puanlama (malzeme staple değilse hesapla)
           CASE 
-            WHEN is_staple = TRUE THEN 0 -- Staple puanı etkilemez
+            WHEN is_staple = TRUE THEN 0
             WHEN amount_have = 0 THEN 0
             WHEN (amount_have / amount_needed) >= 1 THEN 1.0
             ELSE (amount_have / amount_needed)
           END AS score,
-          -- Eksik Miktar Hesabı
+          -- Eksik miktar hesabı
           GREATEST(amount_needed - amount_have, 0) AS missing_amount
         FROM RecipeDetails
       )
@@ -385,13 +385,12 @@ app.get('/api/recipes/match', auth, async (req, res) => {
         r.calories,
         r.serving,
         
-        -- Eşleşme Oranı Hesabı
+        -- Eşleşme oranı hesabı
         ROUND(
           (SUM(cs.score) FILTER (WHERE cs.is_staple = FALSE) / 
            NULLIF(COUNT(*) FILTER (WHERE cs.is_staple = FALSE), 0)) * 100
         ) AS match_percentage,
 
-        -- Eksik Malzemeleri JSON Listesi Olarak Getir
         (
           SELECT json_agg(json_build_object(
             'name', cs_sub.ingredient_name,
@@ -405,7 +404,6 @@ app.get('/api/recipes/match', auth, async (req, res) => {
       FROM recipes r
       JOIN CalculatedScores cs ON r.id = cs.recipe_id
       GROUP BY r.id
-      -- %30 Barajı
       HAVING ROUND(
           (SUM(cs.score) FILTER (WHERE cs.is_staple = FALSE) / 
            NULLIF(COUNT(*) FILTER (WHERE cs.is_staple = FALSE), 0)) * 100
@@ -417,8 +415,8 @@ app.get('/api/recipes/match', auth, async (req, res) => {
     res.json(result.rows);
 
   } catch (error) {
-    console.error('Akıllı eşleşme hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Smart Matching Error:', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
@@ -427,17 +425,17 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
   const { selectedIds } = req.body; // Örn: [1, 5, 23]
 
   if (!selectedIds || selectedIds.length === 0) {
-    return res.status(400).json({ error: 'Lütfen en az bir malzeme seçin.' });
+    return res.status(400).json({ error: 'Plase choose at least one ingredient' });
   }
 
   try {
     const query = `
       WITH SelectedIngredients AS (
-        -- Frontend'den gelen ID listesini tabloya çevir
+        -- fronttan gelen id'leri listeye çevir
         SELECT unnest($1::int[]) AS ingredient_id
       ),
       RecipeStats AS (
-        -- Her tarifin toplam ÖNEMLİ (Staple olmayan) malzeme sayısı
+        -- Her tarifin önemli malzeme sayısı (staple olmayan)
         SELECT 
           r.id AS recipe_id,
           COUNT(ri.ingredient_id) AS total_required
@@ -448,7 +446,7 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
         GROUP BY r.id
       ),
       Matches AS (
-        -- Seçilen malzemelerle tariflerin çakışması
+        -- matching
         SELECT 
           r.id AS recipe_id,
           COUNT(ri.ingredient_id) AS matching_count
@@ -469,16 +467,15 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
         r.calories,
         r.serving,
         
-        -- Eşleşme İstatistikleri
+        -- Eşleşme istatistikleri
         COALESCE(rs.total_required, 0) AS total_ingredients,
         COALESCE(m.matching_count, 0) AS have_ingredients,
         
-        -- Yüzde Hesabı
         ROUND(
           (COALESCE(m.matching_count, 0)::decimal / NULLIF(rs.total_required, 0)) * 100
         ) AS match_percentage,
 
-        -- Eksik Malzemeler Listesi (Frontend'de göstermek için)
+        -- Eksik malzemelerin listesi
         (
           SELECT json_agg(json_build_object(
             'name', i.name,
@@ -496,9 +493,6 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
       JOIN RecipeStats rs ON r.id = rs.recipe_id
       JOIN Matches m ON r.id = m.recipe_id -- Sadece eşleşmesi olanları getir (INNER JOIN)
       
-      -- SIRALAMA MANTIĞI:
-      -- 1. Önce kaç tane malzeme tutturduğuna bak (Çoktan aza)
-      -- 2. Eşitlik varsa, yüzdeye bak (Çoktan aza)
       ORDER BY 
         m.matching_count DESC, 
         match_percentage DESC;
@@ -508,8 +502,8 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
     res.json(result.rows);
 
   } catch (error) {
-    console.error('Manuel eşleşme hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Manuel matching error:', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
@@ -519,31 +513,29 @@ app.post('/api/favorites/toggle', auth, async (req, res) => {
   const { recipeId } = req.body;
 
   try {
-    // 1. Önce bu tarif favorilerde var mı diye bak
+    // Bu tarif favorilerde var mı diye bak
     const check = await db.query(
       'SELECT * FROM favorites WHERE user_id = $1 AND recipe_id = $2',
       [userId, recipeId]
     );
 
     if (check.rows.length > 0) {
-      // VARSA -> SİL (Çıkar)
       await db.query(
         'DELETE FROM favorites WHERE user_id = $1 AND recipe_id = $2',
         [userId, recipeId]
       );
-      res.json({ message: 'Favorilerden çıkarıldı.', isFavorite: false });
+      res.json({ message: 'Removed from Favorites.', isFavorite: false });
     } else {
-      // YOKSA -> EKLE
       await db.query(
         'INSERT INTO favorites (user_id, recipe_id) VALUES ($1, $2)',
         [userId, recipeId]
       );
-      res.json({ message: 'Favorilere eklendi.', isFavorite: true });
+      res.json({ message: 'Added to Favorites.', isFavorite: true });
     }
 
   } catch (error) {
-    console.error('Favori işlem hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Favorites Error:', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
@@ -588,14 +580,13 @@ app.get('/api/favorites', auth, async (req, res) => {
         r.prep_time,
         r.calories,
         r.serving,
-        f.added_at, -- Ekleme tarihi (Sıralama için)
+        f.added_at,
         
-        -- Eşleşme Oranı Hesabı
+        -- Eşleşme oranı
         COALESCE(ROUND(
           (COALESCE(m.matching_count, 0)::decimal / NULLIF(rs.total_required, 0)) * 100
         ), 0) AS match_percentage,
 
-        -- Eksik Malzemeleri JSON Listesi Olarak Getir
         (
           SELECT json_agg(json_build_object(
             'name', i.name,
@@ -617,7 +608,6 @@ app.get('/api/favorites', auth, async (req, res) => {
       
       WHERE f.user_id = $1
       
-      -- SENİN İSTEĞİN: Ekleme Tarihine Göre Sırala (En yeni en üstte)
       ORDER BY f.added_at DESC;
     `;
 
@@ -625,8 +615,8 @@ app.get('/api/favorites', auth, async (req, res) => {
     res.json(result.rows);
 
   } catch (error) {
-    console.error('Favori listeleme hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Favorite Listing error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -643,8 +633,8 @@ app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error('Tarif detay hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Recipe detail Error', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 

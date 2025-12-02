@@ -14,10 +14,9 @@ export default function FavoritesScreen({ navigation }) {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Sıralama State'leri
+  //sıralama stateleri
   const [modalVisible, setModalVisible] = useState(false);
-  const [sortBy, setSortBy] = useState('date_new'); // Varsayılan: En Yeni
-
+  const [sortBy, setSortBy] = useState('date_new'); 
   useFocusEffect(
     useCallback(() => {
       fetchFavorites();
@@ -38,33 +37,33 @@ export default function FavoritesScreen({ navigation }) {
     }
   };
 
-  // --- GELİŞMİŞ SIRALAMA MANTIĞI ---
+  //sorting part
   const sortedFavorites = useMemo(() => {
     let sorted = [...favorites];
 
     switch (sortBy) {
-      case 'match_high': // Eşleşme: Yüksek -> Düşük
+      case 'match_high':
         sorted.sort((a, b) => b.match_percentage - a.match_percentage);
         break;
-      case 'match_low': // Eşleşme: Düşük -> Yüksek
+      case 'match_low':
         sorted.sort((a, b) => a.match_percentage - b.match_percentage);
         break;
-      case 'calories_low': // Kalori: Az -> Çok
+      case 'calories_low': 
         sorted.sort((a, b) => a.calories - b.calories);
         break;
-      case 'calories_high': // Kalori: Çok -> Az
+      case 'calories_high':
         sorted.sort((a, b) => b.calories - a.calories);
         break;
-      case 'time_short': // Süre: Kısa -> Uzun
+      case 'time_short': 
         sorted.sort((a, b) => a.prep_time - b.prep_time);
         break;
-      case 'time_long': // Süre: Uzun -> Kısa
+      case 'time_long':
         sorted.sort((a, b) => b.prep_time - a.prep_time);
         break;
-      case 'date_old': // Tarih: Eski -> Yeni
+      case 'date_old': 
         sorted.sort((a, b) => new Date(a.added_at) - new Date(b.added_at));
         break;
-      case 'date_new': // Tarih: Yeni -> Eski (Varsayılan)
+      case 'date_new': 
       default:
         sorted.sort((a, b) => new Date(b.added_at) - new Date(a.added_at));
         break;
@@ -101,15 +100,15 @@ export default function FavoritesScreen({ navigation }) {
 
             <View style={styles.missingContainer}>
               {missingList.length === 0 ? (
-                <Text style={{color: '#4CAF50', fontSize: 12}}>Malzemeler Tam! 🎉</Text>
+                <Text style={{color: '#4CAF50', fontSize: 12}}>All ingredients available! 🎉</Text>
               ) : (
                 <>
-                  <Text style={styles.missingTitle}>Eksikler:</Text>
+                  <Text style={styles.missingTitle}>Missing Ingredients:</Text>
                   {displayMissing.map((ing, idx) => (
                     <Text key={idx} style={styles.missingText}>• {ing.name}</Text>
                   ))}
                   {remainingCount > 0 && (
-                    <Text style={styles.moreText}>+ {remainingCount} daha...</Text>
+                    <Text style={styles.moreText}>+ {remainingCount} more...</Text>
                   )}
                 </>
               )}
@@ -118,7 +117,7 @@ export default function FavoritesScreen({ navigation }) {
             <View style={styles.cardFooter}>
               <View style={styles.metaContainer}>
                 <Ionicons name="time-outline" size={14} color="#666" />
-                <Text style={styles.metaText}>{item.prep_time} dk</Text>
+                <Text style={styles.metaText}>{item.prep_time} m</Text>
                 <Ionicons name="flame-outline" size={14} color="#666" style={{marginLeft: 5}}/>
                 <Text style={styles.metaText}>{item.calories} kcal</Text>
               </View>
@@ -140,9 +139,9 @@ export default function FavoritesScreen({ navigation }) {
   return (
     <View style={styles.container}>
       
-      {/* HEADER: Başlık ve Sıralama Butonu */}
+      {/* header: başlık kısmı ve sıralama butonu */}
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>Favorilerim ❤️</Text>
+        <Text style={styles.header}>My Favorites ❤️</Text>
         <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.sortButton}>
           <Ionicons name="swap-vertical" size={24} color="#333" />
         </TouchableOpacity>
@@ -156,12 +155,12 @@ export default function FavoritesScreen({ navigation }) {
         ListEmptyComponent={
           <View style={styles.center}>
             <Ionicons name="heart-dislike-outline" size={50} color="#ccc" />
-            <Text style={styles.emptyText}>Henüz favori tarifin yok.</Text>
+            <Text style={styles.emptyText}>You don't have a favorite recipe yet.</Text>
           </View>
         }
       />
 
-      {/* --- SIRALAMA MODALI --- */}
+      {/* sıralama için modal ekran */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -171,7 +170,7 @@ export default function FavoritesScreen({ navigation }) {
         <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Sıralama Ölçütü</Text>
+              <Text style={styles.modalTitle}>Ranking Criterion</Text>
               
               <ScrollView showsVerticalScrollIndicator={false}>
                 
@@ -179,50 +178,50 @@ export default function FavoritesScreen({ navigation }) {
                 <Text style={styles.sectionHeader}>Tarih</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('date_new'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'date_new' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>En Yeni Eklenen (Varsayılan)</Text>
+                  <Text style={styles.optionText}>Most Recently Added (Default)</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('date_old'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'date_old' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>En Eski Eklenen</Text>
+                  <Text style={styles.optionText}>Most Oldest Added</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
 
-                {/* 2. EŞLEŞME */}
-                <Text style={styles.sectionHeader}>Eşleşme Oranı</Text>
+                {/* eşleşme */}
+                <Text style={styles.sectionHeader}>Matching Percantage</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('match_high'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'match_high' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>En Yüksek Eşleşme</Text>
+                  <Text style={styles.optionText}>Highest Match</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('match_low'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'match_low' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>En Düşük Eşleşme</Text>
+                  <Text style={styles.optionText}>Lowest Match</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
 
                 {/* 3. KALORİ */}
-                <Text style={styles.sectionHeader}>Kalori</Text>
+                <Text style={styles.sectionHeader}>Calories</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('calories_low'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'calories_low' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Azdan Çoğa</Text>
+                  <Text style={styles.optionText}>Low to High</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('calories_high'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'calories_high' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Çoktan Aza</Text>
+                  <Text style={styles.optionText}>High to Low</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
 
-                {/* 4. SÜRE */}
-                <Text style={styles.sectionHeader}>Hazırlama Süresi</Text>
+                {/* süre */}
+                <Text style={styles.sectionHeader}>Preperation Time</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('time_short'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'time_short' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Kısadan Uzuna</Text>
+                  <Text style={styles.optionText}>Shortest to Longest</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('time_long'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'time_long' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
-                  <Text style={styles.optionText}>Uzundan Kısaya</Text>
+                  <Text style={styles.optionText}>Longest to Shortest</Text>
                 </TouchableOpacity>
 
               </ScrollView>
@@ -267,7 +266,7 @@ const styles = StyleSheet.create({
   dateText: { fontSize: 10, color: '#aaa' },
   emptyText: { marginTop: 10, color: '#aaa', fontSize: 16 },
 
-  // Modal Stilleri
+  //modal stilleri
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { width: '85%', backgroundColor: 'white', borderRadius: 15, padding: 20, elevation: 5, maxHeight: '70%' },
   modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },

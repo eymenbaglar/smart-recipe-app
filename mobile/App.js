@@ -128,7 +128,7 @@ export default function App() {
             <Stack.Screen 
               name="SmartRecipeResults" 
               component={SmartRecipeResultsScreen} 
-              options={{ title: 'Eşleşen Tarifler' }}
+              options={{ title: 'Matching Recipes' }}
             />
             <Stack.Screen 
               name="RecipeDetails" 
@@ -138,7 +138,7 @@ export default function App() {
             <Stack.Screen 
               name="ManualInput" 
               component={ManualInputScreen} 
-              options={{ title: 'Manuel Seçim' }}
+              options={{ title: 'Manual Selection' }}
             />
           </>
         )}
