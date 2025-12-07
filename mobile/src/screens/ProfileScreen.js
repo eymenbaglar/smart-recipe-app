@@ -142,7 +142,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
   const menuItems = [
     { icon: 'share-social-outline', title: 'Share A Recipe', count: null }, // share-outline bazen hata verir, share-social-outline daha güvenli
     { icon: 'book-outline', title: 'My Recipes', count: null },
-    { icon: 'time-outline', title: 'Meal History', count: null },
+    { icon: 'time-outline', title: 'Geçmiş', count: null, screen: 'MealHistory' },,
     { icon: 'star-outline', title: 'My Reviews', count: null },
     { icon: 'settings-outline', title: 'Settings', count: null, screen: 'Settings' },
   ];

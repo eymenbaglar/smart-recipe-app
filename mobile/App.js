@@ -14,6 +14,8 @@ import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 import SmartRecipeResultsScreen from './src/screens/SmartRecipeResultsScreen';
 import RecipeDetailsScreen from './src/screens/RecipeDetailsScreen';
 import ManualInputScreen from './src/screens/ManualInputScreen';
+import MealHistoryScreen from './src/screens/MealHistoryScreen';
+import RecommendedRecipesScreen from './src/screens/RecommendedRecipesScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -140,6 +142,17 @@ export default function App() {
               component={ManualInputScreen} 
               options={{ title: 'Manual Selection' }}
             />
+            <Stack.Screen 
+              name="MealHistory" 
+              component={MealHistoryScreen} 
+              options={{ title: 'Yemek Geçmişim' }}
+            />
+            <Stack.Screen 
+              name="RecommendedRecipes" 
+              component={RecommendedRecipesScreen} 
+              options={{ title: 'Önerilenler' }}
+            />
+            
           </>
         )}
       </Stack.Navigator>

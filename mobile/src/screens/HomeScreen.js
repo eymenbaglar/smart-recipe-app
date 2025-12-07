@@ -1,4 +1,5 @@
 import React from 'react';
+import RecommendationRow from '../components/RecommendationRow';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
 export default function HomeScreen({ navigation }) {
@@ -11,10 +12,12 @@ export default function HomeScreen({ navigation }) {
       {/* Recipe Wizard Butonu */}
       <TouchableOpacity 
         style={styles.wizardButton}
-        onPress={() => { /* Recipe Wizard'a git */ }}
+        onPress={() => {  }}
       >
         <Text style={styles.wizardButtonText}>Recipe Wizard</Text>
       </TouchableOpacity>
+
+      <RecommendationRow />
 
       {/* Popüler Tarifler Alanı */}
       <Text style={styles.popularTitle}>Take a look to popular recipes!</Text>

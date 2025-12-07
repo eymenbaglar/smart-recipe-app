@@ -620,6 +620,7 @@ app.get('/api/favorites', auth, async (req, res) => {
   }
 });
 
+//tarifle kullanıcı stoğu eşleştirme
 app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id; // Auth middleware'den gelen user id
@@ -648,7 +649,8 @@ app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
   }
 });
 
-// --- YENİ ROTA: PİŞİRDİM (Stoktan Düş + Geçmişe Ekle) [DÜZELTİLMİŞ] ---
+//I cooked butonu ve stoğu güncelleme
+// --- YENİ ROTA: PİŞİRDİM (Stoktan Düş + Geçmişe Ekle + 0 Olanı Sil) ---
 app.post('/api/recipes/cook', auth, async (req, res) => {
   const userId = req.user.id;
   const { recipeId, multiplier } = req.body; 
@@ -663,7 +665,6 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
     await client.query('BEGIN'); 
 
     // 1. Tarifin Malzemelerini Çek
-    // DÜZELTME: 'i.unit_type' YERİNE 'ri.unit_type' KULLANILDI
     const recipeIngredients = await client.query(
       `SELECT i.id, i.name, ri.unit_type, i.is_staple, ri.quantity as base_quantity
        FROM recipe_ingredients ri
@@ -673,7 +674,6 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
     );
 
     // 2. Kullanıcının Stoklarını Çek
-    // DÜZELTME: 'i.unit_type' YERİNE 'i.unit' KULLANILDI (Alias ile unit_type yapıldı)
     const userStock = await client.query(
       `SELECT ri.id as row_id, ri.ingredient_id, ri.quantity, i.unit as unit_type
        FROM refrigerator_items ri
@@ -683,14 +683,13 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
       [userId, recipeIngredients.rows.map(r => r.id)]
     );
 
-    // 3. Hesaplama ve Stok Düşme
+    // 3. Hesaplama ve Stok Düşme/Silme
     for (const rItem of recipeIngredients.rows) {
       
       if (rItem.is_staple) continue;
 
       const uItem = userStock.rows.find(u => u.ingredient_id === rItem.id);
       
-      // Birim kontrolü: Recipe'daki birim ile Ingredient'in ana birimi uyuşuyor mu?
       if (!uItem || uItem.unit_type !== rItem.unit_type) continue;
 
       let neededAmount = rItem.base_quantity * multiplier;
@@ -700,12 +699,21 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
       }
 
       let newQuantity = uItem.quantity - neededAmount;
-      if (newQuantity < 0) newQuantity = 0;
 
-      await client.query(
-        'UPDATE refrigerator_items SET quantity = $1 WHERE id = $2',
-        [newQuantity, uItem.row_id]
-      );
+      // --- MANTIK DEĞİŞİKLİĞİ BURADA ---
+      if (newQuantity <= 0) {
+        // Eğer miktar 0 veya altına düştüyse -> SİL
+        await client.query(
+          'DELETE FROM refrigerator_items WHERE id = $1',
+          [uItem.row_id]
+        );
+      } else {
+        // Eğer hala malzeme kaldıysa -> GÜNCELLE
+        await client.query(
+          'UPDATE refrigerator_items SET quantity = $1 WHERE id = $2',
+          [newQuantity, uItem.row_id]
+        );
+      }
     }
 
     // 4. Geçmişe Ekle
@@ -723,6 +731,120 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
     res.status(500).json({ error: 'Server error during cooking process.' });
   } finally {
     client.release();
+  }
+});
+
+//meal history
+app.get('/api/history', auth, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await db.query(
+      `SELECT 
+         mh.id AS history_id,   -- Geçmiş kaydının kendi ID'si
+         mh.cooked_at, 
+         
+         r.id,                  -- TARİF ID'si (Buraya 'id' ismini verdik ki frontend anlasın)
+         r.title, 
+         r.image_url, 
+         r.calories,
+         r.prep_time,
+         r.serving,             -- EKLENDİ: Kişi sayısı artık doğru gelecek
+         r.instructions         -- EKLENDİ: Yapılışı da artık gelecek
+         
+       FROM meal_history mh
+       JOIN recipes r ON mh.recipe_id = r.id
+       WHERE mh.user_id = $1
+       ORDER BY mh.cooked_at DESC`,
+      [userId]
+    );
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('Geçmiş listeleme hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
+// --- YENİ ROTA: AKILLI ÖNERİ SİSTEMİ (Recommendation Engine) ---
+app.get('/api/recipes/recommendations', auth, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    // 1. Önce kullanıcının geçmişi var mı diye kontrol et
+    const historyCheck = await db.query(
+      'SELECT COUNT(*) FROM meal_history WHERE user_id = $1',
+      [userId]
+    );
+    const historyCount = parseInt(historyCheck.rows[0].count);
+
+    if (historyCount === 0) {
+      // --- SENARYO A: COLD START (HİÇ GEÇMİŞ YOK) ---
+      // Rastgele 10 tarif getir
+      const randomRecipes = await db.query(`
+        SELECT r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving 
+        FROM recipes r
+        ORDER BY RANDOM() 
+        LIMIT 10
+      `);
+      return res.json({ type: 'random', data: randomRecipes.rows });
+    }
+
+    // --- SENARYO B: AKILLI ALGORİTMA (GEÇMİŞ VAR) ---
+    const recommendationQuery = `
+      WITH LastHistory AS (
+        -- 1. Son 20 Pişirme Geçmişini Al
+        SELECT recipe_id 
+        FROM meal_history 
+        WHERE user_id = $1 
+        ORDER BY cooked_at DESC 
+        LIMIT 20
+      ),
+      IngredientScores AS (
+        -- 2. Malzeme Frekans Puanlarını Hesapla
+        -- (Staple ürünler hariç: Tuz, Yağ vs. puanı etkilemesin)
+        SELECT 
+          ri.ingredient_id, 
+          COUNT(*) as freq_score -- Kaç kere kullanılmış? (Örn: Tavuk 5 kere = 5 Puan)
+        FROM recipe_ingredients ri
+        JOIN LastHistory lh ON ri.recipe_id = lh.recipe_id
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.is_staple = FALSE
+        GROUP BY ri.ingredient_id
+      ),
+      CandidateRecipes AS (
+        -- 3. Aday Tarifleri Puanla
+        SELECT 
+          r.id,
+          SUM(ibs.freq_score) as total_score, -- Toplam Puan
+          COUNT(ibs.ingredient_id) as hit_count -- Kaç farklı sevilen malzeme var? (Çeşitlilik)
+        FROM recipes r
+        JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+        JOIN IngredientScores ibs ON ri.ingredient_id = ibs.ingredient_id
+        WHERE r.id NOT IN (SELECT recipe_id FROM LastHistory) -- Son pişirilenleri önerme
+        GROUP BY r.id
+      )
+      -- 4. Sonuçları Getir ve Sırala
+      SELECT 
+        r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving,
+        cr.total_score,
+        cr.hit_count
+      FROM recipes r
+      JOIN CandidateRecipes cr ON r.id = cr.id
+      ORDER BY 
+        cr.total_score DESC, -- Önce Puan (En sevilene göre)
+        cr.hit_count DESC,   -- Sonra Çeşitlilik (Aynı puandaysa çok malzemeli olan)
+        RANDOM()             -- Sonra Rastgelelik
+      LIMIT 15;
+    `;
+
+    const recommendations = await db.query(recommendationQuery, [userId]);
+    res.json({ type: 'algorithm', data: recommendations.rows });
+
+  } catch (error) {
+    console.error('Öneri sistemi hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
   }
 });
 

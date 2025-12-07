@@ -14,6 +14,10 @@ export default function RecipeWizardScreen({ navigation }) {
     navigation.navigate('ManualInput');
   };
 
+  const handleRecommendations = () => {
+  navigation.navigate('RecommendedRecipes');
+};
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       
@@ -62,6 +66,23 @@ export default function RecipeWizardScreen({ navigation }) {
             <Ionicons name="chevron-forward" size={24} color="#333" />
           </View>
         </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.card, styles.recommendCard]} onPress={handleRecommendations}>
+      <View style={styles.cardContent}>
+          <View style={[styles.cardIcon, { backgroundColor: '#E3F2FD' }]}>
+            <Ionicons name="restaurant-outline" size={32} color="#2196F3" />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.cardTitle}>Ne Pişirsem?</Text>
+            <Text style={styles.cardDescription}>
+              Damak zevkine göre hazırladığımız özel önerilere göz at.
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#2196F3" />
+        </View>
+      </TouchableOpacity>
+
+        
 
       </View>
 
