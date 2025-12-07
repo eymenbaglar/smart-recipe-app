@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import React, { useState } from 'react';
 import { 
   View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, 
   Alert, Keyboard, ActivityIndicator, ScrollView 
@@ -36,12 +38,14 @@ export default function MyStockScreen() {
   const [quantity, setQuantity] = useState('');
   const [selectedUnit, setSelectedUnit] = useState(null); 
   
-  // --- YENİ: Düzenleme Modu State'i ---
-  const [editingItem, setEditingItem] = useState(null); // Eğer doluysa güncelleme yapıyoruz demektir
+  // düzenleme modu
+  const [editingItem, setEditingItem] = useState(null);
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     fetchMyStock();
-  }, []);
+  }, [])
+  );
 
   const fetchMyStock = async () => {
     setLoadingStock(true);

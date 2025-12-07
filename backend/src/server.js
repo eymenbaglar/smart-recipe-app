@@ -622,19 +622,107 @@ app.get('/api/favorites', auth, async (req, res) => {
 
 app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
   const { id } = req.params;
+  const userId = req.user.id; // Auth middleware'den gelen user id
 
   try {
     const result = await db.query(
-      `SELECT i.name, ri.quantity, ri.unit_type 
+      `SELECT 
+         i.name, 
+         ri.quantity, 
+         ri.unit_type,
+         i.is_staple,
+         -- Kullanıcının dolabındaki miktar (Yoksa 0 döner)
+         COALESCE(rf.quantity, 0) AS user_stock_quantity
        FROM recipe_ingredients ri
        JOIN ingredients i ON ri.ingredient_id = i.id
+       -- Kullanıcının stoğuyla eşleştiriyoruz
+       LEFT JOIN refrigerator_items rf ON rf.ingredient_id = i.id 
+       LEFT JOIN virtual_refrigerator vr ON rf.virtual_refrigerator_id = vr.id AND vr.user_id = $2
        WHERE ri.recipe_id = $1`,
-      [id]
+      [id, userId]
     );
     res.json(result.rows);
   } catch (error) {
-    console.error('Recipe detail Error', error);
-    res.status(500).json({ error: 'Server Error' });
+    console.error('Tarif detay hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
+// --- YENİ ROTA: PİŞİRDİM (Stoktan Düş + Geçmişe Ekle) [DÜZELTİLMİŞ] ---
+app.post('/api/recipes/cook', auth, async (req, res) => {
+  const userId = req.user.id;
+  const { recipeId, multiplier } = req.body; 
+
+  if (!recipeId || !multiplier) {
+    return res.status(400).json({ error: 'Missing parameters' });
+  }
+
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN'); 
+
+    // 1. Tarifin Malzemelerini Çek
+    // DÜZELTME: 'i.unit_type' YERİNE 'ri.unit_type' KULLANILDI
+    const recipeIngredients = await client.query(
+      `SELECT i.id, i.name, ri.unit_type, i.is_staple, ri.quantity as base_quantity
+       FROM recipe_ingredients ri
+       JOIN ingredients i ON ri.ingredient_id = i.id
+       WHERE ri.recipe_id = $1`,
+      [recipeId]
+    );
+
+    // 2. Kullanıcının Stoklarını Çek
+    // DÜZELTME: 'i.unit_type' YERİNE 'i.unit' KULLANILDI (Alias ile unit_type yapıldı)
+    const userStock = await client.query(
+      `SELECT ri.id as row_id, ri.ingredient_id, ri.quantity, i.unit as unit_type
+       FROM refrigerator_items ri
+       JOIN virtual_refrigerator vr ON ri.virtual_refrigerator_id = vr.id
+       JOIN ingredients i ON ri.ingredient_id = i.id
+       WHERE vr.user_id = $1 AND ri.ingredient_id = ANY($2::int[])`,
+      [userId, recipeIngredients.rows.map(r => r.id)]
+    );
+
+    // 3. Hesaplama ve Stok Düşme
+    for (const rItem of recipeIngredients.rows) {
+      
+      if (rItem.is_staple) continue;
+
+      const uItem = userStock.rows.find(u => u.ingredient_id === rItem.id);
+      
+      // Birim kontrolü: Recipe'daki birim ile Ingredient'in ana birimi uyuşuyor mu?
+      if (!uItem || uItem.unit_type !== rItem.unit_type) continue;
+
+      let neededAmount = rItem.base_quantity * multiplier;
+
+      if (rItem.unit_type === 'qty') {
+        neededAmount = Math.ceil(neededAmount);
+      }
+
+      let newQuantity = uItem.quantity - neededAmount;
+      if (newQuantity < 0) newQuantity = 0;
+
+      await client.query(
+        'UPDATE refrigerator_items SET quantity = $1 WHERE id = $2',
+        [newQuantity, uItem.row_id]
+      );
+    }
+
+    // 4. Geçmişe Ekle
+    await client.query(
+      'INSERT INTO meal_history (user_id, recipe_id) VALUES ($1, $2)',
+      [userId, recipeId]
+    );
+
+    await client.query('COMMIT'); 
+    res.json({ message: 'Cooking recorded and inventory updated.' });
+
+  } catch (error) {
+    await client.query('ROLLBACK'); 
+    console.error('Pişirme hatası:', error);
+    res.status(500).json({ error: 'Server error during cooking process.' });
+  } finally {
+    client.release();
   }
 });
 
