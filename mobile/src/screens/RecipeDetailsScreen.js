@@ -6,24 +6,87 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
+
+// Modal bileşenini import ediyoruz
+import RateRecipeModal from '../components/RateRecipeModal';
 
 export default function RecipeDetailsScreen({ route, navigation }) {
   const { recipe } = route.params;
   
+  // --- STATE TANIMLARI ---
   const [fullIngredients, setFullIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-
+  
   // Porsiyon State'leri
   const [currentServings, setCurrentServings] = useState(recipe.serving || 1);
   const originalServings = recipe.serving || 1;
 
+  // Puanlama State'leri
+  const [ratingStats, setRatingStats] = useState({ avg: 0, count: 0, comments: 0 });
+  const [userReview, setUserReview] = useState(null);
+  const [showRateModal, setShowRateModal] = useState(false);
+
+  //yorum statei
+  const [reviews, setReviews] = useState([]);
+
+  // --- BAŞLANGIÇ ---
   useEffect(() => {
     fetchIngredients();
     checkIfFavorite();
+    fetchRatingStats();
+    fetchReviews();
   }, []);
+
+  // --- API FONKSİYONLARI ---
+  
+  const fetchIngredients = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      // Kullanıcı stoğunu da getiren endpoint
+      const response = await axios.get(`${API_URL}/api/recipes/${recipe.id}/ingredients`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFullIngredients(response.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRatingStats = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/recipes/${recipe.id}/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const { stats, userReview } = response.data;
+      setRatingStats({
+        avg: parseFloat(stats.average_rating),
+        count: parseInt(stats.total_ratings),
+        comments: parseInt(stats.total_comments)
+      });
+      setUserReview(userReview);
+      
+    } catch (error) {
+      console.log("Stats error", error);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/recipes/${recipe.id}/reviews`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setReviews(response.data);
+    } catch (error) {
+      console.log("Reviews fetch error", error);
+    }
+  };
 
   const checkIfFavorite = async () => {
     try {
@@ -37,6 +100,8 @@ export default function RecipeDetailsScreen({ route, navigation }) {
       console.log("Favorite check error", error);
     }
   };
+
+  // --- ETKİLEŞİM FONKSİYONLARI ---
 
   const toggleFavorite = async () => {
     try {
@@ -52,17 +117,18 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
-  const fetchIngredients = async () => {
+  const handleRateSubmit = async (rating, comment) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/recipes/${recipe.id}/ingredients`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFullIngredients(response.data);
+      await axios.post(`${API_URL}/api/reviews`, 
+        { recipeId: recipe.id, rating, comment },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // İstatistikleri güncelle
+      fetchRatingStats();
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
+      Alert.alert("Error", "Failed to submit review");
     }
   };
 
@@ -75,6 +141,8 @@ export default function RecipeDetailsScreen({ route, navigation }) {
       }
     }
   };
+
+  // --- COOKING MANTIĞI ---
 
   const handleCookPress = () => {
     Alert.alert(
@@ -97,61 +165,81 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Alert.alert("Success", "Bon appétit! Inventory updated.");
-      navigation.navigate('Main', { screen: 'MyStock' });
+      // Başarılıysa Modal'ı aç
+      Alert.alert(
+        "Success", 
+        "Bon appétit! Inventory updated.",
+        [
+          { 
+            text: "OK", 
+            onPress: () => setShowRateModal(true) 
+          }
+        ]
+      );
+      
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to update inventory.");
     }
   };
 
-  // --- HESAPLAMA YARDIMCISI ---
+  const handleModalClose = () => {
+    setShowRateModal(false);
+    // İşlem bitince Stok sayfasına yönlendir
+    navigation.navigate('Main', { screen: 'MyStock' });
+  };
+
+  // --- HESAPLAMA VE RENDER YARDIMCILARI ---
+
   const calculateRequiredAmount = (baseQty, unitType) => {
     const multiplier = currentServings / originalServings;
     const rawAmount = baseQty * multiplier;
 
     if (unitType === 'qty') {
-      // Adet ise yuvarlama mantığı (0.5 katları)
+      // Adet için 0.5 katlarına yuvarla
       let rounded = Math.ceil(rawAmount * 2) / 2;
       if (rounded === 0) rounded = 0.5;
       return rounded;
     } else {
-      // Gram ise 1 ondalık basamak
       return parseFloat(rawAmount.toFixed(1));
     }
   };
 
-  // --- YENİ RENDER MANTIĞI (CANLI KIYASLAMA) ---
+  const renderStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      let iconName = "star-outline";
+      if (rating >= i) {
+        iconName = "star";
+      } else if (rating >= i - 0.5) {
+        iconName = "star-half";
+      }
+      stars.push(<Ionicons key={i} name={iconName} size={16} color="#FFD700" />);
+    }
+    return stars;
+  };
+
   const renderIngredientItem = (item, index) => {
-    // 1. O anki porsiyona göre ne kadar lazım?
     const requiredQty = calculateRequiredAmount(parseFloat(item.quantity), item.unit_type);
     const displayUnit = item.unit_type === 'qty' ? 'adet' : item.unit_type;
-    
-    // 2. Kullanıcıda ne kadar var? (Backend'den geliyor)
     const userStock = parseFloat(item.user_stock_quantity);
 
     let statusColor = "#4CAF50"; 
     let statusIcon = "checkmark-circle";
     let statusText = "";
 
-    // MANTIK:
     if (item.is_staple) {
-      // Staple (Tuz/Yağ) her zaman Mavi
       statusColor = "#2196F3"; 
       statusIcon = "home"; 
     } else {
-      // Stok Kontrolü
       if (userStock >= requiredQty) {
-        // Yeterli
         statusColor = "#4CAF50"; 
         statusIcon = "checkmark-circle";
       } else if (userStock === 0) {
-        // Hiç Yok
         statusColor = "#FF3B30"; 
         statusIcon = "close-circle";
         statusText = `(Fully missing)`;
       } else {
-        // Eksik Var
         statusColor = "#FF9500"; 
         statusIcon = "alert-circle";
         const missingAmount = parseFloat((requiredQty - userStock).toFixed(1));
@@ -176,12 +264,50 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     );
   };
 
+  const renderReviewItem = (item, index) => {
+    // Tarih formatı: 12 Oct 2023
+    const date = new Date(item.created_at).toLocaleDateString('en-US', { 
+      day: 'numeric', month: 'short', year: 'numeric' 
+    });
+
+    return (
+      <View key={index} style={styles.reviewCard}>
+        <View style={styles.reviewHeader}>
+          <View style={styles.userInfo}>
+            {/* Profil Resmi Yerine Baş Harf */}
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarText}>
+                {item.username ? item.username.charAt(0).toUpperCase() : 'U'}
+              </Text>
+            </View>
+            <Text style={styles.usernameText}>{item.username || 'Unknown User'}</Text>
+          </View>
+          <Text style={styles.reviewDate}>{date}</Text>
+        </View>
+
+        {/* Yıldızlar */}
+        <View style={styles.reviewStars}>
+          {renderStars(item.rating)}
+        </View>
+
+        {/* Yorum Metni */}
+        {item.comment ? (
+          <Text style={styles.reviewComment}>{item.comment}</Text>
+        ) : (
+          <Text style={{color:'#ccc', fontSize:12, fontStyle:'italic'}}>No comment provided.</Text>
+        )}
+      </View>
+    );
+  };
+
+  // --- RENDER ---
   return (
     <View style={{flex: 1, backgroundColor: '#fff'}}>
       <ScrollView contentContainerStyle={styles.container}>
         
         <Image source={{ uri: recipe.image_url }} style={styles.image} />
         
+        {/* Üst Butonlar */}
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
@@ -193,6 +319,20 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         <View style={styles.content}>
           <Text style={styles.title}>{recipe.title}</Text>
           
+          {/* Puanlama Satırı */}
+          <View style={styles.ratingRow}>
+            <View style={styles.starsWrapper}>
+              {renderStars(ratingStats.avg)}
+            </View>
+            <Text style={styles.ratingText}>
+              {ratingStats.avg.toFixed(1)} <Text style={styles.ratingCount}>({ratingStats.count})</Text>
+            </Text>
+            <View style={styles.dot} />
+            <Ionicons name="chatbubble-outline" size={14} color="#666" />
+            <Text style={styles.commentText}>{ratingStats.comments} comments</Text>
+          </View>
+
+          {/* Meta Bilgileri ve Porsiyon */}
           <View style={styles.metaContainer}>
             <View style={styles.metaItem}>
               <Ionicons name="time-outline" size={18} color="#666" />
@@ -203,7 +343,6 @@ export default function RecipeDetailsScreen({ route, navigation }) {
               <Text style={styles.metaText}>{recipe.calories} kcal</Text>
             </View>
             
-            {/* Porsiyon Kontrolü */}
             <View style={[styles.metaItem, { paddingVertical: 4 }]}>
               <TouchableOpacity onPress={() => updateServings('decrease')}>
                 <Ionicons name="remove-circle" size={24} color="#4CAF50" />
@@ -239,15 +378,40 @@ export default function RecipeDetailsScreen({ route, navigation }) {
           </Text>
 
         </View>
+        <View style={styles.divider} />
+
+          {/* --- YENİ: YORUMLAR BÖLÜMÜ --- */}
+          <Text marginLeft='25' style={styles.sectionTitle}>Reviews ({ratingStats.count})</Text>
+          
+          {reviews.length === 0 ? (
+            <Text style={{color:'#666', fontStyle:'italic', marginTop:5}}>
+              No reviews yet. Be the first to cook and rate this meal!
+            </Text>
+          ) : (
+            <View style={{marginTop: 10}}>
+              {reviews.map(renderReviewItem)}
+            </View>
+          )}
+
+          {/* Sayfanın en altına biraz boşluk bırakalım */}
+          <View style={{height: 20}} />
       </ScrollView>
 
-      {/* Footer Butonu */}
+      {/* Alt Sabit Buton */}
       <View style={styles.footerButtonContainer}>
         <TouchableOpacity style={styles.cookButton} onPress={handleCookPress}>
           <Text style={styles.cookButtonText}>I Cooked This Meal</Text>
           <Ionicons name="restaurant" size={20} color="white" style={{marginLeft: 10}} />
         </TouchableOpacity>
       </View>
+
+      {/* Puanlama Modalı */}
+      <RateRecipeModal 
+        visible={showRateModal}
+        onClose={handleModalClose}
+        onSubmit={handleRateSubmit}
+        initialData={userReview}
+      />
 
     </View>
   );
@@ -256,6 +420,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { paddingBottom: 100 },
   image: { width: '100%', height: 300, resizeMode: 'cover' },
+  
   backButton: {
     position: 'absolute', top: 40, left: 20, width: 40, height: 40, borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center'
@@ -264,20 +429,32 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 40, right: 20, width: 40, height: 40, borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center'
   },
+
   content: {
     flex: 1, marginTop: -20, backgroundColor: '#fff',
     borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 25,
   },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#333', marginBottom: 5 },
+  
+  // Rating Styles
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 5, marginBottom: 15 },
+  starsWrapper: { flexDirection: 'row', marginRight: 5 },
+  ratingText: { fontWeight: 'bold', color: '#333', fontSize: 14 },
+  ratingCount: { color: '#888', fontWeight: 'normal' },
+  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#ccc', marginHorizontal: 8 },
+  commentText: { color: '#666', fontSize: 12, marginLeft: 4 },
+
   metaContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems:'center', marginBottom: 20 },
   metaItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F5F5', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20 },
   metaText: { marginLeft: 5, color: '#555', fontWeight: '600', fontSize: 13 },
+  
   divider: { height: 1, backgroundColor: '#EEE', marginVertical: 20 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 15 },
   ingredientsList: { marginTop: 5 },
   ingredientRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },
   ingredientText: { fontSize: 16, fontWeight: '500', lineHeight: 22 },
   instructionsText: { fontSize: 16, lineHeight: 26, color: '#444' },
+
   footerButtonContainer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'white', padding: 20, borderTopWidth: 1, borderTopColor: '#eee', elevation: 10
@@ -286,5 +463,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#000', height: 50, borderRadius: 12,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center'
   },
-  cookButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
+  cookButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  reviewCard: {
+    backgroundColor: '#FAFAFA',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#eee'
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  userInfo: { flexDirection: 'row', alignItems: 'center' },
+  avatarCircle: {
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: '#333', justifyContent: 'center', alignItems: 'center', marginRight: 10
+  },
+  avatarText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  usernameText: { fontWeight: 'bold', color: '#333', fontSize: 14 },
+  reviewDate: { fontSize: 12, color: '#999' },
+  reviewStars: { flexDirection: 'row', marginBottom: 8 },
+  reviewComment: { color: '#444', fontSize: 14, lineHeight: 20 }
 });

@@ -741,19 +741,25 @@ app.get('/api/history', auth, async (req, res) => {
   try {
     const result = await db.query(
       `SELECT 
-         mh.id AS history_id,   -- Geçmiş kaydının kendi ID'si
-         mh.cooked_at, 
+         mh.id AS history_id,
+         mh.cooked_at,
          
-         r.id,                  -- TARİF ID'si (Buraya 'id' ismini verdik ki frontend anlasın)
+         r.id, -- Tarif ID
          r.title, 
          r.image_url, 
          r.calories,
          r.prep_time,
-         r.serving,             -- EKLENDİ: Kişi sayısı artık doğru gelecek
-         r.instructions         -- EKLENDİ: Yapılışı da artık gelecek
+         r.serving,
+         
+         -- KULLANICININ VERDİĞİ PUAN VE YORUM (Varsa)
+         rv.rating AS my_rating,
+         rv.comment AS my_comment
          
        FROM meal_history mh
        JOIN recipes r ON mh.recipe_id = r.id
+       -- Kullanıcının bu tarife yaptığı yorumu bulmak için LEFT JOIN
+       LEFT JOIN reviews rv ON r.id = rv.recipe_id AND rv.user_id = $1
+       
        WHERE mh.user_id = $1
        ORDER BY mh.cooked_at DESC`,
       [userId]
@@ -845,6 +851,149 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
   } catch (error) {
     console.error('Öneri sistemi hatası:', error);
     res.status(500).json({ error: 'Sunucu hatası' });
+  }
+});
+
+// --- YENİ ROTA: PUAN VER VEYA GÜNCELLE (UPSERT) ---
+app.post('/api/reviews', auth, async (req, res) => {
+  const userId = req.user.id;
+  const { recipeId, rating, comment } = req.body;
+
+  try {
+    // Postgres'in süper özelliği: ON CONFLICT
+    // Eğer (user_id, recipe_id) çakışırsa UPDATE yap, yoksa INSERT yap.
+    const query = `
+      INSERT INTO reviews (user_id, recipe_id, rating, comment, updated_at)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, recipe_id) 
+      DO UPDATE SET 
+        rating = EXCLUDED.rating,
+        comment = EXCLUDED.comment,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+    
+    const result = await db.query(query, [userId, recipeId, rating, comment]);
+    res.json(result.rows[0]);
+
+  } catch (error) {
+    console.error('Review error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// --- YENİ ROTA: TARİFİN PUAN İSTATİSTİKLERİNİ GETİR ---
+app.get('/api/recipes/:id/stats', auth, async (req, res) => {
+  const recipeId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    // 1. Genel İstatistikler (Ortalama, Toplam Puan, Toplam Yorum)
+    const statsQuery = `
+      SELECT 
+        COUNT(*) as total_ratings,
+        COUNT(comment) as total_comments,
+        COALESCE(AVG(rating), 0) as average_rating
+      FROM reviews
+      WHERE recipe_id = $1
+    `;
+    const statsResult = await db.query(statsQuery, [recipeId]);
+
+    // 2. Bu kullanıcının kendi yorumu (Varsa modalda göstermek için)
+    const userReviewQuery = `
+      SELECT rating, comment 
+      FROM reviews 
+      WHERE recipe_id = $1 AND user_id = $2
+    `;
+    const userReviewResult = await db.query(userReviewQuery, [recipeId, userId]);
+
+    res.json({
+      stats: statsResult.rows[0],
+      userReview: userReviewResult.rows[0] || null // Yoksa null döner
+    });
+
+  } catch (error) {
+    console.error('Stats error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// --- YENİ ROTA: TARİFİN YORUMLARINI GETİR ---
+app.get('/api/recipes/:id/reviews', auth, async (req, res) => {
+  const recipeId = req.params.id;
+
+  try {
+    const query = `
+      SELECT 
+        r.id, 
+        r.rating, 
+        r.comment, 
+        r.created_at, 
+        u.username  -- Yorum yapanın kullanıcı adı
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.recipe_id = $1
+      ORDER BY r.created_at DESC -- En yeni yorum en üstte
+      LIMIT 20 -- Şimdilik son 20 yorumu gösterelim
+    `;
+    
+    const result = await db.query(query, [recipeId]);
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('Reviews list error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//profile ekranına reviewları getirmek
+app.get('/api/user/reviews', auth, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const query = `
+      SELECT 
+        rv.id, -- Review ID
+        rv.rating, 
+        rv.comment, 
+        rv.updated_at,
+        r.id AS recipe_id, -- Modal için lazım
+        r.title AS recipe_title, 
+        r.image_url
+      FROM reviews rv
+      JOIN recipes r ON rv.recipe_id = r.id
+      WHERE rv.user_id = $1
+      ORDER BY rv.updated_at DESC -- En son güncellenen en üstte
+    `;
+    
+    const result = await db.query(query, [userId]);
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('User reviews error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//tarifi myreviews kısmı için getirme
+app.get('/api/recipes/details/:id', auth, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      'SELECT * FROM recipes WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Recipe not found' });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (error) {
+    console.error('Recipe details error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

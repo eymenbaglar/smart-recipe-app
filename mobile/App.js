@@ -16,6 +16,7 @@ import RecipeDetailsScreen from './src/screens/RecipeDetailsScreen';
 import ManualInputScreen from './src/screens/ManualInputScreen';
 import MealHistoryScreen from './src/screens/MealHistoryScreen';
 import RecommendedRecipesScreen from './src/screens/RecommendedRecipesScreen';
+import MyReviewsScreen from './src/screens/MyReviewsScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -152,7 +153,11 @@ export default function App() {
               component={RecommendedRecipesScreen} 
               options={{ title: 'Önerilenler' }}
             />
-            
+            <Stack.Screen 
+              name="MyReviews" 
+              component={MyReviewsScreen} 
+              options={{ title: 'Yorumlarım & Puanlarım' }}
+            />
           </>
         )}
       </Stack.Navigator>
