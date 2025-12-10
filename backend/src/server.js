@@ -649,8 +649,7 @@ app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
   }
 });
 
-//I cooked butonu ve stoğu güncelleme
-// --- YENİ ROTA: PİŞİRDİM (Stoktan Düş + Geçmişe Ekle + 0 Olanı Sil) ---
+//I cooked butonu ve stoğu güncelleme (Geçmişe ekle + Malzemeleri stokta düzenle + 0 olanları sil)
 app.post('/api/recipes/cook', auth, async (req, res) => {
   const userId = req.user.id;
   const { recipeId, multiplier } = req.body; 
@@ -664,7 +663,7 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
   try {
     await client.query('BEGIN'); 
 
-    // 1. Tarifin Malzemelerini Çek
+    // 1. Malzemeleri çek
     const recipeIngredients = await client.query(
       `SELECT i.id, i.name, ri.unit_type, i.is_staple, ri.quantity as base_quantity
        FROM recipe_ingredients ri
@@ -673,7 +672,7 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
       [recipeId]
     );
 
-    // 2. Kullanıcının Stoklarını Çek
+    // 2. Stoğu çek
     const userStock = await client.query(
       `SELECT ri.id as row_id, ri.ingredient_id, ri.quantity, i.unit as unit_type
        FROM refrigerator_items ri
@@ -683,7 +682,7 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
       [userId, recipeIngredients.rows.map(r => r.id)]
     );
 
-    // 3. Hesaplama ve Stok Düşme/Silme
+    // 3. Hesaplama ve stokğu ayarlama
     for (const rItem of recipeIngredients.rows) {
       
       if (rItem.is_staple) continue;
@@ -700,15 +699,13 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
 
       let newQuantity = uItem.quantity - neededAmount;
 
-      // --- MANTIK DEĞİŞİKLİĞİ BURADA ---
+      //eğer 0'a düşerse sil değilse güncelle
       if (newQuantity <= 0) {
-        // Eğer miktar 0 veya altına düştüyse -> SİL
         await client.query(
           'DELETE FROM refrigerator_items WHERE id = $1',
           [uItem.row_id]
         );
       } else {
-        // Eğer hala malzeme kaldıysa -> GÜNCELLE
         await client.query(
           'UPDATE refrigerator_items SET quantity = $1 WHERE id = $2',
           [newQuantity, uItem.row_id]
@@ -716,7 +713,7 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
       }
     }
 
-    // 4. Geçmişe Ekle
+    // 4. Geçmişe ekle
     await client.query(
       'INSERT INTO meal_history (user_id, recipe_id) VALUES ($1, $2)',
       [userId, recipeId]
@@ -757,7 +754,6 @@ app.get('/api/history', auth, async (req, res) => {
          
        FROM meal_history mh
        JOIN recipes r ON mh.recipe_id = r.id
-       -- Kullanıcının bu tarife yaptığı yorumu bulmak için LEFT JOIN
        LEFT JOIN reviews rv ON r.id = rv.recipe_id AND rv.user_id = $1
        
        WHERE mh.user_id = $1
@@ -768,17 +764,17 @@ app.get('/api/history', auth, async (req, res) => {
     res.json(result.rows);
 
   } catch (error) {
-    console.error('Geçmiş listeleme hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Past listing error:', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
-// --- YENİ ROTA: AKILLI ÖNERİ SİSTEMİ (Recommendation Engine) ---
+// Recommendation Sistemi
 app.get('/api/recipes/recommendations', auth, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // 1. Önce kullanıcının geçmişi var mı diye kontrol et
+    // 1. Geçmişi varmı kontrol et
     const historyCheck = await db.query(
       'SELECT COUNT(*) FROM meal_history WHERE user_id = $1',
       [userId]
@@ -786,8 +782,7 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
     const historyCount = parseInt(historyCheck.rows[0].count);
 
     if (historyCount === 0) {
-      // --- SENARYO A: COLD START (HİÇ GEÇMİŞ YOK) ---
-      // Rastgele 10 tarif getir
+      // Eğer Cold Startsa
       const randomRecipes = await db.query(`
         SELECT r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving 
         FROM recipes r
@@ -797,10 +792,9 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
       return res.json({ type: 'random', data: randomRecipes.rows });
     }
 
-    // --- SENARYO B: AKILLI ALGORİTMA (GEÇMİŞ VAR) ---
+    // Geçmişi varsa
     const recommendationQuery = `
       WITH LastHistory AS (
-        -- 1. Son 20 Pişirme Geçmişini Al
         SELECT recipe_id 
         FROM meal_history 
         WHERE user_id = $1 
@@ -808,11 +802,9 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
         LIMIT 20
       ),
       IngredientScores AS (
-        -- 2. Malzeme Frekans Puanlarını Hesapla
-        -- (Staple ürünler hariç: Tuz, Yağ vs. puanı etkilemesin)
         SELECT 
           ri.ingredient_id, 
-          COUNT(*) as freq_score -- Kaç kere kullanılmış? (Örn: Tavuk 5 kere = 5 Puan)
+          COUNT(*) as freq_score 
         FROM recipe_ingredients ri
         JOIN LastHistory lh ON ri.recipe_id = lh.recipe_id
         JOIN ingredients i ON ri.ingredient_id = i.id
@@ -820,18 +812,17 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
         GROUP BY ri.ingredient_id
       ),
       CandidateRecipes AS (
-        -- 3. Aday Tarifleri Puanla
         SELECT 
           r.id,
-          SUM(ibs.freq_score) as total_score, -- Toplam Puan
-          COUNT(ibs.ingredient_id) as hit_count -- Kaç farklı sevilen malzeme var? (Çeşitlilik)
+          SUM(ibs.freq_score) as total_score, 
+          COUNT(ibs.ingredient_id) as hit_count 
         FROM recipes r
         JOIN recipe_ingredients ri ON r.id = ri.recipe_id
         JOIN IngredientScores ibs ON ri.ingredient_id = ibs.ingredient_id
-        WHERE r.id NOT IN (SELECT recipe_id FROM LastHistory) -- Son pişirilenleri önerme
+        WHERE r.id NOT IN (SELECT recipe_id FROM LastHistory)
         GROUP BY r.id
       )
-      -- 4. Sonuçları Getir ve Sırala
+      -- Sonuçları sırala
       SELECT 
         r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving,
         cr.total_score,
@@ -839,9 +830,9 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
       FROM recipes r
       JOIN CandidateRecipes cr ON r.id = cr.id
       ORDER BY 
-        cr.total_score DESC, -- Önce Puan (En sevilene göre)
-        cr.hit_count DESC,   -- Sonra Çeşitlilik (Aynı puandaysa çok malzemeli olan)
-        RANDOM()             -- Sonra Rastgelelik
+        cr.total_score DESC, 
+        cr.hit_count DESC,   
+        RANDOM()            
       LIMIT 15;
     `;
 
@@ -854,14 +845,12 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
   }
 });
 
-// --- YENİ ROTA: PUAN VER VEYA GÜNCELLE (UPSERT) ---
+// Puan ver veya güncelle
 app.post('/api/reviews', auth, async (req, res) => {
   const userId = req.user.id;
   const { recipeId, rating, comment } = req.body;
 
   try {
-    // Postgres'in süper özelliği: ON CONFLICT
-    // Eğer (user_id, recipe_id) çakışırsa UPDATE yap, yoksa INSERT yap.
     const query = `
       INSERT INTO reviews (user_id, recipe_id, rating, comment, updated_at)
       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
@@ -882,13 +871,12 @@ app.post('/api/reviews', auth, async (req, res) => {
   }
 });
 
-// --- YENİ ROTA: TARİFİN PUAN İSTATİSTİKLERİNİ GETİR ---
+// Tarifin puan istatistikleri
 app.get('/api/recipes/:id/stats', auth, async (req, res) => {
   const recipeId = req.params.id;
   const userId = req.user.id;
 
   try {
-    // 1. Genel İstatistikler (Ortalama, Toplam Puan, Toplam Yorum)
     const statsQuery = `
       SELECT 
         COUNT(*) as total_ratings,
@@ -899,7 +887,6 @@ app.get('/api/recipes/:id/stats', auth, async (req, res) => {
     `;
     const statsResult = await db.query(statsQuery, [recipeId]);
 
-    // 2. Bu kullanıcının kendi yorumu (Varsa modalda göstermek için)
     const userReviewQuery = `
       SELECT rating, comment 
       FROM reviews 
@@ -909,7 +896,7 @@ app.get('/api/recipes/:id/stats', auth, async (req, res) => {
 
     res.json({
       stats: statsResult.rows[0],
-      userReview: userReviewResult.rows[0] || null // Yoksa null döner
+      userReview: userReviewResult.rows[0] || null
     });
 
   } catch (error) {
@@ -918,7 +905,7 @@ app.get('/api/recipes/:id/stats', auth, async (req, res) => {
   }
 });
 
-// --- YENİ ROTA: TARİFİN YORUMLARINI GETİR ---
+// Tarifin yorumları
 app.get('/api/recipes/:id/reviews', auth, async (req, res) => {
   const recipeId = req.params.id;
 
@@ -929,12 +916,12 @@ app.get('/api/recipes/:id/reviews', auth, async (req, res) => {
         r.rating, 
         r.comment, 
         r.created_at, 
-        u.username  -- Yorum yapanın kullanıcı adı
+        u.username  
       FROM reviews r
       JOIN users u ON r.user_id = u.id
       WHERE r.recipe_id = $1
-      ORDER BY r.created_at DESC -- En yeni yorum en üstte
-      LIMIT 20 -- Şimdilik son 20 yorumu gösterelim
+      ORDER BY r.created_at DESC 
+      LIMIT 20 
     `;
     
     const result = await db.query(query, [recipeId]);

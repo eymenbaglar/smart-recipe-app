@@ -146,17 +146,17 @@ export default function App() {
             <Stack.Screen 
               name="MealHistory" 
               component={MealHistoryScreen} 
-              options={{ title: 'Yemek Geçmişim' }}
+              options={{ title: 'Meal History' }}
             />
             <Stack.Screen 
               name="RecommendedRecipes" 
               component={RecommendedRecipesScreen} 
-              options={{ title: 'Önerilenler' }}
+              options={{ title: 'Recommended Recipes' }}
             />
             <Stack.Screen 
               name="MyReviews" 
               component={MyReviewsScreen} 
-              options={{ title: 'Yorumlarım & Puanlarım' }}
+              options={{ title: 'My Comments & Reviews' }}
             />
           </>
         )}

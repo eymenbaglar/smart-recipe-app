@@ -30,22 +30,20 @@ export default function MyReviewsScreen({ navigation }) {
 
   const handleViewRecipe = async (recipeId) => {
     try {
-      // Kullanıcıya hissettirmeden yükleme efekti verebiliriz ama
-      // işlem çok hızlı olacağı için direkt axios çağırıyoruz.
       const token = await AsyncStorage.getItem('token');
       
-      // 1. Tarifin tam detayını çek
+      //tarifin detayını çek
       const response = await axios.get(`${API_URL}/api/recipes/details/${recipeId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       const fullRecipeData = response.data;
 
-      // 2. Detay sayfasına tüm veriyi göndererek git
+      //detay sayfasına veriyi göndererek git
       navigation.navigate('RecipeDetails', { recipe: fullRecipeData });
 
     } catch (error) {
-      console.error("Tarif detayı çekilemedi:", error);
+      console.error("Recipe details could not be retrieved:", error);
       Alert.alert("Error", "Could not load recipe details.");
     }
   };
@@ -64,7 +62,7 @@ export default function MyReviewsScreen({ navigation }) {
     }
   };
 
-  // Düzenle Butonuna Basınca
+  // Düzenle butonuna basınca
   const handleEditPress = (item) => {
     setSelectedRecipeId(item.recipe_id);
     setInitialReviewData({
@@ -74,18 +72,16 @@ export default function MyReviewsScreen({ navigation }) {
     setShowRateModal(true);
   };
 
-  // Modal Submit (Güncelleme İşlemi)
+  //modal submit işlemi
   const handleRateSubmit = async (rating, comment) => {
     try {
       const token = await AsyncStorage.getItem('token');
-      // Mevcut "POST /reviews" rotamız zaten "Varsa Güncelle" (Upsert) yapıyor.
-      // O yüzden ekstra bir "PUT" rotasına gerek yok.
       await axios.post(`${API_URL}/api/reviews`, 
         { recipeId: selectedRecipeId, rating, comment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      fetchMyReviews(); // Listeyi yenile
+      fetchMyReviews();
       
     } catch (error) {
       console.error(error);
@@ -96,7 +92,6 @@ export default function MyReviewsScreen({ navigation }) {
   const renderItem = ({ item }) => {
     const date = new Date(item.updated_at).toLocaleDateString();
 
-    // Yıldızları render etme yardımcısı
     const renderStars = (r) => {
       const stars = [];
       for (let i = 1; i <= 5; i++) {

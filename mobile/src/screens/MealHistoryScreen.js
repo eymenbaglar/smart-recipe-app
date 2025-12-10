@@ -17,12 +17,12 @@ export default function MealHistoryScreen({ navigation }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- MODAL STATE'LERİ ---
+  //modal stateleri
   const [showRateModal, setShowRateModal] = useState(false);
-  const [selectedRecipeForRate, setSelectedRecipeForRate] = useState(null); // Hangi tarif puanlanıyor?
-  const [initialReviewData, setInitialReviewData] = useState(null); // Varsa eski puanı
+  const [selectedRecipeForRate, setSelectedRecipeForRate] = useState(null); 
+  const [initialReviewData, setInitialReviewData] = useState(null);
 
-  // Sayfaya her gelindiğinde listeyi yenile (Puan durumu değişmiş olabilir)
+  //sayfaya her gelindiğinde listeyi yeniler
   useFocusEffect(
     useCallback(() => {
       fetchHistory();
@@ -43,12 +43,11 @@ export default function MealHistoryScreen({ navigation }) {
     }
   };
 
-  // --- PUANLAMA BUTONUNA BASINCA ---
+  //puanlama butonuna basınca
   const handleOpenRateModal = (item) => {
-    // Tarif ID'sini sakla
-    setSelectedRecipeForRate(item.id); // item.id = recipe_id (Backend sorgusunda öyle ayarladık)
+    setSelectedRecipeForRate(item.id);
     
-    // Eğer daha önce puanladıysa modal'a bu veriyi gönder
+    //eğer önceden puanlandıysa
     if (item.my_rating) {
       setInitialReviewData({
         rating: item.my_rating,
@@ -61,7 +60,7 @@ export default function MealHistoryScreen({ navigation }) {
     setShowRateModal(true);
   };
 
-  // --- PUAN GÖNDERME ---
+  //puan gönderme
   const handleRateSubmit = async (rating, comment) => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -70,7 +69,6 @@ export default function MealHistoryScreen({ navigation }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      // Listeyi yenile ki buton "Rate"ten "Edit"e dönsün
       fetchHistory();
       
     } catch (error) {
@@ -84,7 +82,6 @@ export default function MealHistoryScreen({ navigation }) {
     const dateString = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
     const timeString = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    // Kullanıcı puanlamış mı?
     const hasRated = item.my_rating > 0;
 
     return (
@@ -122,7 +119,7 @@ export default function MealHistoryScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
-        {/* --- RATE BUTONU (KARTIN ALTINA ENTEGRE) --- */}
+        {/* Rate Butonu*/}
         <View style={styles.actionRow}>
            <TouchableOpacity 
              style={[styles.rateButton, hasRated && styles.editButton]} 
@@ -168,7 +165,7 @@ export default function MealHistoryScreen({ navigation }) {
         }
       />
 
-      {/* --- PUANLAMA MODALI --- */}
+      {/* Puanlama Modalı */}
       <RateRecipeModal 
         visible={showRateModal}
         onClose={() => setShowRateModal(false)}
@@ -183,7 +180,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9f9f9' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   
-  // Kartın Dış Kaplaması (Butonu da kapsar)
   cardWrapper: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -205,7 +201,6 @@ const styles = StyleSheet.create({
   statText: { fontSize: 12, color: '#666', marginLeft: 4, fontWeight: '500' },
   arrowContainer: { paddingRight: 15 , paddingTop: 10},
   
-  // Rate Butonu Stilleri
   actionRow: {
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
@@ -223,7 +218,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff'
   },
   editButton: {
-    backgroundColor: '#FFD700', // Altın rengi (Puan verilmişse)
+    backgroundColor: '#FFD700',
     borderColor: '#FFD700',
   },
   rateButtonText: {

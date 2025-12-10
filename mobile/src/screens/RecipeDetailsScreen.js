@@ -8,13 +8,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
-// Modal bileşenini import ediyoruz
+//modal
 import RateRecipeModal from '../components/RateRecipeModal';
 
 export default function RecipeDetailsScreen({ route, navigation }) {
   const { recipe } = route.params;
   
-  // --- STATE TANIMLARI ---
+  // state tanımları
   const [fullIngredients, setFullIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -31,7 +31,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
   //yorum statei
   const [reviews, setReviews] = useState([]);
 
-  // --- BAŞLANGIÇ ---
+  //başlangıç
   useEffect(() => {
     fetchIngredients();
     checkIfFavorite();
@@ -39,12 +39,11 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     fetchReviews();
   }, []);
 
-  // --- API FONKSİYONLARI ---
+  //API fonksiyonları
   
   const fetchIngredients = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      // Kullanıcı stoğunu da getiren endpoint
       const response = await axios.get(`${API_URL}/api/recipes/${recipe.id}/ingredients`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -101,7 +100,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
-  // --- ETKİLEŞİM FONKSİYONLARI ---
+  //etkileşim fonksiyonları
 
   const toggleFavorite = async () => {
     try {
@@ -124,7 +123,6 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         { recipeId: recipe.id, rating, comment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // İstatistikleri güncelle
       fetchRatingStats();
     } catch (error) {
       console.error(error);
@@ -142,7 +140,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
-  // --- COOKING MANTIĞI ---
+  //cooking mantığı
 
   const handleCookPress = () => {
     Alert.alert(
@@ -165,7 +163,6 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Başarılıysa Modal'ı aç
       Alert.alert(
         "Success", 
         "Bon appétit! Inventory updated.",
@@ -185,18 +182,16 @@ export default function RecipeDetailsScreen({ route, navigation }) {
 
   const handleModalClose = () => {
     setShowRateModal(false);
-    // İşlem bitince Stok sayfasına yönlendir
     navigation.navigate('Main', { screen: 'MyStock' });
   };
 
-  // --- HESAPLAMA VE RENDER YARDIMCILARI ---
+  //hesaplama ve render yardımcıları
 
   const calculateRequiredAmount = (baseQty, unitType) => {
     const multiplier = currentServings / originalServings;
     const rawAmount = baseQty * multiplier;
 
     if (unitType === 'qty') {
-      // Adet için 0.5 katlarına yuvarla
       let rounded = Math.ceil(rawAmount * 2) / 2;
       if (rounded === 0) rounded = 0.5;
       return rounded;
@@ -265,7 +260,6 @@ export default function RecipeDetailsScreen({ route, navigation }) {
   };
 
   const renderReviewItem = (item, index) => {
-    // Tarih formatı: 12 Oct 2023
     const date = new Date(item.created_at).toLocaleDateString('en-US', { 
       day: 'numeric', month: 'short', year: 'numeric' 
     });
@@ -274,7 +268,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
       <View key={index} style={styles.reviewCard}>
         <View style={styles.reviewHeader}>
           <View style={styles.userInfo}>
-            {/* Profil Resmi Yerine Baş Harf */}
+            {/* Profil Resmi Yerine Baş Harf (Sonradan Düzenlenecek) */}
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>
                 {item.username ? item.username.charAt(0).toUpperCase() : 'U'}
@@ -300,7 +294,6 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     );
   };
 
-  // --- RENDER ---
   return (
     <View style={{flex: 1, backgroundColor: '#fff'}}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -380,7 +373,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         </View>
         <View style={styles.divider} />
 
-          {/* --- YENİ: YORUMLAR BÖLÜMÜ --- */}
+          {/* Yorumlar Bölümü*/}
           <Text marginLeft='25' style={styles.sectionTitle}>Reviews ({ratingStats.count})</Text>
           
           {reviews.length === 0 ? (
@@ -393,7 +386,6 @@ export default function RecipeDetailsScreen({ route, navigation }) {
             </View>
           )}
 
-          {/* Sayfanın en altına biraz boşluk bırakalım */}
           <View style={{height: 20}} />
       </ScrollView>
 

@@ -73,9 +73,9 @@ export default function RecipeWizardScreen({ navigation }) {
             <Ionicons name="restaurant-outline" size={32} color="#2196F3" />
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.cardTitle}>Ne Pişirsem?</Text>
+            <Text style={styles.cardTitle}>Let Us Suggest You</Text>
             <Text style={styles.cardDescription}>
-              Damak zevkine göre hazırladığımız özel önerilere göz at.
+              Check out the recipes we have prepared according to your tastes.
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#2196F3" />

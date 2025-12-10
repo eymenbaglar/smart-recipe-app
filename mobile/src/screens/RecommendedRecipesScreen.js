@@ -47,7 +47,7 @@ export default function RecommendedRecipesScreen({ navigation }) {
           <Text style={styles.metaText}>{item.calories} kcal</Text>
         </View>
         
-        {/* Eğer Algoritma çalıştıysa Puanı gösterelim */}
+        {/* Algoritma çalışırsa puanı göster */}
         {type === 'algorithm' && item.total_score && (
           <View style={styles.scoreContainer}>
              <Text style={styles.scoreText}>Taste Match Score: {item.total_score}</Text>
