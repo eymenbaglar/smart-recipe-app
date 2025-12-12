@@ -127,7 +127,14 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
                   <Ionicons name="flame-outline" size={14} color="#666" />
                   <Text style={styles.metaText}>{item.calories} kcal</Text>
                 </View>
+                <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 2}}>
+                  <Ionicons name="star" size={12} color="#FFD700" />
+                  <Text style={{fontSize: 12, color: '#666', marginLeft: 4, fontWeight:'bold'}}>
+                  {parseFloat(item.average_rating).toFixed(1)}
+                  </Text>
+                </View>
               </View>
+              
               
               <View style={styles.detailButton}>
                 <Text style={styles.detailButtonText}>Details</Text>

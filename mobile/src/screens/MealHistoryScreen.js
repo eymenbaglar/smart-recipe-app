@@ -110,6 +110,12 @@ export default function MealHistoryScreen({ navigation }) {
                   <Ionicons name="time-outline" size={14} color="#4CAF50" />
                   <Text style={styles.statText}>{item.prep_time} min</Text>
                 </View>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <Ionicons name="star" size={12} color="#FFD700" />
+                  <Text style={{fontSize: 11, color: '#666', marginLeft: 3, fontWeight:'bold'}}>
+                  {parseFloat(item.average_rating).toFixed(1)}
+                  </Text>
+                </View>
               </View>
             </View>
 

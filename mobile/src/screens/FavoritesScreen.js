@@ -120,6 +120,12 @@ export default function FavoritesScreen({ navigation }) {
                 <Text style={styles.metaText}>{item.prep_time} m</Text>
                 <Ionicons name="flame-outline" size={14} color="#666" style={{marginLeft: 5}}/>
                 <Text style={styles.metaText}>{item.calories} kcal</Text>
+                <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 2 , marginLeft: 5}}>
+                  <Ionicons name="star" size={12} color="#FFD700" />
+                  <Text style={{fontSize: 12, color: '#666', marginLeft: 4, fontWeight:'bold'}}>
+                  {parseFloat(item.average_rating).toFixed(1)}
+                </Text>
+                </View>
               </View>
             </View>
           </View>

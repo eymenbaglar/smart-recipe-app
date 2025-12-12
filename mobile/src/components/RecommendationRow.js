@@ -62,7 +62,10 @@ export default function RecommendationRow() {
             <Image source={{ uri: item.image_url }} style={styles.image} />
             <View style={styles.overlay}>
               <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.cardMeta}>{item.calories} kcal • {item.prep_time}m</Text>
+              <Text style={styles.cardMeta}>{item.calories} kcal • {item.prep_time}m • <Ionicons name="star" size={10} color="#FFD700" />
+                <Text style={{fontSize: 10, color: '#fff', marginLeft: 2, fontWeight:'bold'}}>
+                {parseFloat(item.average_rating).toFixed(1)}
+              </Text></Text>
             </View>
           </TouchableOpacity>
         )}
