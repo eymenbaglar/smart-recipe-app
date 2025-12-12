@@ -133,7 +133,11 @@ export default function FavoritesScreen({ navigation }) {
                 </Text>
                 </View>
               </View>
+              <View style={styles.arrowContainer}>
+                <Ionicons name="chevron-forward" size={20} color="#ccc" />
+              </View>
             </View>
+            
           </View>
         </View>
       </TouchableOpacity>

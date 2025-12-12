@@ -140,7 +140,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
   }
 
   const menuItems = [
-    { icon: 'share-social-outline', title: 'Share A Recipe', count: null },
+    { icon: 'add-circle-outline', title: 'Share A Recipe', count: null, screen: 'AddRecipe' },,
     { icon: 'book-outline', title: 'My Recipes', count: null },
     { icon: 'time-outline', title: 'Meal History', count: null, screen: 'MealHistory' },,
     { icon: 'star-outline', title: 'My Reviews', count: null, screen: 'MyReviews' },,

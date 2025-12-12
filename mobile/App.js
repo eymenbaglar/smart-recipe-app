@@ -17,6 +17,7 @@ import ManualInputScreen from './src/screens/ManualInputScreen';
 import MealHistoryScreen from './src/screens/MealHistoryScreen';
 import RecommendedRecipesScreen from './src/screens/RecommendedRecipesScreen';
 import MyReviewsScreen from './src/screens/MyReviewsScreen';
+import AddRecipeScreen from './src/screens/AddRecipeScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -157,6 +158,11 @@ export default function App() {
               name="MyReviews" 
               component={MyReviewsScreen} 
               options={{ title: 'My Comments & Reviews' }}
+            />
+            <Stack.Screen 
+            name="AddRecipe" 
+            component={AddRecipeScreen} 
+            options={{ title: 'Add Recipe' }} 
             />
           </>
         )}

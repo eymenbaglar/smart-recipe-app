@@ -990,6 +990,65 @@ app.get('/api/recipes/details/:id', auth, async (req, res) => {
   }
 });
 
+//yeni recipe ekleme
+app.post('/api/recipes', auth, async (req, res) => {
+  const userId = req.user.id;
+  const { 
+    title, description, instructions, prepTime, calories, imageUrl, serving, ingredients 
+  } = req.body;
+
+  if (!title || !ingredients || ingredients.length === 0) {
+    return res.status(400).json({ error: 'Başlık ve en az bir malzeme gereklidir.' });
+  }
+
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. tarifi 'pending' olarak recipe tablosuna ekle
+    const recipeResult = await client.query(
+      `INSERT INTO recipes (
+         title, description, instructions, prep_time, calories, image_url, serving, 
+         created_by, status, is_verified
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', false)
+       RETURNING id`,
+      [title, description, instructions, prepTime, calories, imageUrl, serving, userId]
+    );
+    const newRecipeId = recipeResult.rows[0].id;
+
+    // 2. Malzemeleri bağla
+    for (const item of ingredients) {
+      
+      await client.query(
+        `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit_type)
+         VALUES ($1, $2, $3, $4)`,
+        [newRecipeId, item.id, item.quantity, item.unit]
+      );
+    }
+
+    await client.query('COMMIT'); 
+    res.status(201).json({ 
+      message: 'Tarif başarıyla gönderildi! Admin onayından sonra yayınlanacaktır.',
+      recipeId: newRecipeId 
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK'); 
+    console.error('Tarif ekleme hatası:', error);
+    
+    // olmayan malzeme idsi gelirse
+    if (error.code === '23503') { 
+       return res.status(400).json({ error: 'Geçersiz malzeme seçimi yapıldı.' });
+    }
+    
+    res.status(500).json({ error: 'Sunucu hatası, tarif eklenemedi.' });
+  } finally {
+    client.release();
+  }
+});
+
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });

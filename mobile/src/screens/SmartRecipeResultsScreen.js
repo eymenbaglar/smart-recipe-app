@@ -142,9 +142,8 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
               </View>
               
               
-              <View style={styles.detailButton}>
-                <Text style={styles.detailButtonText}>Details</Text>
-                <Ionicons name="chevron-forward" size={14} color="#000" />
+              <View style={styles.arrowContainer}>
+                <Ionicons name="chevron-forward" size={20} color="#ccc" />
               </View>
             </View>
 
@@ -310,12 +309,6 @@ const styles = StyleSheet.create({
   metaContainer: { flexDirection: 'row', gap: 10 },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   metaText: { fontSize: 12, color: '#666' },
-  detailButton: { 
-    flexDirection: 'row', alignItems: 'center', 
-    borderWidth: 1, borderColor: '#000', borderRadius: 5, 
-    paddingHorizontal: 8, paddingVertical: 4 
-  },
-  detailButtonText: { fontSize: 12, fontWeight: 'bold', marginRight: 2 },
   emptyText: { textAlign: 'center', color: '#999', marginTop: 50 },
 
   // modal stil
