@@ -42,6 +42,12 @@ export default function FavoritesScreen({ navigation }) {
     let sorted = [...favorites];
 
     switch (sortBy) {
+      case 'rating_high': 
+        sorted.sort((a, b) => parseFloat(b.average_rating || 0) - parseFloat(a.average_rating || 0));
+        break;
+      case 'rating_low': 
+        sorted.sort((a, b) => parseFloat(a.average_rating || 0) - parseFloat(b.average_rating || 0));
+        break;
       case 'match_high':
         sorted.sort((a, b) => b.match_percentage - a.match_percentage);
         break;
@@ -181,7 +187,7 @@ export default function FavoritesScreen({ navigation }) {
               <ScrollView showsVerticalScrollIndicator={false}>
                 
                 {/* 1. TARİH */}
-                <Text style={styles.sectionHeader}>Tarih</Text>
+                <Text style={styles.sectionHeader}>Date</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('date_new'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'date_new' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
                   <Text style={styles.optionText}>Most Recently Added (Default)</Text>
@@ -189,6 +195,19 @@ export default function FavoritesScreen({ navigation }) {
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('date_old'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'date_old' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
                   <Text style={styles.optionText}>Most Oldest Added</Text>
+                </TouchableOpacity>
+
+                <View style={styles.divider} />
+
+                {/* rating */}
+                <Text style={styles.sectionHeader}>Rating</Text>
+                <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('rating_high'); setModalVisible(false); }}>
+                  <Ionicons name={sortBy === 'rating_high' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
+                  <Text style={styles.optionText}>Highest Rating</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('rating_low'); setModalVisible(false); }}>
+                  <Ionicons name={sortBy === 'rating_low' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
+                  <Text style={styles.optionText}>Lowest Rating</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />

@@ -57,6 +57,12 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
     let sorted = [...recipes];
 
     switch (sortBy) {
+      case 'rating_high':
+        sorted.sort((a, b) => parseFloat(b.average_rating || 0) - parseFloat(a.average_rating || 0));
+        break;
+      case 'rating_low':
+        sorted.sort((a, b) => parseFloat(a.average_rating || 0) - parseFloat(b.average_rating || 0));
+        break;
       case 'calories_low': 
         sorted.sort((a, b) => a.calories - b.calories);
         break;
@@ -194,6 +200,25 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
                 >
                   <Ionicons name={sortBy === 'match' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
                   <Text style={styles.optionText}>Matching Percantage (Highest)</Text>
+                </TouchableOpacity>
+
+                <View style={styles.divider} />
+
+                {/*ratinge göre */}
+                <TouchableOpacity 
+                  style={styles.modalOption} 
+                  onPress={() => { setSortBy('rating_high'); setModalVisible(false); }}
+                >
+                  <Ionicons name={sortBy === 'rating_high' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
+                  <Text style={styles.optionText}>Highest Rating</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.modalOption} 
+                  onPress={() => { setSortBy('rating_low'); setModalVisible(false); }}
+                >
+                  <Ionicons name={sortBy === 'rating_low' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
+                  <Text style={styles.optionText}>Lowest Rating</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
