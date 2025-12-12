@@ -880,7 +880,8 @@ app.get('/api/recipes/:id/stats', auth, async (req, res) => {
     const statsQuery = `
       SELECT 
         COUNT(*) as total_ratings,
-        COUNT(comment) as total_comments,
+        COUNT(NULLIF(comment, '')) as total_comments,
+        
         COALESCE(AVG(rating), 0) as average_rating
       FROM reviews
       WHERE recipe_id = $1
