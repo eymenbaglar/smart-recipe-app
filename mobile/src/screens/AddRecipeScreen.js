@@ -19,6 +19,9 @@ export default function AddRecipeScreen({ navigation }) {
   const [calories, setCalories] = useState('');
   const [serving, setServing] = useState('');
   
+  // YENİ: Hata durumunu tutacak state
+  const [errors, setErrors] = useState({});
+
   // FOTOĞRAF STATE'İ
   const [imageUri, setImageUri] = useState(null);
   const [imageBase64, setImageBase64] = useState('');
@@ -35,6 +38,39 @@ export default function AddRecipeScreen({ navigation }) {
 
   const [addedIngredients, setAddedIngredients] = useState([]); 
   const [loading, setLoading] = useState(false);
+
+  // --- DOĞRULAMA (VALIDATION) FONKSİYONU ---
+  const validateForm = () => {
+    let newErrors = {};
+    let isValid = true;
+
+    // 1. Başlık Kontrolü
+    if (!title.trim()) {
+      newErrors.title = true;
+      isValid = false;
+    }
+
+    // 2. Kişi Sayısı Kontrolü
+    if (!serving.toString().trim()) {
+      newErrors.serving = true;
+      isValid = false;
+    }
+
+    // 3. Yapılış (Instructions) Kontrolü
+    if (!instructions.trim()) {
+      newErrors.instructions = true;
+      isValid = false;
+    }
+
+    // 4. Malzeme Kontrolü (Listenin boş olup olmadığı)
+    if (addedIngredients.length === 0) {
+      newErrors.ingredients = true;
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   // --- FOTOĞRAF SEÇME ---
   const pickImage = async () => {
@@ -76,7 +112,7 @@ export default function AddRecipeScreen({ navigation }) {
     }
   };
 
-  // --- BİRİM SEÇENEKLERİ (MYSTOCK GİBİ) ---
+  // --- BİRİM SEÇENEKLERİ ---
   const getUnitOptions = (defaultUnit) => {
     const liquidUnits = ['ml', 'L'];
     const solidUnits = ['gr', 'kg'];
@@ -115,11 +151,16 @@ export default function AddRecipeScreen({ navigation }) {
       id: selectedIngredient.id,
       name: selectedIngredient.name,
       quantity: parseFloat(qty),
-      unit: selectedUnit // Kullanıcının seçtiği birim
+      unit: selectedUnit
     };
 
     setAddedIngredients([...addedIngredients, newIng]);
     
+    // Hata varsa temizle (kullanıcı malzeme ekledi çünkü)
+    if (errors.ingredients) {
+      setErrors(prev => ({ ...prev, ingredients: false }));
+    }
+
     // Resetle
     setSelectedIngredient(null);
     setQty('');
@@ -134,8 +175,9 @@ export default function AddRecipeScreen({ navigation }) {
   };
 
   const handleSubmit = async () => {
-    if (!title || addedIngredients.length === 0) {
-      Alert.alert("Hata", "Lütfen başlık girin ve en az bir malzeme ekleyin.");
+    // Önce validasyon kontrolü
+    if (!validateForm()) {
+      Alert.alert("Eksik Bilgi", "Lütfen zorunlu (*) alanları doldurunuz.");
       return;
     }
 
@@ -182,11 +224,26 @@ export default function AddRecipeScreen({ navigation }) {
 
         {/* --- TEMEL BİLGİLER --- */}
         <View style={styles.section}>
-          <Text style={styles.label}>Tarif Adı</Text>
-          <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Örn: Karnıyarık" />
+          <Text style={styles.label}>
+            Tarif Adı <Text style={styles.requiredStar}>*</Text>
+          </Text>
+          <TextInput 
+            style={[styles.input, errors.title && styles.inputError]} 
+            value={title} 
+            onChangeText={(text) => {
+              setTitle(text);
+              if(errors.title) setErrors({...errors, title: false});
+            }} 
+            placeholder="Örn: Karnıyarık" 
+          />
           
           <Text style={styles.label}>Açıklama</Text>
-          <TextInput style={styles.input} value={description} onChangeText={setDescription} placeholder="Kısa özet..." />
+          <TextInput 
+            style={styles.input} 
+            value={description} 
+            onChangeText={setDescription} 
+            placeholder="Kısa özet..." 
+          />
 
           {/* FOTOĞRAF */}
           <Text style={styles.label}>Tarif Fotoğrafı</Text>
@@ -211,15 +268,27 @@ export default function AddRecipeScreen({ navigation }) {
                 <TextInput style={styles.input} value={calories} onChangeText={setCalories} keyboardType="numeric" />
              </View>
              <View style={{flex:1, marginLeft:5}}>
-                <Text style={styles.label}>Kişi</Text>
-                <TextInput style={styles.input} value={serving} onChangeText={setServing} keyboardType="numeric" />
+                <Text style={styles.label}>
+                  Kişi <Text style={styles.requiredStar}>*</Text>
+                </Text>
+                <TextInput 
+                  style={[styles.input, errors.serving && styles.inputError]} 
+                  value={serving} 
+                  onChangeText={(text) => {
+                    setServing(text);
+                    if(errors.serving) setErrors({...errors, serving: false});
+                  }} 
+                  keyboardType="numeric" 
+                />
              </View>
           </View>
         </View>
 
         {/* --- MALZEMELER --- */}
         <View style={[styles.section, { zIndex: 1000 }]}> 
-          <Text style={styles.sectionHeader}>Malzemeler</Text>
+          <Text style={styles.sectionHeader}>
+            Malzemeler <Text style={styles.requiredStar}>*</Text>
+          </Text>
 
           {!selectedIngredient ? (
             <View style={{ position: 'relative', zIndex: 2000 }}>
@@ -230,8 +299,7 @@ export default function AddRecipeScreen({ navigation }) {
                 placeholder="Malzeme ara... (örn: Süt)" 
               />
               
-              {/* --- ÇÖZÜM: FlatList yerine MAP kullanıyoruz (Hata Düzeltildi) --- */}
-              {/* ScrollView içinde FlatList kullanmak hata verir. Burası kısa liste olduğu için map yeterli. */}
+              {/* DROPDOWN */}
               {searchResults.length > 0 && (
                 <View style={styles.searchResultsContainer}>
                   <ScrollView nestedScrollEnabled={true} style={{maxHeight: 150}}>
@@ -270,7 +338,7 @@ export default function AddRecipeScreen({ navigation }) {
                 />
               </View>
 
-              {/* BİRİM SEÇİMİ (CHIPS) */}
+              {/* BİRİM SEÇİMİ */}
               <Text style={styles.label}>Birim</Text>
               <View style={styles.unitContainer}>
                 {availableUnits.map((u, index) => (
@@ -299,7 +367,7 @@ export default function AddRecipeScreen({ navigation }) {
           )}
 
           {/* EKLENENLER LİSTESİ */}
-          {addedIngredients.length > 0 && (
+          {addedIngredients.length > 0 ? (
             <View style={styles.addedList}>
               {addedIngredients.map((ing, index) => (
                 <View key={index} style={styles.addedItem}>
@@ -310,16 +378,30 @@ export default function AddRecipeScreen({ navigation }) {
                 </View>
               ))}
             </View>
+          ) : (
+            // Malzeme listesi boşsa ve hata varsa uyarı göster
+            errors.ingredients && (
+              <Text style={styles.errorText}>Lütfen en az bir malzeme ekleyin.</Text>
+            )
           )}
         </View>
 
         {/* --- YAPILIŞ --- */}
         <View style={styles.section}>
-          <Text style={styles.label}>Yapılışı</Text>
+          <Text style={styles.label}>
+            Yapılışı <Text style={styles.requiredStar}>*</Text>
+          </Text>
           <TextInput 
-            style={[styles.input, {height: 100, textAlignVertical: 'top'}]} 
+            style={[
+              styles.input, 
+              {height: 100, textAlignVertical: 'top'},
+              errors.instructions && styles.inputError
+            ]} 
             value={instructions} 
-            onChangeText={setInstructions} 
+            onChangeText={(text) => {
+              setInstructions(text);
+              if(errors.instructions) setErrors({...errors, instructions: false});
+            }} 
             multiline 
             placeholder="Adım adım tarif..." 
           />
@@ -345,6 +427,24 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionHeader: { fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
+
+  // YENİ STİLLER (VALIDATION)
+  requiredStar: {
+    color: '#e74c3c',
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  inputError: {
+    borderColor: '#e74c3c',
+    borderWidth: 1.5,
+    backgroundColor: '#fff5f5'
+  },
+  errorText: {
+    color: '#e74c3c',
+    fontSize: 12,
+    marginTop: 5,
+    fontWeight: '600'
+  },
 
   // IMAGE PICKER
   imagePickerBtn: { 

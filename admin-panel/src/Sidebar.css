@@ -1,0 +1,71 @@
+/* admin-panel/src/Sidebar.css */
+.sidebar {
+  width: 250px;
+  background-color: #2c3e50; /* Koyu lacivert */
+  color: #ecf0f1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar-header {
+  padding: 20px;
+  background-color: #1a252f; /* Daha koyu başlık */
+  text-align: center;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  padding: 15px 25px;
+  color: #bdc3c7;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: 0.3s;
+  border-left: 4px solid transparent;
+}
+
+.nav-item:hover {
+  background-color: #34495e;
+  color: #fff;
+}
+
+.nav-item.active {
+  background-color: #34495e;
+  color: #3498db; /* Aktif mavi renk */
+  border-left-color: #3498db;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  background-color: #1a252f;
+}
+
+.sidebar-footer .logout-btn {
+  width: 100%;
+  background-color: #c0392b;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sidebar-footer .logout-btn:hover {
+  background-color: #e74c3c;
+}

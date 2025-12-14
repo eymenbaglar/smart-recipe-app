@@ -1,106 +1,48 @@
+// admin-panel/src/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import api from './api';
 import './Dashboard.css';
 
-function Dashboard({ onLogout }) {
-  const [recipes, setRecipes] = useState([]);
-  const [loading, setLoading] = useState(true);
+function Dashboard() {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalRecipes: 0,
+    pendingRecipes: 0,
+    cookedToday: 0
+  });
 
   useEffect(() => {
-    fetchPendingRecipes();
+    const fetchStats = async () => {
+      try {
+        const response = await api.get('/api/admin/stats');
+        setStats(response.data);
+      } catch (error) {
+        console.error('Stats hatası:', error);
+      }
+    };
+    fetchStats();
   }, []);
 
-  const fetchPendingRecipes = async () => {
-    try {
-      const response = await api.get('/api/admin/recipes/pending');
-      setRecipes(response.data);
-    } catch (error) {
-      console.error('Veri çekme hatası:', error);
-      alert('Oturum süreniz dolmuş olabilir.');
-      onLogout();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAction = async (id, action) => {
-    let reason = null;
-
-    // Eğer Reddediliyorsa sebep sor
-    if (action === 'reject') {
-      reason = window.prompt("Reddetme sebebini yazın:");
-      if (!reason) return; // Vazgeçtiyse dur
-    }
-
-    try {
-      await api.patch(`/api/admin/recipes/${id}/action`, { action, reason });
-      alert('İşlem başarılı!');
-      fetchPendingRecipes(); // Listeyi yenile (Onaylanan listeden gider)
-    } catch (error) {
-      alert('İşlem sırasında hata oluştu.');
-    }
-  };
-
   return (
-    <div className="dashboard-container">
-      <header className="top-bar">
-        <h1>Smart Recipe Admin</h1>
-        <button onClick={onLogout} className="logout-btn">Çıkış Yap</button>
-      </header>
-
-      <div className="content">
-        <h2>Onay Bekleyen Tarifler</h2>
-        
-        {loading ? <p>Yükleniyor...</p> : (
-          <table className="recipe-table">
-            <thead>
-              <tr>
-                <th>Resim</th>
-                <th>Başlık</th>
-                <th>Yazar</th>
-                <th>Tarih</th>
-                <th>Aksiyonlar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recipes.length === 0 ? (
-                <tr><td colSpan="5" style={{textAlign:'center'}}>Bekleyen tarif yok 🎉</td></tr>
-              ) : (
-                recipes.map(recipe => (
-                  <tr key={recipe.id}>
-                    <td>
-                      <img src={recipe.image_url} alt="tarif" className="table-img" />
-                    </td>
-                    <td>
-                        <strong>{recipe.title}</strong>
-                        <br/><small>{recipe.calories} kcal • {recipe.prep_time} dk</small>
-                    </td>
-                    <td>{recipe.author || 'Anonim'}</td>
-                    <td>{new Date(recipe.created_at).toLocaleDateString()}</td>
-                    <td className="actions-cell">
-                      <button 
-                        className="btn-approve" 
-                        onClick={() => handleAction(recipe.id, 'approve')}>
-                        ✅ Onayla
-                      </button>
-                      <button 
-                        className="btn-verify" 
-                        onClick={() => handleAction(recipe.id, 'verify')}
-                        title="Onayla ve Mavi Tik Ver">
-                        🏅 Verify
-                      </button>
-                      <button 
-                        className="btn-reject" 
-                        onClick={() => handleAction(recipe.id, 'reject')}>
-                        ❌ Reddet
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        )}
+    <div className="page-content">
+      <h2>Genel Bakış (Dashboard)</h2>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>👥 Kullanıcılar</h3>
+          <p className="stat-number">{stats.totalUsers}</p>
+        </div>
+        <div className="stat-card">
+          <h3>🍲 Aktif Tarifler</h3>
+          <p className="stat-number">{stats.totalRecipes}</p>
+        </div>
+        <div className="stat-card warning">
+          <h3>⏳ Onay Bekleyen</h3>
+          <p className="stat-number">{stats.pendingRecipes}</p>
+        </div>
+        <div className="stat-card success">
+          <h3>🔥 Bugün Pişirilen</h3>
+          <p className="stat-number">{stats.cookedToday}</p>
+        </div>
       </div>
     </div>
   );

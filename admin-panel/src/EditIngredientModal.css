@@ -1,0 +1,45 @@
+.modal-content-sm {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.edit-ing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edit-ing-form label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 2px;
+}
+
+.edit-ing-form input, .edit-ing-form select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.row-group {
+  display: flex;
+  gap: 10px;
+}
+
+.col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+}

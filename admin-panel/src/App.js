@@ -1,36 +1,60 @@
+// admin-panel/src/App.js
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login';
 import Dashboard from './Dashboard';
+import Sidebar from './Sidebar';
+import PendingRecipes from './PendingRecipes';
+import './App.css';
+import Recipes from './Recipes';
+import Users from './Users';
+import Ingredients from './Ingredients';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('adminToken'));
 
   useEffect(() => {
-    // Sayfa yenilenince token var mı kontrol et
-    const token = localStorage.getItem('adminToken');
     if (token) {
-      setIsAuthenticated(true);
+      localStorage.setItem('adminToken', token);
+    } else {
+      localStorage.removeItem('adminToken');
     }
-  }, []);
+  }, [token]);
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
+  const handleLogin = (newToken) => {
+    setToken(newToken);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminName');
-    setIsAuthenticated(false);
+    setToken(null);
   };
 
+  // Eğer giriş yapılmamışsa Login ekranını göster
+  if (!token) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  // Giriş yapılmışsa Sidebar'lı yapıyı göster
   return (
-    <div>
-      {isAuthenticated ? (
-        <Dashboard onLogout={handleLogout} />
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
-    </div>
+    <Router>
+      <div className="app-container" style={{ display: 'flex' }}>
+        {/* Sol Menü */}
+        <Sidebar onLogout={handleLogout} />
+
+        {/* Sağ İçerik Alanı */}
+        <div className="main-content" style={{ flex: 1, marginLeft: '250px', padding: '20px', backgroundColor: '#f4f6f8', minHeight: '100vh' }}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/pending-recipes" element={<PendingRecipes />} />
+            {/* Yanlış bir linke gidilirse Dashboard'a at */}
+            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/recipes" element={<Recipes />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/ingredients" element={<Ingredients />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
   );
 }
 

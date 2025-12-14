@@ -1,0 +1,110 @@
+/* Recipes.css */
+
+/* Sekme (Tab) Yapısı */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ddd;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #666;
+  font-weight: 500;
+  transition: all 0.3s;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+  color: #3498db;
+  background-color: #f8f9fa;
+}
+
+.tab-btn.active {
+  color: #3498db;
+  border-bottom: 3px solid #3498db;
+}
+
+/* Tablo İyileştirmeleri */
+.date-text {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.empty-msg {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+  font-style: italic;
+}
+
+/* Aksiyon Butonları */
+.icon-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-right: 5px;
+  transition: 0.2s;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.icon-btn.edit:hover {
+  background-color: #f39c12;
+  border-color: #f39c12;
+  color: white;
+}
+
+.icon-btn.verify:hover {
+  background-color: #3498db; /* Mavi */
+  border-color: #3498db;
+}
+
+.icon-btn.unverify:hover {
+  background-color: #7f8c8d; /* Gri */
+  border-color: #7f8c8d;
+}
+
+.icon-btn.delete:hover {
+  background-color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+/* Header ve Arama Kutusu Düzeni */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-row h2 {
+  margin: 0;
+}
+
+.search-input {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 20px; /* Yuvarlak kenarlar */
+  width: 250px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.search-input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+  width: 300px; /* Odaklanınca biraz uzasın */
+}

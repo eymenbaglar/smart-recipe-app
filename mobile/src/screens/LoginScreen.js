@@ -60,12 +60,12 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
 
     } catch (error) {
       console.log("Login hatası:", error.response ? error.response.data : error.message);
-      if (error.response && error.response.status === 401) {
-        Alert.alert('Error', 'E-mail or password is wrong');
+      if (error.response) {
+        Alert.alert('Log In Error', error.response.data.error || 'Check your information.');
       } else if (error.request) {
-        Alert.alert('Connection Error', 'The server cannot be reached.');
+        Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamıyor. İnternet bağlantınızı kontrol edin.');
       } else {
-        Alert.alert('Error.', 'Login is failed please check your login informations.');
+        Alert.alert('Hata', 'Beklenmedik bir hata oluştu.');
       }
     } finally {
       setLoading(false);
