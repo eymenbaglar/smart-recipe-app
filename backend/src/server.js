@@ -7,6 +7,7 @@ const db = require('./config/database');
 const auth = require('./middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const adminAuth = require('./middleware/adminAuth');
 
 const app = express();
 app.use(cors());
@@ -26,6 +27,60 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+{/* ADMİN API'LERİ*/}
+//pending olan tarifleri getir
+app.get('/api/admin/recipes/pending', adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT r.*, u.username as author 
+       FROM recipes r
+       LEFT JOIN users u ON r.created_by = u.id
+       WHERE r.status = 'pending'
+       ORDER BY r.created_at ASC`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//pending tarifle ilgili işlemler
+app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
+  const { id } = req.params;
+  const { action, reason } = req.body; // action: 'approve', 'reject', 'verify'
+
+  try {
+    if (action === 'approve') {
+      await db.query("UPDATE recipes SET status = 'approved' WHERE id = $1", [id]);
+      res.json({ message: 'Tarif onaylandı.' });
+    } 
+    else if (action === 'reject') {
+      await db.query(
+        "UPDATE recipes SET status = 'rejected', rejection_reason = $1 WHERE id = $2", 
+        [reason, id]
+      );
+      res.json({ message: 'Tarif reddedildi.' });
+    }
+    else if (action === 'verify') {
+        // Hem onaylı yap hem de verified (mavi tik) yap
+        await db.query(
+            "UPDATE recipes SET status = 'approved', is_verified = TRUE WHERE id = $1", 
+            [id]
+        );
+        res.json({ message: 'Tarif doğrulandı (Verified) ve onaylandı.' });
+    }
+    else {
+      res.status(400).json({ error: 'Geçersiz işlem.' });
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+{/* USER API'LERİ*/}
 // Register endpoint
 app.post('/auth/register', async (req, res) => {
     const { username, email, password } = req.body;
@@ -96,7 +151,8 @@ app.post('/auth/login', async (req, res) => {
                 id: user.id,
                 username: user.username,
                 email: user.email,
-                profile_picture: user.profile_picture
+                profile_picture: user.profile_picture,
+                role: user.role
             }
         });
 
