@@ -17,7 +17,7 @@ function Users() {
       const response = await api.get('/api/admin/users');
       setUsers(response.data);
     } catch (error) {
-      console.error('Kullanıcılar çekilemedi:', error);
+      console.error('Users could not be retrieved:', error);
     } finally {
       setLoading(false);
     }
@@ -25,33 +25,32 @@ function Users() {
 
   const handleBanToggle = async (user) => {
     const isBanned = user.role === 'banned';
-    const action = isBanned ? "Banı kaldırmak" : "Kullanıcıyı banlamak";
+    const action = isBanned ? "Unban" : "Ban User";
     
-    if (!window.confirm(`Bu ${action} istediğinize emin misiniz?`)) return;
+    if (!window.confirm(`Do you want ${action} action?`)) return;
 
     try {
       await api.patch(`/api/admin/users/${user.id}/ban`, { isBanned: !isBanned });
-      fetchUsers(); // Listeyi yenile
-      alert("İşlem başarılı.");
+      fetchUsers();
+      alert("Succesfull!");
     } catch (error) {
-        alert(error.response?.data?.error || "Hata oluştu.");
+        alert(error.response?.data?.error || "An error occured.");
     }
   };
 
   const handleRoleChange = async (user) => {
     const newRole = user.role === 'admin' ? 'user' : 'admin';
-    if (!window.confirm(`${user.username} adlı kullanıcıyı ${newRole.toUpperCase()} yapmak istiyor musunuz?`)) return;
+    if (!window.confirm(`Do you want ${user.username} to make ${newRole.toUpperCase()} ?`)) return;
 
     try {
         await api.patch(`/api/admin/users/${user.id}/role`, { role: newRole });
         fetchUsers();
-        alert("Rol güncellendi.");
+        alert("Role updated");
     } catch (error) {
-        alert("Hata oluştu.");
+        alert("An error occured.");
     }
   };
 
-  // Filtreleme
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -60,26 +59,26 @@ function Users() {
   return (
     <div className="page-content">
       <div className="header-row">
-        <h2>👥 Kullanıcı Yönetimi</h2>
+        <h2>👥 User Management</h2>
         <input 
           type="text" 
-          placeholder="🔍 İsim veya Email ara..." 
+          placeholder="🔍 Search for Name or Email" 
           className="search-input"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      {loading ? <p>Yükleniyor...</p> : (
+      {loading ? <p>Loading...</p> : (
         <table className="user-table">
           <thead>
             <tr>
               <th width="60">Avatar</th>
-              <th>Kullanıcı Bilgisi</th>
-              <th>Rol</th>
-              <th>İstatistik</th>
-              <th>Kayıt Tarihi</th>
-              <th>İşlemler</th>
+              <th>User Information</th>
+              <th>Role</th>
+              <th>Statistics</th>
+              <th>Date of Registration</th>
+              <th>Operations</th>
             </tr>
           </thead>
           <tbody>
@@ -100,20 +99,18 @@ function Users() {
                   <span className={`badge badge-${user.role}`}>{user.role.toUpperCase()}</span>
                 </td>
                 <td>
-                  <small>🍲 {user.recipe_count} Tarif</small><br/>
-                  <small>💬 {user.review_count} Yorum</small>
+                  <small>🍲 {user.recipe_count} Recipe</small><br/>
+                  <small>💬 {user.review_count} Comments</small>
                 </td>
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
                 <td className="actions-cell">
-                  {/* Ban Butonu */}
                   <button 
                     className={`btn-action ${user.role === 'banned' ? 'btn-unban' : 'btn-ban'}`}
                     onClick={() => handleBanToggle(user)}
                   >
-                    {user.role === 'banned' ? '🔓 Aç' : '🚫 Banla'}
+                    {user.role === 'banned' ? '🔓 Unban' : '🚫 Ban'}
                   </button>
 
-                  {/* Admin Yap Butonu */}
                   <button 
                     className="btn-action btn-role"
                     onClick={() => handleRoleChange(user)}

@@ -17,11 +17,9 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Dosyalar 'uploads' klasörüne gitsin
+    cb(null, 'uploads/');
   },
   filename: function (req, file, cb) {
-    // Dosya adı çakışmasın diye isminin başına tarih ekliyoruz
-    // Örn: 17654321-profil.jpg
     cb(null, Date.now() + path.extname(file.originalname)); 
   }
 });
@@ -48,30 +46,29 @@ app.get('/api/admin/recipes/pending', adminAuth, async (req, res) => {
 //pending tarifle ilgili işlemler
 app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
   const { id } = req.params;
-  const { action, reason } = req.body; // action: 'approve', 'reject', 'verify'
+  const { action, reason } = req.body;
 
   try {
     if (action === 'approve') {
       await db.query("UPDATE recipes SET status = 'approved' WHERE id = $1", [id]);
-      res.json({ message: 'Tarif onaylandı.' });
+      res.json({ message: 'Recipe approved.' });
     } 
     else if (action === 'reject') {
       await db.query(
         "UPDATE recipes SET status = 'rejected', rejection_reason = $1 WHERE id = $2", 
         [reason, id]
       );
-      res.json({ message: 'Tarif reddedildi.' });
+      res.json({ message: 'Recipe rejected.' });
     }
     else if (action === 'verify') {
-        // Hem onaylı yap hem de verified (mavi tik) yap
         await db.query(
             "UPDATE recipes SET status = 'approved', is_verified = TRUE WHERE id = $1", 
             [id]
         );
-        res.json({ message: 'Tarif doğrulandı (Verified) ve onaylandı.' });
+        res.json({ message: 'Recipe Verified and Approved.' });
     }
     else {
-      res.status(400).json({ error: 'Geçersiz işlem.' });
+      res.status(400).json({ error: 'Invalid transaction.' });
     }
 
   } catch (error) {
@@ -83,16 +80,16 @@ app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
 // Dashboard İstatistikleri
 app.get('/api/admin/stats', adminAuth, async (req, res) => {
   try {
-    // 1. Toplam Kullanıcı Sayısı
+    //toplam kullanıcı
     const userCount = await db.query('SELECT COUNT(*) FROM users');
     
-    // 2. Onaylanmış Toplam Tarif Sayısı
+    //onaylanmış tarif
     const recipeCount = await db.query("SELECT COUNT(*) FROM recipes WHERE status = 'approved'");
     
-    // 3. Onay Bekleyen Tarif Sayısı
+    //onay bekleyen tarif
     const pendingCount = await db.query("SELECT COUNT(*) FROM recipes WHERE status = 'pending'");
     
-    // 4. Bugün Pişirilen Yemek Sayısı (Meal History'den)
+    //bugün pişirilen yemek sayısı
     const cookedToday = await db.query(
       "SELECT COUNT(*) FROM meal_history WHERE cooked_at::date = CURRENT_DATE"
     );
@@ -110,9 +107,9 @@ app.get('/api/admin/stats', adminAuth, async (req, res) => {
   }
 });
 
-// Onaylanmış tarifleri getir (İstatistiklerle birlikte)
+//Onaylanmış tarifleri getir
 app.get('/api/admin/recipes/approved', adminAuth, async (req, res) => {
-  const { type } = req.query; // 'verified' veya 'standard'
+  const { type } = req.query;
   
   try {
     const isVerified = type === 'verified' ? 'TRUE' : 'FALSE';
@@ -121,9 +118,7 @@ app.get('/api/admin/recipes/approved', adminAuth, async (req, res) => {
       `SELECT 
          r.*, 
          u.username as author,
-         -- Yorum sayısını hesapla
          (SELECT COUNT(*) FROM reviews WHERE recipe_id = r.id) as review_count,
-         -- Ortalama puanı hesapla (Yoksa 0 ver)
          (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating
        FROM recipes r
        LEFT JOIN users u ON r.created_by = u.id
@@ -137,42 +132,39 @@ app.get('/api/admin/recipes/approved', adminAuth, async (req, res) => {
   }
 });
 
-// Tarif Silme (Admin yetkisiyle)
+//Tarif silme
 app.delete('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
   try {
-    // Önce bağlı tablolardan (ingredients, reviews vb.) silinmesi gerekebilir (CASCADE ayarlı değilse)
-    // Basitlik adına direkt siliyoruz (DB'de ON DELETE CASCADE olduğunu varsayarak)
     await db.query('DELETE FROM recipes WHERE id = $1', [id]);
-    res.json({ message: 'Tarif silindi.' });
+    res.json({ message: 'Recipe deleted.' });
   } catch (error) {
     console.error('Delete error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Verified Durumunu Değiştir (Toggle)
+//Verified durumunu değiştir
 app.patch('/api/admin/recipes/:id/toggle-verify', adminAuth, async (req, res) => {
   const { id } = req.params;
-  const { isVerified } = req.body; // Yeni durum
+  const { isVerified } = req.body;
 
   try {
     await db.query(
       'UPDATE recipes SET is_verified = $1 WHERE id = $2',
       [isVerified, id]
     );
-    res.json({ message: 'Verified durumu güncellendi.' });
+    res.json({ message: 'Verified situation updated.' });
   } catch (error) {
     console.error('Verify toggle error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Admin: Tekil Tarif Getir (Düzenleme modalını doldurmak için)
+//Tekil tarif getir
 app.get('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
   try {
-    // Tarif bilgileri + malzemeleri JSON array olarak çekiyoruz
     const query = `
       SELECT r.*, 
              COALESCE(
@@ -195,7 +187,7 @@ app.get('/api/admin/recipes/:id', adminAuth, async (req, res) => {
     const result = await db.query(query, [id]);
     
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Tarif bulunamadı' });
+      return res.status(404).json({ error: 'Could not find recipe' });
     }
     res.json(result.rows[0]);
   } catch (error) {
@@ -204,7 +196,7 @@ app.get('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   }
 });
 
-// Admin: Tarifi Güncelle
+//Tarifi Güncelle
 app.put('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
   const { title, description, instructions, prep_time, calories, serving, image_url, ingredients } = req.body;
@@ -212,9 +204,8 @@ app.put('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   const client = await db.connect();
 
   try {
-    await client.query('BEGIN'); // Transaction Başlat
+    await client.query('BEGIN');
 
-    // A. Temel Bilgileri Güncelle
     await client.query(
       `UPDATE recipes 
        SET title = $1, description = $2, instructions = $3, prep_time = $4, calories = $5, serving = $6, image_url = $7 
@@ -222,14 +213,10 @@ app.put('/api/admin/recipes/:id', adminAuth, async (req, res) => {
       [title, description, instructions, prep_time, calories, serving, image_url, id]
     );
 
-    // B. Malzemeleri Güncelle (Eskileri sil, yenileri ekle)
     if (ingredients && Array.isArray(ingredients)) {
-      // 1. Mevcut bağlantıları sil
       await client.query('DELETE FROM recipe_ingredients WHERE recipe_id = $1', [id]);
 
-      // 2. Yeni malzemeleri ekle
       for (const ing of ingredients) {
-        // Dropdown'dan seçilen id ve girilen miktar ile ekle
         await client.query(
           `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit_type) 
            VALUES ($1, $2, $3, $4)`,
@@ -238,11 +225,11 @@ app.put('/api/admin/recipes/:id', adminAuth, async (req, res) => {
       }
     }
 
-    await client.query('COMMIT'); // Onayla
-    res.json({ message: 'Tarif başarıyla güncellendi.' });
+    await client.query('COMMIT'); 
+    res.json({ message: 'Recipe updated successfully.' });
 
   } catch (error) {
-    await client.query('ROLLBACK'); // Hata varsa geri al
+    await client.query('ROLLBACK'); 
     console.error('Update error:', error);
     res.status(500).json({ error: 'Server error' });
   } finally {
@@ -250,6 +237,7 @@ app.put('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   }
 });
 
+//ingredients getir
 app.get('/api/ingredients', adminAuth, async (req, res) => {
   try {
     const result = await db.query('SELECT id, name FROM ingredients ORDER BY name ASC');
@@ -263,7 +251,6 @@ app.get('/api/ingredients', adminAuth, async (req, res) => {
 app.get('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
   try {
-    // Tarif bilgileri + malzemeleri JSON array olarak çekiyoruz
     const query = `
       SELECT r.*, 
              COALESCE(
@@ -286,7 +273,7 @@ app.get('/api/admin/recipes/:id', adminAuth, async (req, res) => {
     const result = await db.query(query, [id]);
     
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Tarif bulunamadı' });
+      return res.status(404).json({ error: 'Could not find recipe' });
     }
     res.json(result.rows[0]);
   } catch (error) {
@@ -295,7 +282,7 @@ app.get('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   }
 });
 
-// 1. Tüm Kullanıcıları Getir (İstatistiklerle)
+//Tüm Kullanıcıları Getir
 app.get('/api/admin/users', adminAuth, async (req, res) => {
   try {
     const query = `
@@ -314,46 +301,43 @@ app.get('/api/admin/users', adminAuth, async (req, res) => {
   }
 });
 
-// 2. Kullanıcıyı Banla/Banı Kaldır (Rolünü 'banned' yapıyoruz veya eski haline döndürüyoruz)
+//Kullanıcıyı Banla/Banı Kaldır
 app.patch('/api/admin/users/:id/ban', adminAuth, async (req, res) => {
   const { id } = req.params;
-  const { isBanned } = req.body; // true = banla, false = aç
+  const { isBanned } = req.body;
   
-  // Eğer banlanacaksa rolü 'banned' yap, açılacaksa 'user' yap
   const newRole = isBanned ? 'banned' : 'user';
 
   try {
-    // Kendini banlamayı engelle (Opsiyonel güvenlik)
     if (id == req.user.userId) { 
-        return res.status(400).json({ error: "Kendinizi banlayamazsınız." });
+        return res.status(400).json({ error: "You can not ban yourself" });
     }
 
     await db.query('UPDATE users SET role = $1 WHERE id = $2', [newRole, id]);
-    res.json({ message: `Kullanıcı durumu güncellendi: ${newRole}` });
+    res.json({ message: `User status updated: ${newRole}` });
   } catch (error) {
     console.error('Ban error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// 3. Kullanıcıyı Admin Yap/Geri Al
+//Kullanıcıyı Admin Yap/Geri Al
 app.patch('/api/admin/users/:id/role', adminAuth, async (req, res) => {
   const { id } = req.params;
-  const { role } = req.body; // 'admin' veya 'user'
+  const { role } = req.body;
 
   try {
     await db.query('UPDATE users SET role = $1 WHERE id = $2', [role, id]);
-    res.json({ message: 'Rol güncellendi.' });
+    res.json({ message: 'Role updated' });
   } catch (error) {
     console.error('Role update error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// 1. Tüm Malzemeleri Getir
+//Tüm Malzemeleri Getir
 app.get('/api/admin/ingredients/list', adminAuth, async (req, res) => {
   try {
-    // Veritabanındaki gerçek sütun isimlerini çekiyoruz
     const result = await db.query('SELECT * FROM ingredients ORDER BY id DESC');
     res.json(result.rows);
   } catch (error) {
@@ -362,13 +346,12 @@ app.get('/api/admin/ingredients/list', adminAuth, async (req, res) => {
   }
 });
 
-// 2. Yeni Malzeme Ekle (SQL TABLOLARINA GÖRE DÜZENLENDİ)
+//Yeni Malzeme Ekle
 app.post('/api/admin/ingredients', adminAuth, async (req, res) => {
-  // Frontend'den gelen veriler
   const { name, unit, unit_category, category, calories, isStaple } = req.body;
   
   if (!name || !unit) {
-      return res.status(400).json({ error: "Malzeme adı ve birimi zorunludur." });
+      return res.status(400).json({ error: "Ingredient name and unit are required." });
   }
 
   try {
@@ -379,20 +362,20 @@ app.post('/api/admin/ingredients', adminAuth, async (req, res) => {
       [
         name, 
         unit, 
-        unit_category || 'count', // Varsayılan: count
-        category || 'General',    // Varsayılan: General
-        calories || 0,            // Frontend'den 'calories' geliyor, DB'de 'calories_per_unit'
+        unit_category || 'count',
+        category || 'General',    
+        calories || 0, 
         isStaple || false
       ]
     );
-    res.status(201).json({ message: 'Malzeme başarıyla eklendi.' });
+    res.status(201).json({ message: 'Ingredient added succesfully' });
   } catch (error) {
     console.error('Add ingredient error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// 3. Malzeme Düzenleme
+//Malzeme Düzenleme
 app.put('/api/admin/ingredients/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
   const { name, unit, unit_category, category, calories, isStaple } = req.body;
@@ -404,7 +387,7 @@ app.put('/api/admin/ingredients/:id', adminAuth, async (req, res) => {
        WHERE id = $7`,
       [name, unit, unit_category, category, calories, isStaple, id]
     );
-    res.json({ message: 'Malzeme güncellendi.' });
+    res.json({ message: 'Ingredient updated' });
   } catch (error) {
     console.error('Update ingredient error:', error);
     res.status(500).json({ error: 'Server error' });

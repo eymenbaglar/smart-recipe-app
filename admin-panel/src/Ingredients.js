@@ -44,7 +44,7 @@ function Ingredients() {
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!newName || !newUnit) {
-      alert("İsim ve Birim zorunludur!");
+      alert("Name and Unit are required!");
       return;
     }
 
@@ -58,8 +58,7 @@ function Ingredients() {
         isStaple: isStaple
       });
       
-      alert("Malzeme eklendi!");
-      // Formu temizle
+      alert("Ingredient added!");
       setNewName('');
       setNewUnit('');
       setUnitCategory('count');
@@ -70,18 +69,18 @@ function Ingredients() {
       fetchIngredients(); 
     } catch (error) {
       console.error(error);
-      alert("Ekleme başarısız.");
+      alert("Addition failed.");
     }
   };
 
   const handleUpdate = async (id, updatedData) => {
     try {
       await api.put(`/api/admin/ingredients/${id}`, updatedData);
-      alert('Malzeme güncellendi!');
+      alert('Ingredient updated!');
       setIsEditModalOpen(false);
-      fetchIngredients(); // Listeyi yenile
+      fetchIngredients();
     } catch (error) {
-      alert('Güncelleme başarısız.');
+      alert('Update Failed.');
     }
   };
 
@@ -91,19 +90,17 @@ function Ingredients() {
 
   return (
     <div className="page-content">
-      <h2>🥕 Malzeme Yönetimi</h2>
+      <h2>🥕 Ingredient Management</h2>
       
-      {/* ... Ekleme Formu (add-ingredient-box) Aynen Kalsın ... */}
       <div className="add-ingredient-box">
-         {/* ... form kodları ... */}
-          <h4>Yeni Malzeme Ekle</h4>
+          <h4>Add New Ingredient</h4>
             <form onSubmit={handleAdd} className="add-form">
             <div className="form-group-row">
-                <input type="text" placeholder="İsim" value={newName} onChange={e=>setNewName(e.target.value)} className="form-input" required />
-                <input type="text" placeholder="Kategori" value={category} onChange={e=>setCategory(e.target.value)} className="form-input" />
+                <input type="text" placeholder="Name" value={newName} onChange={e=>setNewName(e.target.value)} className="form-input" required />
+                <input type="text" placeholder="Category" value={category} onChange={e=>setCategory(e.target.value)} className="form-input" />
             </div>
             <div className="form-group-row">
-                <input type="text" placeholder="Birim" value={newUnit} onChange={e=>setNewUnit(e.target.value)} className="form-input" required style={{width:'100px'}} />
+                <input type="text" placeholder="Unit" value={newUnit} onChange={e=>setNewUnit(e.target.value)} className="form-input" required style={{width:'100px'}} />
                 <select value={unitCategory} onChange={e=>setUnitCategory(e.target.value)} className="form-select">
                     <option value="count">Count</option>
                     <option value="weight">Weight</option>
@@ -115,7 +112,7 @@ function Ingredients() {
                 <label className="checkbox-label">
                     <input type="checkbox" checked={isStaple} onChange={e=>setIsStaple(e.target.checked)} /> Staple?
                 </label>
-                <button type="submit" className="btn-add">➕ Ekle</button>
+                <button type="submit" className="btn-add">➕ Add</button>
             </div>
             </form>
       </div>
@@ -123,27 +120,27 @@ function Ingredients() {
       {/* Arama Çubuğu */}
       <div className="search-row">
         <input 
-          type="text" placeholder="🔍 Malzeme Ara..." 
+          type="text" placeholder="🔍 Search Ingredient" 
           className="search-input-wide"
           value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <span className="count-badge">{filteredIngredients.length} Malzeme</span>
+        <span className="count-badge">{filteredIngredients.length} Ingredient</span>
       </div>
 
       {/* Tablo */}
-      {loading ? <p>Yükleniyor...</p> : (
+      {loading ? <p>Loading...</p> : (
         <div className="table-container">
           <table className="ingredient-table">
             <thead>
               <tr>
                 <th>ID</th>
-                <th>İsim</th>
-                <th>Kategori</th>
-                <th>Birim</th>
-                <th>Tip</th>
-                <th>Kalori</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Unit</th>
+                <th>Unit Type</th>
+                <th>Calory</th>
                 <th>Staple</th>
-                <th>İşlem</th> {/* Başlık değişti */}
+                <th>Edit</th>
               </tr>
             </thead>
             <tbody>
@@ -155,11 +152,10 @@ function Ingredients() {
                   <td>{ing.unit}</td>
                   <td><span className="badge badge-gray">{ing.unit_category}</span></td>
                   <td>{ing.calories_per_unit}</td>
-                  <td>{ing.is_staple ? <span className="badge badge-staple">Evet</span> : ''}</td>
+                  <td>{ing.is_staple ? <span className="badge badge-staple">Yes</span> : ''}</td>
                   <td>
-                    {/* YENİ: Sadece Edit Butonu */}
                     <button className="icon-btn edit" onClick={() => openEditModal(ing)}>
-                      ✏️ Düzenle
+                      ✏️ Edit
                     </button>
                   </td>
                 </tr>

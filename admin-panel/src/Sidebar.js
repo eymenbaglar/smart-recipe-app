@@ -1,4 +1,3 @@
-// admin-panel/src/Sidebar.js
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import './Sidebar.css';
@@ -16,26 +15,25 @@ function Sidebar({ onLogout }) {
         </NavLink>
         
         <NavLink to="/pending-recipes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          ⏳ Onay Bekleyenler
+          ⏳ Waiting For Approve
         </NavLink>
 
         <NavLink to="/recipes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-        🍲 Tarifler
+        🍲 Recipes
         </NavLink>
 
         <NavLink to="/users" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-        👥 Kullanıcılar
+        👥 Users
         </NavLink>
 
         <NavLink to="/ingredients" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-        🥕 Malzemeler
+        🥕 Ingredients
         </NavLink>
 
-        {/* İleride buraya Kullanıcılar, Tarifler vb. eklenecek */}
       </nav>
 
       <div className="sidebar-footer">
-        <button onClick={onLogout} className="logout-btn">Çıkış Yap</button>
+        <button onClick={onLogout} className="logout-btn">Log Out</button>
       </div>
     </div>
   );

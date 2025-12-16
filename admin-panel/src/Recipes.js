@@ -9,10 +9,10 @@ function Recipes() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  // YENİ: Arama Terimi State'i
+  //Arama Terimi State'i
   const [searchTerm, setSearchTerm] = useState('');
 
-  // YENİ: Modal State'leri
+  //Modal State'leri
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
 
@@ -25,38 +25,37 @@ function Recipes() {
     try {
       const response = await api.get(`/api/admin/recipes/approved?type=${activeTab}`);
       setRecipes(response.data);
-      // Sekme değişince aramayı sıfırlamak istersen:
       setSearchTerm(''); 
     } catch (error) {
-      console.error('Tarifler çekilemedi:', error);
+      console.error('Recipes could not be retrieved:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Bu tarifi kalıcı olarak silmek istediğinize emin misiniz?")) return;
+    if (!window.confirm("Are you sure you want to permanently delete this recipe?")) return;
 
     try {
       await api.delete(`/api/admin/recipes/${id}`);
       setRecipes(recipes.filter(r => r.id !== id));
-      alert("Tarif silindi.");
+      alert("Recipe Deleted.");
     } catch (error) {
-      alert("Silme işlemi başarısız.");
+      alert("Deletion failed.");
     }
   };
 
   const handleToggleVerify = async (recipe) => {
     const newStatus = !recipe.is_verified;
-    const actionText = newStatus ? "Verified (Mavi Tik) yapmak" : "Verified yetkisini almak";
+    const actionText = newStatus ? "Get verified" : "Obtain verified status";
     
-    if (!window.confirm(`Bu tarifi ${actionText} istiyor musunuz?`)) return;
+    if (!window.confirm(`Would you like ${actionText} recipe?`)) return;
 
     try {
       await api.patch(`/api/admin/recipes/${recipe.id}/toggle-verify`, { isVerified: newStatus });
       fetchRecipes(); 
     } catch (error) {
-      alert("İşlem başarısız.");
+      alert("The operation failed.");
     }
   };
 
@@ -69,17 +68,16 @@ function Recipes() {
   const saveRecipe = async (id, updatedData) => {
     try {
       await api.put(`/api/admin/recipes/${id}`, updatedData);
-      alert('Tarif güncellendi!');
+      alert('Recipe Updated!');
       setIsModalOpen(false);
       fetchRecipes();
     } catch (error) {
-      alert('Güncelleme sırasında hata oluştu.');
+      alert('An error occurred during the update.');
       console.error(error);
     }
   };
 
-  // YENİ: Filtreleme Mantığı
-  // Tarif başlığı (title) arama terimini içeriyor mu? (Büyük/küçük harf duyarsız)
+  //Filtreleme
   const filteredRecipes = recipes.filter(recipe => 
     recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (recipe.author && recipe.author.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -92,12 +90,10 @@ function Recipes() {
   return (
     <div className="page-content">
       <div className="header-row">
-        <h2>Tarif Yönetimi</h2>
-        
-        {/* YENİ: Arama Kutusu */}
+        <h2>Recipe Management</h2>
         <input 
           type="text" 
-          placeholder="🔍 Tarif veya Kullanıcı Ara..." 
+          placeholder="🔍 Search for Recipe or User..." 
           className="search-input"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -109,39 +105,38 @@ function Recipes() {
         <button 
           className={`tab-btn ${activeTab === 'standard' ? 'active' : ''}`} 
           onClick={() => setActiveTab('standard')}>
-          📋 Standart Tarifler
+          📋 Standart Recipes
         </button>
         <button 
           className={`tab-btn ${activeTab === 'verified' ? 'active' : ''}`} 
           onClick={() => setActiveTab('verified')}>
-          🏅 Verified Tarifler
+          🏅 Verified Recipes
         </button>
       </div>
 
       {/* LİSTE */}
-      {loading ? <p>Yükleniyor...</p> : (
+      {loading ? <p>Loading...</p> : (
         <table className="recipe-table">
           <thead>
             <tr>
-              <th width="80">Görsel</th>
-              <th>Tarif Bilgisi</th>
-              <th>Yazar</th>
-              <th>İstatistik</th>
-              <th>Puan/Yorum</th>
-              <th width="180">İşlemler</th>
+              <th width="80">Picture</th>
+              <th>Recipe Information</th>
+              <th>Author</th>
+              <th>Statistics</th>
+              <th>Rate/Comment</th>
+              <th width="180">Operations</th>
             </tr>
           </thead>
           <tbody>
             {filteredRecipes.length === 0 ? (
               <tr>
                 <td colSpan="6" className="empty-msg">
-                  {searchTerm ? `"${searchTerm}" aramasına uygun tarif bulunamadı.` : 'Bu kategoride tarif yok.'}
+                  {searchTerm ? `"${searchTerm}" No suitable recipe was found for your search.` : 'There are no recipes in this category.'}
                 </td>
               </tr>
             ) : (
               filteredRecipes.map(recipe => (
                 <tr key={recipe.id}>
-                  {/* ... Görsel ve Tarif Bilgisi sütunları aynı ... */}
                   <td>
                     <img 
                       src={recipe.image_url ? recipe.image_url : "https://via.placeholder.com/50"} 
@@ -157,7 +152,6 @@ function Recipes() {
                     </span>
                   </td>
 
-                  {/* YENİ YAZAR SÜTUNU */}
                   <td className="author-cell">
                     <span>{recipe.author || 'Anonim'}</span>
                     {recipe.author && (
@@ -171,10 +165,9 @@ function Recipes() {
                     )}
                   </td>
 
-                  {/* ... Diğer sütunlar aynı ... */}
                   <td>
                     <small>🔥 {recipe.calories} kcal</small><br/>
-                    <small>⏱️ {recipe.prep_time} dk</small>
+                    <small>⏱️ {recipe.prep_time} m</small>
                   </td>
                   <td>
                     <div style={{display:'flex', flexDirection:'column'}}>
@@ -182,20 +175,19 @@ function Recipes() {
                          ★ {Number(recipe.average_rating).toFixed(1)}
                        </span>
                        <small style={{color:'#666'}}>
-                         💬 {recipe.review_count} Yorum
+                         💬 {recipe.review_count} Comments
                        </small>
                     </div>
                   </td>
                   <td className="actions-cell">
-                    {/* ... Butonlar aynı ... */}
-                    <button className="icon-btn edit" title="Düzenle" onClick={() => handleEdit(recipe)}>✏️</button>
+                    <button className="icon-btn edit" title="Edit" onClick={() => handleEdit(recipe)}>✏️</button>
                     <button 
                       className={`icon-btn ${recipe.is_verified ? 'unverify' : 'verify'}`} 
                       onClick={() => handleToggleVerify(recipe)}
                     >
                       {recipe.is_verified ? '⬇️' : '🏅'}
                     </button>
-                    <button className="icon-btn delete" title="Sil" onClick={() => handleDelete(recipe.id)}>🗑️</button>
+                    <button className="icon-btn delete" title="Delete" onClick={() => handleDelete(recipe.id)}>🗑️</button>
                   </td>
                 </tr>
               ))
@@ -204,7 +196,6 @@ function Recipes() {
         </table>
       )}
 
-      {/* MODAL */}
       <EditRecipeModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

@@ -1,4 +1,3 @@
-// admin-panel/src/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import api from './api';
 import './Dashboard.css';
@@ -17,7 +16,7 @@ function Dashboard() {
         const response = await api.get('/api/admin/stats');
         setStats(response.data);
       } catch (error) {
-        console.error('Stats hatası:', error);
+        console.error('Stats error:', error);
       }
     };
     fetchStats();
@@ -25,22 +24,22 @@ function Dashboard() {
 
   return (
     <div className="page-content">
-      <h2>Genel Bakış (Dashboard)</h2>
+      <h2>Dashboard</h2>
       <div className="stats-grid">
         <div className="stat-card">
-          <h3>👥 Kullanıcılar</h3>
+          <h3>👥 Users</h3>
           <p className="stat-number">{stats.totalUsers}</p>
         </div>
         <div className="stat-card">
-          <h3>🍲 Aktif Tarifler</h3>
+          <h3>🍲 Active Recipes</h3>
           <p className="stat-number">{stats.totalRecipes}</p>
         </div>
         <div className="stat-card warning">
-          <h3>⏳ Onay Bekleyen</h3>
+          <h3>⏳ Waiting For Approve</h3>
           <p className="stat-number">{stats.pendingRecipes}</p>
         </div>
         <div className="stat-card success">
-          <h3>🔥 Bugün Pişirilen</h3>
+          <h3>🔥 Cooked Today</h3>
           <p className="stat-number">{stats.cookedToday}</p>
         </div>
       </div>

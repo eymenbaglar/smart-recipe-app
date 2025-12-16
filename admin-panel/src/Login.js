@@ -14,44 +14,42 @@ function Login({ onLogin }) {
       
       const { token, user } = response.data;
 
-      // KONTROL: Sadece Adminler girebilir!
       if (user.role !== 'admin') {
-        setError('Yetkisiz giriş! Sadece yöneticiler girebilir.');
+        setError('Unauthorized access! Only administrators may enter.');
         return;
       }
 
-      // Token'ı tarayıcı hafızasına kaydet
       localStorage.setItem('adminToken', token);
       localStorage.setItem('adminName', user.username);
       
-      onLogin(); // App.js'e haber ver (Sayfayı değiştir)
+      onLogin();
 
     } catch (err) {
-      setError('Giriş başarısız. Bilgileri kontrol edin.');
+      setError('Login failed. Please check your credentials.');
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-box">
-        <h2>Admin Panel Girişi</h2>
+        <h2>Admin Panel Login</h2>
         {error && <p className="error">{error}</p>}
         <form onSubmit={handleSubmit}>
           <input 
             type="email" 
-            placeholder="Admin E-posta" 
+            placeholder="Admin E-mail" 
             value={email} 
             onChange={(e) => setEmail(e.target.value)} 
             required 
           />
           <input 
             type="password" 
-            placeholder="Şifre" 
+            placeholder="Password" 
             value={password} 
             onChange={(e) => setPassword(e.target.value)} 
             required 
           />
-          <button type="submit">Giriş Yap</button>
+          <button type="submit">Log In</button>
         </form>
       </div>
     </div>

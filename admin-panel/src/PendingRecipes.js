@@ -15,7 +15,7 @@ function PendingRecipes() {
       const response = await api.get('/api/admin/recipes/pending');
       setRecipes(response.data);
     } catch (error) {
-      console.error('Veri çekme hatası:', error);
+      console.error('Data retrieval error:', error);
     } finally {
       setLoading(false);
     }
@@ -24,36 +24,36 @@ function PendingRecipes() {
   const handleAction = async (id, action) => {
     let reason = null;
     if (action === 'reject') {
-      reason = window.prompt("Reddetme sebebini yazın:");
+      reason = window.prompt("Please state the reason for rejection:");
       if (!reason) return;
     }
 
     try {
       await api.patch(`/api/admin/recipes/${id}/action`, { action, reason });
-      alert('İşlem başarılı!');
+      alert('Transaction successful!');
       fetchPendingRecipes(); // Listeyi yenile
     } catch (error) {
-      alert('İşlem sırasında hata oluştu.');
+      alert('An error occurred during the process.');
     }
   };
 
   return (
     <div className="page-content">
-      <h2>Onay Bekleyen Tarifler</h2>
-      {loading ? <p>Yükleniyor...</p> : (
+      <h2>Recipes Pending Approval</h2>
+      {loading ? <p>Loading...</p> : (
         <table className="recipe-table">
           <thead>
             <tr>
-              <th>Resim</th>
-              <th>Başlık</th>
-              <th>Yazar</th>
-              <th>Tarih</th>
-              <th>Aksiyonlar</th>
+              <th>Picture</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Date</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {recipes.length === 0 ? (
-              <tr><td colSpan="5" style={{textAlign:'center'}}>Bekleyen tarif yok 🎉</td></tr>
+              <tr><td colSpan="5" style={{textAlign:'center'}}>No pending recepies </td></tr>
             ) : (
               recipes.map(recipe => (
                 <tr key={recipe.id}>
@@ -62,14 +62,14 @@ function PendingRecipes() {
                   </td>
                   <td>
                       <strong>{recipe.title}</strong>
-                      <br/><small>{recipe.calories} kcal • {recipe.prep_time} dk</small>
+                      <br/><small>{recipe.calories} kcal • {recipe.prep_time} m</small>
                   </td>
                   <td>{recipe.author || 'Anonim'}</td>
                   <td>{new Date(recipe.created_at).toLocaleDateString()}</td>
                   <td className="actions-cell">
-                    <button className="btn-approve" onClick={() => handleAction(recipe.id, 'approve')}>✅ Onayla</button>
+                    <button className="btn-approve" onClick={() => handleAction(recipe.id, 'approve')}>✅ Approve</button>
                     <button className="btn-verify" onClick={() => handleAction(recipe.id, 'verify')}>🏅 Verify</button>
-                    <button className="btn-reject" onClick={() => handleAction(recipe.id, 'reject')}>❌ Reddet</button>
+                    <button className="btn-reject" onClick={() => handleAction(recipe.id, 'reject')}>❌ Reject</button>
                   </td>
                 </tr>
               ))

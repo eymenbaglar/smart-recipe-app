@@ -1,4 +1,3 @@
-// admin-panel/src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login';
@@ -29,12 +28,10 @@ function App() {
     setToken(null);
   };
 
-  // Eğer giriş yapılmamışsa Login ekranını göster
   if (!token) {
     return <Login onLogin={handleLogin} />;
   }
 
-  // Giriş yapılmışsa Sidebar'lı yapıyı göster
   return (
     <Router>
       <div className="app-container" style={{ display: 'flex' }}>
@@ -46,7 +43,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/pending-recipes" element={<PendingRecipes />} />
-            {/* Yanlış bir linke gidilirse Dashboard'a at */}
             <Route path="*" element={<Navigate to="/" />} />
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/users" element={<Users />} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './EditIngredientModal.css'; // Birazdan oluşturacağız
+import './EditIngredientModal.css';
 
 function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
   const [formData, setFormData] = useState({
@@ -40,33 +40,33 @@ function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content-sm"> {/* Küçük modal */}
-        <h3>Malzemeyi Düzenle</h3>
+    <div className="modal-overlay"> 
+      <div className="modal-content-sm">
+        <h3>Edit Ingredient</h3>
         <form onSubmit={handleSubmit} className="edit-ing-form">
           
-          <label>Malzeme Adı</label>
+          <label>Ingredient Name</label>
           <input name="name" value={formData.name} onChange={handleChange} required />
 
-          <label>Kategori (Et, Sebze vs.)</label>
+          <label>Category (Meat, Vegetable etc.)</label>
           <input name="category" value={formData.category} onChange={handleChange} />
 
           <div className="row-group">
             <div className="col">
-              <label>Birim (gr, adet)</label>
+              <label>Unit (gr,ml etc.)</label>
               <input name="unit" value={formData.unit} onChange={handleChange} required />
             </div>
             <div className="col">
-              <label>Birim Tipi</label>
+              <label>Unit type</label>
               <select name="unit_category" value={formData.unit_category} onChange={handleChange}>
-                <option value="count">Count (Adet)</option>
-                <option value="weight">Weight (Ağırlık)</option>
-                <option value="volume">Volume (Hacim)</option>
+                <option value="count">Count</option>
+                <option value="weight">Weight</option>
+                <option value="volume">Volume</option>
               </select>
             </div>
           </div>
 
-          <label>Kalori (Birim Başı)</label>
+          <label>Calory (Per unit)</label>
           <input name="calories" type="number" value={formData.calories} onChange={handleChange} />
 
           <div className="checkbox-row">
@@ -77,12 +77,12 @@ function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
               onChange={handleChange} 
               id="stapleCheck"
             />
-            <label htmlFor="stapleCheck">Temel Gıda (Staple)</label>
+            <label htmlFor="stapleCheck">Staple</label>
           </div>
 
           <div className="modal-actions">
-            <button type="button" onClick={onClose} className="btn-cancel">İptal</button>
-            <button type="submit" className="btn-save">Güncelle</button>
+            <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+            <button type="submit" className="btn-save">Update</button>
           </div>
         </form>
       </div>
