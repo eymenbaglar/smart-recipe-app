@@ -1,4 +1,3 @@
-// backend/src/server.js
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
@@ -1420,6 +1419,107 @@ app.post('/api/recipes', auth, async (req, res) => {
     res.status(500).json({ error: 'Sunucu hatası, tarif eklenemedi.' });
   } finally {
     client.release();
+  }
+});
+
+//kullanıcının kendi tariflerini getir
+app.get('/my-recipes', auth, async (req, res) => {
+  try {
+    // KONSOLDA GÖRMEK İÇİN LOG EKLE:
+    console.log("İstek Yapan Kullanıcı ID:", req.user ? req.user.id : 'KULLANICI YOK'); 
+
+    const result = await db.query(
+      `SELECT * FROM recipes 
+       WHERE created_by = $1 
+       ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    // HATAYI KONSOLA DETAYLI YAZDIR:
+    console.error('My recipes SQL Hatası:', err.message); 
+    res.status(500).json({ error: 'Tarifler getirilemedi.' });
+  }
+});
+
+//rejected tarifi sil
+app.delete('/recipes/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Önce tarifin bu kullanıcıya ait olup olmadığını kontrol et
+    const check = await db.query(
+      'SELECT * FROM recipes WHERE id = $1 AND created_by = $2',
+      [id, req.user.id]
+    );
+
+    if (check.rows.length === 0) {
+      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok veya tarif bulunamadı.' });
+    }
+
+    // Silme işlemi
+    await db.query('DELETE FROM recipes WHERE id = $1', [id]);
+    res.json({ message: 'Tarif başarıyla silindi.' });
+
+  } catch (err) {
+    console.error('Delete recipe error:', err);
+    res.status(500).json({ error: 'Silme işlemi başarısız.' });
+  }
+});
+
+//rejected tarifi düzenle ve tekrar gönder
+app.put('/recipes/:id', auth, upload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, ingredients, steps, category, preparation_time, calories, difficulty } = req.body;
+    
+    // Resim yüklendiyse URL'i al, yüklenmediyse eskiyi koruyacağız (SQL'de COALESCE kullanabiliriz veya JS'de kontrol ederiz)
+    const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+
+    // 1. Yetki kontrolü
+    const check = await db.query('SELECT * FROM recipes WHERE id = $1 AND created_by = $2', [id, req.user.id]);
+    if (check.rows.length === 0) {
+      return res.status(403).json({ error: 'Yetkisiz işlem.' });
+    }
+
+    // 2. Güncelleme Sorgusu
+    // Status'ü tekrar 'pending' yapıyoruz. 
+    // Rejection reason'ı temizliyoruz (NULL yapıyoruz) çünkü yeni bir değerlendirme başlayacak.
+    let query = `
+      UPDATE recipes 
+      SET 
+        title = $1, 
+        ingredients = $2, 
+        steps = $3, 
+        category = $4, 
+        preparation_time = $5, 
+        calories = $6, 
+        difficulty = $7,
+        status = 'pending',
+        rejection_reason = NULL,
+        is_verified = FALSE
+    `;
+    
+    const values = [title, ingredients, steps, category, preparation_time, calories, difficulty];
+    let paramIndex = 8;
+
+    // Eğer yeni resim varsa onu da güncelle
+    if (image_url) {
+      query += `, image_url = $${paramIndex} `;
+      values.push(image_url);
+      paramIndex++;
+    }
+
+    query += ` WHERE id = $${paramIndex} RETURNING *`;
+    values.push(id);
+
+    const updateResult = await db.query(query, values);
+    
+    res.json({ message: 'Tarif güncellendi ve onaya gönderildi.', recipe: updateResult.rows[0] });
+
+  } catch (err) {
+    console.error('Recipe update error:', err);
+    res.status(500).json({ error: 'Güncelleme hatası.' });
   }
 });
 

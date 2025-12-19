@@ -18,6 +18,7 @@ import MealHistoryScreen from './src/screens/MealHistoryScreen';
 import RecommendedRecipesScreen from './src/screens/RecommendedRecipesScreen';
 import MyReviewsScreen from './src/screens/MyReviewsScreen';
 import AddRecipeScreen from './src/screens/AddRecipeScreen';
+import MyRecipesScreen from './src/screens/MyRecipesScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -163,6 +164,11 @@ export default function App() {
             name="AddRecipe" 
             component={AddRecipeScreen} 
             options={{ title: 'Add Recipe' }} 
+            />
+            <Stack.Screen 
+            name="MyRecipes" 
+            component={MyRecipesScreen} 
+            options={{ title: 'Tariflerim', headerTintColor: '#FF6F00' }} 
             />
           </>
         )}

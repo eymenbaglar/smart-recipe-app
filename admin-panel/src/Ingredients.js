@@ -90,7 +90,7 @@ function Ingredients() {
 
   return (
     <div className="page-content">
-      <h2>🥕 Ingredient Management</h2>
+      <h2>Ingredient Management</h2>
       
       <div className="add-ingredient-box">
           <h4>Add New Ingredient</h4>
@@ -112,7 +112,7 @@ function Ingredients() {
                 <label className="checkbox-label">
                     <input type="checkbox" checked={isStaple} onChange={e=>setIsStaple(e.target.checked)} /> Staple?
                 </label>
-                <button type="submit" className="btn-add">➕ Add</button>
+                <button type="submit" className="btn-add"> Add</button>
             </div>
             </form>
       </div>

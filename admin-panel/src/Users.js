@@ -59,7 +59,7 @@ function Users() {
   return (
     <div className="page-content">
       <div className="header-row">
-        <h2>👥 User Management</h2>
+        <h2>User Management</h2>
         <input 
           type="text" 
           placeholder="🔍 Search for Name or Email" 

@@ -140,9 +140,9 @@ export default function ProfileScreen({ navigation, onLogout }) {
   }
 
   const menuItems = [
-    { icon: 'add-circle-outline', title: 'Share A Recipe', count: null, screen: 'AddRecipe' },,
-    { icon: 'book-outline', title: 'My Recipes', count: null },
-    { icon: 'time-outline', title: 'Meal History', count: null, screen: 'MealHistory' },,
+    { icon: 'add-circle-outline', title: 'Share A Recipe', count: null, screen: 'AddRecipe' },
+    { icon: 'book-outline', title: 'My Recipes', count: null , screen: 'MyRecipes'},
+    { icon: 'time-outline', title: 'Meal History', count: null, screen: 'MealHistory' },
     { icon: 'star-outline', title: 'My Reviews', count: null, screen: 'MyReviews' },,
     { icon: 'settings-outline', title: 'Settings', count: null, screen: 'Settings' },
   ];
