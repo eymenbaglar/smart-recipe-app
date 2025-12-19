@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import React, { useState } from 'react';
 import { 
   View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, 
-  Alert, Keyboard, ActivityIndicator, ScrollView 
+  Alert, Keyboard, ActivityIndicator, ScrollView , Modal , KeyboardAvoidingView, Platform, TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -40,6 +40,10 @@ export default function MyStockScreen() {
   
   // düzenleme modu
   const [editingItem, setEditingItem] = useState(null);
+
+  // Öneri Modalı için yeni state'ler
+  const [suggestionModalVisible, setSuggestionModalVisible] = useState(false);
+  const [suggestionText, setSuggestionText] = useState('');
 
   useFocusEffect(
   useCallback(() => {
@@ -91,6 +95,29 @@ export default function MyStockScreen() {
     
     const defaultUnitList = UNIT_TYPES[item.unit_category] || UNIT_TYPES.count;
     setSelectedUnit(defaultUnitList[0]);
+  };
+  
+  //malzeme önerisi
+  const handleSendSuggestion = async () => {
+    if (!suggestionText.trim()) {
+      Alert.alert("Uyarı", "Lütfen bir malzeme ismi giriniz.");
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('token');
+      await axios.post(`${API_URL}/api/ingredients/suggest`, 
+        { name: suggestionText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setSuggestionModalVisible(false);
+      setSuggestionText('');
+      Alert.alert("Teşekkürler", "Öneriniz başarıyla gönderildi! Admin onayından sonra listeye eklenecektir.");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Hata", "Öneri gönderilirken bir sorun oluştu.");
+    }
   };
 
   // düzenleme modu
@@ -210,7 +237,15 @@ export default function MyStockScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>My Stock</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>My Stock</Text>
+        <TouchableOpacity 
+          style={styles.suggestButton} 
+          onPress={() => setSuggestionModalVisible(true)}
+        >
+          <Text style={styles.suggestButtonText}>+ Suggest Us</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* ARAMA KUTUSU */}
       <View style={styles.searchContainer}>
@@ -360,6 +395,65 @@ export default function MyStockScreen() {
           }
         />
       )}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={suggestionModalVisible}
+        onRequestClose={() => setSuggestionModalVisible(false)}
+      >
+        {/* EN DIŞ KATMAN: KeyboardAvoidingView (Ekranın tamamını kaplar) */}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          
+          {/* Klavye kapatma alanı */}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            
+            {/* GRİ ARKA PLAN (Overlay) */}
+            <View style={styles.modalOverlay}>
+              
+              {/* MODAL İÇERİĞİ */}
+              {/* Tıklamaların arka plana (klavye kapamaya) gitmemesi için */}
+              <TouchableWithoutFeedback> 
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Malzeme Önerisi</Text>
+                  <Text style={styles.modalMessage}>
+                    İstediğiniz malzeme veritabanımızda yok mu?{"\n"}
+                    Bize öneride bulunun, ekleyelim.
+                  </Text>
+                  
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="Malzeme İsmi (örn: Avokado)"
+                    value={suggestionText}
+                    onChangeText={setSuggestionText}
+                    autoFocus={true} 
+                  />
+
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity 
+                      style={[styles.modalBtn, styles.cancelBtn]} 
+                      onPress={() => setSuggestionModalVisible(false)}
+                    >
+                      <Text style={styles.btnText}>İptal</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[styles.modalBtn, styles.sendBtn]} 
+                      onPress={handleSendSuggestion}
+                    >
+                      <Text style={styles.btnText}>Gönder</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -399,5 +493,100 @@ const styles = StyleSheet.create({
   stockAmountBadge: { backgroundColor: '#f0f0f0', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20 },
   stockAmountText: { fontWeight: 'bold', color: '#333', fontSize: 14 },
   emptyContainer: { alignItems: 'center', marginTop: 50 },
-  emptyText: { marginTop: 10, color: '#aaa', fontSize: 16 }
+  emptyText: { marginTop: 10, color: '#aaa', fontSize: 16 },
+  // Header Alanı
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    marginTop: 10,
+  },
+  headerRow: {
+    flexDirection: 'row',        // Yan yana diz
+    justifyContent: 'space-between', // Biri sağa biri sola yaslansın
+    alignItems: 'center',        // Dikey olarak ortala
+    marginBottom: 20,            // Altındaki arama çubuğu ile arasına boşluk koy
+    width: '100%',
+  },
+  suggestButton: {
+    backgroundColor: '#333', // Tema rengin
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 20,
+
+  },
+  suggestButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+
+  // Modal Stilleri
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+    color: '#333',
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 20,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  modalBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    backgroundColor: '#999',
+  },
+  sendBtn: {
+    backgroundColor: '#4CAF50', // Yeşil onay rengi
+  },
+  btnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  keyboardView: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

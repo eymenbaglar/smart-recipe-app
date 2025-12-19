@@ -168,7 +168,7 @@ export default function App() {
             <Stack.Screen 
             name="MyRecipes" 
             component={MyRecipesScreen} 
-            options={{ title: 'Tariflerim', headerTintColor: '#FF6F00' }} 
+            options={{ title: 'My Recipe'}} 
             />
           </>
         )}

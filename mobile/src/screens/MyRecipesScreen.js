@@ -46,29 +46,32 @@ export default function MyRecipesScreen({ navigation }) {
   };
 
   // --- İŞLEMLER ---
-  const handleDelete = (id) => {
-    Alert.alert("Tarifi Sil", "Bu işlem geri alınamaz. Emin misin?", [
-      { text: "Vazgeç", style: "cancel" },
-      { 
-        text: "Sil", 
-        style: "destructive", 
-        onPress: async () => {
-          try {
-            const token = await AsyncStorage.getItem('token');
-            await axios.delete(`${API_URL}/recipes/${id}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            setRecipes(prev => prev.filter(item => item.id !== id));
-          } catch (error) {
-            Alert.alert("Hata", "Silme işlemi başarısız.");
+  const handleDelete = (recipeId) => {
+    Alert.alert(
+      "Tarifi Sil",
+      "Bu tarifi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        { 
+          text: "Sil", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('token');
+              await axios.delete(`${API_URL}/api/recipes/${recipeId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              // Listeyi güncelle (Silineni arayüzden kaldır)
+              setRecipes(prev => prev.filter(item => item.id !== recipeId));
+              Alert.alert("Başarılı", "Tarif silindi.");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Hata", error.response?.data?.error || "Silme işlemi başarısız.");
+            }
           }
         }
-      }
-    ]);
-  };
-
-  const handleEdit = (recipe) => {
-    navigation.navigate('RecipeWizard', { isEditMode: true, existingRecipe: recipe });
+      ]
+    );
   };
 
   // --- GÜVENLİ RESİM URL ---
@@ -128,8 +131,8 @@ export default function MyRecipesScreen({ navigation }) {
               </Text>
             </View>
 
-            {/* Kategori */}
-            <Text style={styles.categoryText}>{item.category || 'Genel'}</Text>
+            {/* Açıklama */}
+            <Text style={styles.categoryText}>{item.description}</Text>
 
             {/* Alt Bilgiler: Süre ve Kalori */}
             <View style={styles.cardFooter}>
@@ -166,23 +169,34 @@ export default function MyRecipesScreen({ navigation }) {
         )}
 
         {/* Butonlar (Yayında olmayanlar için alt kısma ekledim) */}
-        {!isApproved && (
-          <View style={styles.actionRow}>
-            <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.actionButton}>
-              <Ionicons name="trash-outline" size={18} color="#FF5252" />
-              <Text style={[styles.actionText, { color: '#FF5252' }]}>Sil</Text>
-            </TouchableOpacity>
+        
+        <View style={styles.actionContainer}>
+  
+        {/* Düzenle Butonu (Her zaman görünür) */}
+        <TouchableOpacity 
+            style={[styles.actionBtn, styles.editBtn]}
+            onPress={() => navigation.navigate('AddRecipe', { recipeToEdit: item })}
+        >
+            <Ionicons name="create-outline" size={18} color="#FFF" />
+            <Text style={styles.actionBtnText}>Düzenle</Text>
+        </TouchableOpacity>
 
-            {isRejected && (
-              <TouchableOpacity onPress={() => handleEdit(item)} style={styles.actionButton}>
-                <MaterialIcons name="edit" size={18} color="#FF6F00" />
-                <Text style={[styles.actionText, { color: '#FF6F00' }]}>Düzenle</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+        {/* Sil Butonu (Sadece Onaylı Değilse Görünür - is_verified: false) */}
+        {!item.is_verified && (
+            <TouchableOpacity 
+            style={[styles.actionBtn, styles.deleteBtn]}
+            onPress={() => handleDelete(item.id)}
+            >
+            <Ionicons name="trash-outline" size={18} color="#FFF" />
+            <Text style={styles.actionBtnText}>Sil</Text>
+            </TouchableOpacity>
         )}
+
+        </View>
       </View>
+      
     );
+    
   };
 
   // Sekmeler
@@ -212,14 +226,14 @@ export default function MyRecipesScreen({ navigation }) {
     </View>
   );
 
-  if (loading) return <View style={styles.loadingCenter}><ActivityIndicator size="large" color="#FF6F00" /></View>;
+  if (loading) return <View style={styles.loadingCenter}><ActivityIndicator size="large" color="#333" /></View>;
 
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#FF6F00',
+        tabBarActiveTintColor: '#333',
         tabBarInactiveTintColor: 'gray',
-        tabBarIndicatorStyle: { backgroundColor: '#FF6F00' },
+        tabBarIndicatorStyle: { backgroundColor: '#333' },
         tabBarLabelStyle: { fontWeight: 'bold' },
         tabBarStyle: { backgroundColor: '#fff' }
       }}
@@ -250,7 +264,7 @@ const styles = StyleSheet.create({
   },
   rejectedBorder: {
     borderWidth: 1,
-    borderColor: '#FF5252',
+    borderColor: '#9b0606ff',
     backgroundColor: '#fff5f5'
   },
 
@@ -362,5 +376,34 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 50,
     fontSize: 15
-  }
+  },
+
+  actionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end', // Sağ tarafa yasla
+    marginTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 10,
+    gap: 10, // Butonlar arası boşluk
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  editBtn: {
+    backgroundColor: '#4CAF50', // Yeşil
+  },
+  deleteBtn: {
+    backgroundColor: '#F44336', // Kırmızı
+  },
+  actionBtnText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
 });

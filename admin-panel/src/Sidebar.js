@@ -29,6 +29,10 @@ function Sidebar({ onLogout }) {
         <NavLink to="/ingredients" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
         🥕 Ingredients
         </NavLink>
+        
+        <NavLink to="/suggestions" className={({isActive}) => (isActive ? 'nav-item active' : 'nav-item')}>
+        💡 Ingredient Suggestions
+        </NavLink>
 
       </nav>
 

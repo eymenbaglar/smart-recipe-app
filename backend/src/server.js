@@ -393,6 +393,29 @@ app.put('/api/admin/ingredients/:id', adminAuth, async (req, res) => {
   }
 });
 
+//malzeme önerilerini getir
+app.get('/api/admin/suggestions', adminAuth, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM ingredient_suggestions ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('SQL Hatası:', err.message); // Hatayı terminale yazdırır
+    res.status(500).json({ error: 'Öneriler getirilemedi.' });
+  }
+});
+
+//DONE butonu
+app.delete('/api/admin/suggestions/:id', adminAuth, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query('DELETE FROM ingredient_suggestions WHERE id = $1', [id]);
+    res.json({ message: 'Öneri listeden kaldırıldı.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Silme işlemi başarısız.' });
+  }
+});
+
 {/* USER API'LERİ*/}
 // Register endpoint
 app.post('/auth/register', async (req, res) => {
@@ -1425,25 +1448,49 @@ app.post('/api/recipes', auth, async (req, res) => {
 //kullanıcının kendi tariflerini getir
 app.get('/my-recipes', auth, async (req, res) => {
   try {
-    // KONSOLDA GÖRMEK İÇİN LOG EKLE:
-    console.log("İstek Yapan Kullanıcı ID:", req.user ? req.user.id : 'KULLANICI YOK'); 
+    const result = await db.query(`
+      SELECT 
+        r.*, 
+        COALESCE(AVG(rv.rating), 0)::NUMERIC(10,1) as average_rating,
+        (
+          -- Bu alt sorgu, tarifin malzemelerini JSON listesi olarak getirir
+          SELECT json_agg(
+            json_build_object(
+              'id', i.id,
+              'name', i.name,
+              'quantity', ri.quantity,
+              'unit', ri.unit_type
+            )
+          )
+          FROM recipe_ingredients ri
+          JOIN ingredients i ON ri.ingredient_id = i.id
+          WHERE ri.recipe_id = r.id
+        ) as ingredients
+      FROM recipes r
+      LEFT JOIN reviews rv ON r.id = rv.recipe_id
+      WHERE r.created_by = $1
+      GROUP BY r.id
+      ORDER BY r.created_at DESC
+    `, [req.user.id]);
 
-    const result = await db.query(
-      `SELECT * FROM recipes 
-       WHERE created_by = $1 
-       ORDER BY created_at DESC`,
-      [req.user.id]
-    );
-    res.json(result.rows);
+    // Verileri formatla
+    const recipes = result.rows.map(recipe => ({
+      ...recipe,
+      average_rating: parseFloat(recipe.average_rating),
+      // Eğer hiç malzeme yoksa null gelir, onu boş dizi [] yapalım
+      ingredients: recipe.ingredients || []
+    }));
+
+    res.json(recipes);
   } catch (err) {
-    // HATAYI KONSOLA DETAYLI YAZDIR:
     console.error('My recipes SQL Hatası:', err.message); 
     res.status(500).json({ error: 'Tarifler getirilemedi.' });
   }
 });
 
+
 //rejected tarifi sil
-app.delete('/recipes/:id', auth, async (req, res) => {
+ /* app.delete('/recipes/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -1465,61 +1512,163 @@ app.delete('/recipes/:id', auth, async (req, res) => {
     console.error('Delete recipe error:', err);
     res.status(500).json({ error: 'Silme işlemi başarısız.' });
   }
-});
+}); */
 
-//rejected tarifi düzenle ve tekrar gönder
-app.put('/recipes/:id', auth, upload.single('image'), async (req, res) => {
+app.delete('/api/recipes/:id', auth, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
   try {
-    const { id } = req.params;
-    const { title, ingredients, steps, category, preparation_time, calories, difficulty } = req.body;
-    
-    // Resim yüklendiyse URL'i al, yüklenmediyse eskiyi koruyacağız (SQL'de COALESCE kullanabiliriz veya JS'de kontrol ederiz)
-    const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+    // 1. Önce tarifi kontrol et (Sahibi mi? Onaylı mı?)
+    const checkQuery = await db.query(
+      'SELECT * FROM recipes WHERE id = $1 AND created_by = $2',
+      [id, userId]
+    );
 
-    // 1. Yetki kontrolü
-    const check = await db.query('SELECT * FROM recipes WHERE id = $1 AND created_by = $2', [id, req.user.id]);
-    if (check.rows.length === 0) {
-      return res.status(403).json({ error: 'Yetkisiz işlem.' });
+    if (checkQuery.rows.length === 0) {
+      return res.status(404).json({ error: 'Tarif bulunamadı veya bu işlem için yetkiniz yok.' });
     }
 
-    // 2. Güncelleme Sorgusu
-    // Status'ü tekrar 'pending' yapıyoruz. 
-    // Rejection reason'ı temizliyoruz (NULL yapıyoruz) çünkü yeni bir değerlendirme başlayacak.
-    let query = `
-      UPDATE recipes 
-      SET 
-        title = $1, 
-        ingredients = $2, 
-        steps = $3, 
-        category = $4, 
-        preparation_time = $5, 
-        calories = $6, 
-        difficulty = $7,
-        status = 'pending',
-        rejection_reason = NULL,
-        is_verified = FALSE
-    `;
-    
-    const values = [title, ingredients, steps, category, preparation_time, calories, difficulty];
-    let paramIndex = 8;
+    const recipe = checkQuery.rows[0];
 
-    // Eğer yeni resim varsa onu da güncelle
-    if (image_url) {
-      query += `, image_url = $${paramIndex} `;
-      values.push(image_url);
-      paramIndex++;
+    // İSTEK: Onaylanmış (is_verified = true) tarifler silinemez
+    if (recipe.is_verified) {
+      return res.status(403).json({ error: 'Onaylanmış tarifler silinemez. Lütfen admin ile iletişime geçin.' });
     }
 
-    query += ` WHERE id = $${paramIndex} RETURNING *`;
-    values.push(id);
-
-    const updateResult = await db.query(query, values);
-    
-    res.json({ message: 'Tarif güncellendi ve onaya gönderildi.', recipe: updateResult.rows[0] });
+    // 2. Silme İşlemi (Transaction ile güvenli silme)
+    const client = await db.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Önce ilişkili tabloları temizle (ON DELETE CASCADE varsa gerekmez ama garanti olsun)
+      await client.query('DELETE FROM recipe_ingredients WHERE recipe_id = $1', [id]);
+      await client.query('DELETE FROM reviews WHERE recipe_id = $1', [id]);
+      
+      // Tarifi sil
+      await client.query('DELETE FROM recipes WHERE id = $1', [id]);
+      
+      await client.query('COMMIT');
+      res.json({ message: 'Tarif başarıyla silindi.' });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
 
   } catch (err) {
-    console.error('Recipe update error:', err);
-    res.status(500).json({ error: 'Güncelleme hatası.' });
+    console.error('Silme hatası:', err.message);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
+
+//rejected tarifi düzenle ve tekrar gönder
+app.put('/api/recipes/:id', auth, async (req, res) => {
+  const recipeId = req.params.id;
+  const userId = req.user.id;
+  
+  // Frontend'den gelen veriler (POST kopyasıyla aynı yapıda)
+  const { 
+    title, description, instructions, prepTime, calories, imageUrl, serving, ingredients 
+  } = req.body;
+
+  // Temel validasyon
+  if (!title || !ingredients || ingredients.length === 0) {
+    return res.status(400).json({ error: 'Başlık ve en az bir malzeme gereklidir.' });
+  }
+
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN'); // İşlemi başlat
+
+    // 1. ADIM: Tarif bilgilerini güncelle
+    // status='pending' yapıyoruz ki admin tekrar onaylasın.
+    // rejection_reason=NULL yapıyoruz ki eski red mesajı silinsin.
+    // WHERE koşulunda userId kontrolü yaparak başkasının tarifini değiştirmeyi engelliyoruz.
+    
+    const updateResult = await client.query(
+      `UPDATE recipes 
+       SET title = $1, 
+           description = $2, 
+           instructions = $3, 
+           prep_time = $4, 
+           calories = $5, 
+           image_url = COALESCE($6, image_url), -- Yeni resim yoksa eskisini koru
+           serving = $7,
+           status = 'pending',      -- Tekrar onaya gönder
+           is_verified = false,     -- Onayı kaldır
+           rejection_reason = NULL  -- Red nedenini temizle
+       WHERE id = $8 AND created_by = $9
+       RETURNING id`,
+      [title, description, instructions, prepTime, calories, imageUrl, serving, recipeId, userId]
+    );
+
+    // Eğer güncelleme sonucunda satır dönmediyse; ya tarif yok ya da sahibi bu kullanıcı değil.
+    if (updateResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'Bu tarifi düzenleme yetkiniz yok veya tarif bulunamadı.' });
+    }
+
+    // 2. ADIM: Eski malzemeleri temizle
+    await client.query(
+      `DELETE FROM recipe_ingredients WHERE recipe_id = $1`,
+      [recipeId]
+    );
+
+    // 3. ADIM: Yeni malzemeleri ekle (POST kodundaki döngünün aynısı)
+    for (const item of ingredients) {
+      // item.id frontend'den gelmeli. Eğer listeden seçilen bir malzeme ise id'si vardır.
+      await client.query(
+        `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit_type)
+         VALUES ($1, $2, $3, $4)`,
+        [recipeId, item.id, item.quantity, item.unit] 
+        // Not: Frontend'de birim 'unit' olarak geliyorsa buraya item.unit, 'unit_type' ise item.unit_type yaz.
+        // Senin POST kodunda item.unit kullanmışsın, burada da öyle bıraktım.
+      );
+    }
+
+    await client.query('COMMIT'); // İşlemi onayla
+
+    res.json({ 
+      message: 'Tarif başarıyla güncellendi ve tekrar onaya gönderildi.',
+      recipeId: recipeId
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK'); // Hata durumunda her şeyi geri al
+    console.error('Tarif güncelleme hatası:', error);
+
+    if (error.code === '23503') { 
+       return res.status(400).json({ error: 'Geçersiz malzeme seçimi yapıldı.' });
+    }
+
+    res.status(500).json({ error: 'Sunucu hatası, tarif güncellenemedi.' });
+  } finally {
+    client.release(); // Bağlantıyı havuza iade et
+  }
+});
+
+// Malzeme Önerisi Kaydetme Endpoint'i
+app.post('/api/ingredients/suggest', auth, async (req, res) => {
+  const { name } = req.body;
+  const userId = req.user.id;
+
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'Lütfen bir malzeme ismi giriniz.' });
+  }
+
+  try {
+    await db.query(
+      'INSERT INTO ingredient_suggestions (user_id, ingredient_name) VALUES ($1, $2)',
+      [userId, name.trim()]
+    );
+    res.json({ message: 'Öneriniz başarıyla alındı. Teşekkürler!' });
+  } catch (err) {
+    console.error('Öneri hatası:', err.message);
+    res.status(500).json({ error: 'Sunucu hatası oluştu.' });
   }
 });
 

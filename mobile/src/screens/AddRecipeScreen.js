@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, 
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image 
@@ -10,7 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
-export default function AddRecipeScreen({ navigation }) {
+export default function AddRecipeScreen({ navigation , route}) {
   // --- FORM STATE'LERİ ---
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -38,6 +38,46 @@ export default function AddRecipeScreen({ navigation }) {
 
   const [addedIngredients, setAddedIngredients] = useState([]); 
   const [loading, setLoading] = useState(false);
+
+  //dolu from gelmesi
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  useEffect(() => {
+    if (route.params?.recipeToEdit) {
+      const recipe = route.params.recipeToEdit;
+      setIsEditing(true);
+      setEditingId(recipe.id);
+
+      // Mevcut verileri doldur
+      setTitle(recipe.title || '');
+      setDescription(recipe.description || '');
+      setInstructions(recipe.instructions || recipe.steps || ''); 
+      setPrepTime(recipe.preparation_time ? String(recipe.preparation_time) : '');
+      setCalories(recipe.calories ? String(recipe.calories) : '');
+      setServing(recipe.serving ? String(recipe.serving) : '');
+      
+      // Resim varsa göster
+      if (recipe.image_url) {
+        setImageUri(recipe.image_url);
+      }
+
+      // Malzemeleri yükle
+      if (recipe.ingredients) {
+        let parsedIngredients = [];
+        if (typeof recipe.ingredients === 'string') {
+            try {
+                parsedIngredients = JSON.parse(recipe.ingredients);
+            } catch (e) {
+                console.log("Malzeme parse hatası:", e);
+            }
+        } else if (Array.isArray(recipe.ingredients)) {
+            parsedIngredients = recipe.ingredients;
+        }
+        setAddedIngredients(parsedIngredients);
+      }
+    }
+  }, [route.params]);
 
   // --- DOĞRULAMA (VALIDATION) FONKSİYONU ---
   const validateForm = () => {
@@ -174,10 +214,9 @@ export default function AddRecipeScreen({ navigation }) {
     setAddedIngredients(newList);
   };
 
-  const handleSubmit = async () => {
-    // Önce validasyon kontrolü
+const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert("Eksik Bilgi", "Lütfen zorunlu (*) alanları doldurunuz.");
+      Alert.alert("Eksik Bilgi", "Lütfen zorunlu alanları doldurunuz.");
       return;
     }
 
@@ -188,25 +227,39 @@ export default function AddRecipeScreen({ navigation }) {
       const payload = {
         title,
         description,
-        instructions,
+        instructions, 
         prepTime: parseInt(prepTime) || 0,
         calories: parseInt(calories) || 0,
         serving: parseInt(serving) || 1,
-        imageUrl: imageBase64, 
+        // Yeni resim seçilmediyse ve düzenleme modundaysak null gönder (backend eskiyi korur)
+        imageUrl: imageBase64 ? imageBase64 : (isEditing ? null : ''), 
         ingredients: addedIngredients
       };
 
-      await axios.post(`${API_URL}/api/recipes`, payload, {
+      let url = `${API_URL}/api/recipes`;
+      let method = 'POST';
+      let successMessage = "Tarifiniz gönderildi! Admin onayından sonra yayınlanacaktır.";
+
+      if (isEditing) {
+        url = `${API_URL}/api/recipes/${editingId}`; 
+        method = 'PUT'; 
+        successMessage = "Tarifiniz başarıyla güncellendi ve tekrar onaya gönderildi.";
+      }
+
+      await axios({
+        method: method,
+        url: url,
+        data: payload,
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      Alert.alert("Başarılı", "Tarifiniz gönderildi! Admin onayından sonra yayınlanacaktır.", [
+      Alert.alert("Başarılı", successMessage, [
         { text: "Tamam", onPress: () => navigation.goBack() }
       ]);
 
     } catch (error) {
       console.error(error);
-      Alert.alert("Hata", "Tarif gönderilemedi.");
+      Alert.alert("Hata", "İşlem başarısız oldu.");
     } finally {
       setLoading(false);
     }
@@ -219,7 +272,7 @@ export default function AddRecipeScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         
-        <Text style={styles.headerTitle}>Yeni Tarif Ekle 🍳</Text>
+        <Text style={styles.headerTitle}>{isEditing ? "Tarifi Düzenle" : "Yeni Tarif Paylaş"}</Text>
         <Text style={styles.subTitle}>Tarifiniz admin onayından geçecektir.</Text>
 
         {/* --- TEMEL BİLGİLER --- */}
@@ -408,7 +461,9 @@ export default function AddRecipeScreen({ navigation }) {
         </View>
 
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
-          {loading ? <ActivityIndicator color="white" /> : <Text style={styles.submitBtnText}>Tarifi Gönder</Text>}
+          <Text style={styles.submitBtnText}>
+                {isEditing ? "Güncelle ve Gönder" : "Tarifi Paylaş"}
+            </Text>
         </TouchableOpacity>
 
       </ScrollView>
