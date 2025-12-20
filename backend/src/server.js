@@ -26,6 +26,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+//bildirim için helper fonksion
+const sendNotification = async (userId, title, message, type = 'info') => {
+  try {
+    await db.query(
+      `INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)`,
+      [userId, title, message, type]
+    );
+  } catch (err) {
+    console.error(`Bildirim hatası (User: ${userId}):`, err.message);
+  }
+};
+
 {/* ADMİN API'LERİ*/}
 //pending olan tarifleri getir
 app.get('/api/admin/recipes/pending', adminAuth, async (req, res) => {
@@ -66,15 +78,37 @@ app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
   const { action, reason } = req.body;
 
   try {
+    // 1. ADIM: Önce tarifin sahibini ve başlığını veritabanından çekelim
+    const recipeQuery = await db.query('SELECT created_by, title FROM recipes WHERE id = $1', [id]);
+    
+    if (recipeQuery.rows.length === 0) {
+      return res.status(404).json({ error: 'Tarif bulunamadı.' });
+    }
+
+    const { created_by, title } = recipeQuery.rows[0];
+    const userId = created_by; // sendNotification için gerekli değişken
+
+    // 2. ADIM: Aksiyona göre işlem yap
     if (action === 'approve') {
       await db.query("UPDATE recipes SET status = 'approved' WHERE id = $1", [id]);
-      res.json({ message: 'Recipe approved.' });
+      
+      // Eğer tarifi bir kullanıcı yazdıysa (Admin değilse) bildirim gönder
+      if (userId) {
+        await sendNotification(userId, "Tarifiniz Onaylandı! 🎉", `"${title}" başlıklı tarifiniz yayına alındı.`, "success");
+      }
+      
+      res.json({ message: 'Recipe approved.' });     
     } 
     else if (action === 'reject') {
       await db.query(
         "UPDATE recipes SET status = 'rejected', rejection_reason = $1 WHERE id = $2", 
         [reason, id]
       );
+      
+      if (userId) {
+        await sendNotification(userId, "Tarifiniz Reddedildi ⚠️", `"${title}" başlıklı tarifiniz reddedildi. Lütfen düzenleyip tekrar gönderin.`, "warning");
+      }
+      
       res.json({ message: 'Recipe rejected.' });
     }
     else if (action === 'verify') {
@@ -82,14 +116,18 @@ app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
             "UPDATE recipes SET status = 'approved', is_verified = TRUE WHERE id = $1", 
             [id]
         );
+        
+        if (userId) {
+          await sendNotification(userId, "Tarifiniz Doğrulandı! ✅", `"${title}" başlıklı tarifiniz editörlerimiz tarafından doğrulandı ve onaylandı.`, "success");
+        }
+        
         res.json({ message: 'Recipe Verified and Approved.' });
     }
     else {
       res.status(400).json({ error: 'Invalid transaction.' });
     }
-
   } catch (error) {
-    console.error(error);
+    console.error("Action Error:", error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -152,8 +190,17 @@ app.get('/api/admin/recipes/approved', adminAuth, async (req, res) => {
 //Tarif silme
 app.delete('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
+  const recipeInfo = await db.query('SELECT created_by, title FROM recipes WHERE id = $1', [id]);
   try {
     await db.query('DELETE FROM recipes WHERE id = $1', [id]);
+    if (recipeInfo.rows.length > 0) {
+        await sendNotification(
+            recipeInfo.rows[0].created_by, 
+            "Tarifiniz Silindi 🗑️", 
+            `"${recipeInfo.rows[0].title}" başlıklı tarifiniz yayından kaldırıldı.`, 
+            "error"
+        );
+    }
     res.json({ message: 'Recipe deleted.' });
   } catch (error) {
     console.error('Delete error:', error);
@@ -164,14 +211,47 @@ app.delete('/api/admin/recipes/:id', adminAuth, async (req, res) => {
 //Verified durumunu değiştir
 app.patch('/api/admin/recipes/:id/toggle-verify', adminAuth, async (req, res) => {
   const { id } = req.params;
-  const { isVerified } = req.body;
+  const { isVerified } = req.body; // true veya false gelir
 
   try {
+    // 1. ADIM: Tarif sahibini ve başlığını bul
+    const recipeQuery = await db.query('SELECT created_by, title FROM recipes WHERE id = $1', [id]);
+
+    if (recipeQuery.rows.length === 0) {
+      return res.status(404).json({ error: 'Tarif bulunamadı.' });
+    }
+
+    const { created_by, title } = recipeQuery.rows[0];
+    const userId = created_by;
+
+    // 2. ADIM: Veritabanını güncelle
     await db.query(
       'UPDATE recipes SET is_verified = $1 WHERE id = $2',
       [isVerified, id]
     );
-    res.json({ message: 'Verified situation updated.' });
+
+    // 3. ADIM: Bildirim Gönder (Sadece kullanıcı varsa)
+    if (userId) {
+      if (isVerified) {
+        // Verified Yapıldıysa
+        await sendNotification(
+            userId, 
+            "Tarifiniz Doğrulandı! 🌟", 
+            `Tebrikler! "${title}" başlıklı tarifiniz editörlerimiz tarafından 'Doğrulanmış Tarif' rozeti aldı.`, 
+            "success"
+        );
+      } else {
+        // Verified Geri Alındıysa
+        await sendNotification(
+            userId, 
+            "Doğrulama Kaldırıldı ℹ️", 
+            `"${title}" başlıklı tarifinizin doğrulanmış statüsü kaldırıldı.`, 
+            "warning"
+        );
+      }
+    }
+
+    res.json({ message: 'Verified status updated.' });
   } catch (error) {
     console.error('Verify toggle error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -216,33 +296,66 @@ app.get('/api/admin/recipes/:id', adminAuth, async (req, res) => {
 //Tarifi Güncelle
 app.put('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
+  // Gelen verileri al
   const { title, description, instructions, prep_time, calories, serving, image_url, ingredients } = req.body;
+
+  // --- DÜZELTME BAŞLANGICI ---
+  // Boş string ("") gelirse veritabanına NULL gönder, yoksa sayıyı gönder.
+  const safePrepTime = (prep_time === '' || prep_time === null) ? null : prep_time;
+  const safeCalories = (calories === '' || calories === null) ? null : calories;
+  const safeServing  = (serving === ''  || serving === null)  ? null : serving;
+  // --- DÜZELTME BİTİŞİ ---
 
   const client = await db.connect();
 
   try {
     await client.query('BEGIN');
 
-    await client.query(
+    // 1. ADIM: Tarifi güncelle ve sahibinin ID'sini al
+    // Parametre dizisinde req.body'den gelenleri değil, yukarıda düzelttiğimiz (safe...) değişkenleri kullanıyoruz.
+    const updateResult = await client.query(
       `UPDATE recipes 
        SET title = $1, description = $2, instructions = $3, prep_time = $4, calories = $5, serving = $6, image_url = $7 
-       WHERE id = $8`,
-      [title, description, instructions, prep_time, calories, serving, image_url, id]
+       WHERE id = $8
+       RETURNING created_by`,
+      [title, description, instructions, safePrepTime, safeCalories, safeServing, image_url, id] 
     );
 
+    if (updateResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Tarif bulunamadı.' });
+    }
+
+    const userId = updateResult.rows[0].created_by;
+
+    // 2. ADIM: Malzemeleri güncelle
     if (ingredients && Array.isArray(ingredients)) {
       await client.query('DELETE FROM recipe_ingredients WHERE recipe_id = $1', [id]);
 
       for (const ing of ingredients) {
+        // Malzeme miktarı da sayısal olmalı, onu da garantiye alalım (Opsiyonel ama iyi olur)
+        const safeQuantity = (ing.quantity === '' || ing.quantity === null) ? null : ing.quantity;
+
         await client.query(
           `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit_type) 
            VALUES ($1, $2, $3, $4)`,
-          [id, ing.id, ing.quantity, ing.unit]
+          [id, ing.id, safeQuantity, ing.unit]
         );
       }
     }
 
-    await client.query('COMMIT'); 
+    await client.query('COMMIT');
+
+    // 3. ADIM: Bildirim Gönder
+    if (userId) {
+        await sendNotification(
+            userId, 
+            "Tarifiniz Düzenlendi ✏️", 
+            `Admin tarafından "${title}" tarifinizde bazı güncellemeler yapıldı.`, 
+            "info"
+        );
+    }
+
     res.json({ message: 'Recipe updated successfully.' });
 
   } catch (error) {
@@ -385,6 +498,16 @@ app.post('/api/admin/ingredients', adminAuth, async (req, res) => {
         isStaple || false
       ]
     );
+    const newItemName = name;
+    const allUsers = await db.query('SELECT id FROM users');
+    allUsers.rows.forEach(async (user) => {
+        await sendNotification(
+            user.id, 
+            "Yeni Malzeme Eklendi! 🥑", 
+            `Veritabanımıza "${newItemName}" eklendi. Hemen dolabına ekle!`, 
+            "success"
+        );
+    });
     res.status(201).json({ message: 'Ingredient added succesfully' });
   } catch (error) {
     console.error('Add ingredient error:', error);
@@ -1282,6 +1405,7 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
 app.post('/api/reviews', auth, async (req, res) => {
   const userId = req.user.id;
   const { recipeId, rating, comment } = req.body;
+  
 
   try {
     const query = `
@@ -1297,6 +1421,19 @@ app.post('/api/reviews', auth, async (req, res) => {
     
     const result = await db.query(query, [userId, recipeId, rating, comment]);
     res.json(result.rows[0]);
+
+    const recipeOwnerQuery = await db.query('SELECT created_by, title FROM recipes WHERE id = $1', [recipeId]);
+    const recipeOwnerId = recipeOwnerQuery.rows[0].created_by;
+    const recipeTitle = recipeOwnerQuery.rows[0].title;
+
+    if (recipeOwnerId !== req.user.id) {
+        await sendNotification(
+            recipeOwnerId, 
+            "New Comment 💬", 
+            `"${recipeTitle}" tarifinize yeni bir inceleme yapıldı.`, 
+            "info"
+        );
+    }
 
   } catch (error) {
     console.error('Review error:', error);
@@ -1670,6 +1807,60 @@ app.post('/api/ingredients/suggest', auth, async (req, res) => {
   } catch (err) {
     console.error('Öneri hatası:', err.message);
     res.status(500).json({ error: 'Sunucu hatası oluştu.' });
+  }
+});
+
+{/* Bildirim API'leri*/}
+//bildirimi getir
+app.get('/api/notifications', auth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Bildirimler alınamadı.' });
+  }
+});
+
+//okunmamış bildirim
+app.get('/api/notifications/unread-count', auth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE`,
+      [req.user.id]
+    );
+    res.json({ count: parseInt(result.rows[0].count) });
+  } catch (err) {
+    res.status(500).json({ error: 'Hata.' });
+  }
+});
+
+//okundu olarak işaretle
+app.put('/api/notifications/:id/read', auth, async (req, res) => {
+  try {
+    await db.query(
+      `UPDATE notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2`,
+      [req.params.id, req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'İşlem başarısız.' });
+  }
+});
+
+//tümünü okundu olarak işaretlendi
+app.put('/api/notifications/read-all', auth, async (req, res) => {
+  try {
+    await db.query(
+      `UPDATE notifications SET is_read = TRUE WHERE user_id = $1`,
+      [req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'İşlem başarısız.' });
   }
 });
 

@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { TouchableOpacity } from 'react-native';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect , useCallback} from 'react';
+import { TouchableOpacity, View, Text, StyleSheet} from 'react-native';
+import { NavigationContainer, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+
+const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -19,6 +22,7 @@ import RecommendedRecipesScreen from './src/screens/RecommendedRecipesScreen';
 import MyReviewsScreen from './src/screens/MyReviewsScreen';
 import AddRecipeScreen from './src/screens/AddRecipeScreen';
 import MyRecipesScreen from './src/screens/MyRecipesScreen';
+import NotificationScreen from './src/screens/NotificationScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -28,13 +32,74 @@ const Stack = createStackNavigator();
 // Profil ikonu
 const HeaderRightButton = () => {
   const navigation = useNavigation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Sayfa her odaklandığında veya navigasyon değiştiğinde bildirim sayısını çek
+  useFocusEffect(
+    useCallback(() => {
+      const checkUnread = async () => {
+        try {
+          const token = await AsyncStorage.getItem('token');
+          // Eğer token yoksa (giriş yapılmamışsa) işlem yapma
+          if (!token) return;
+
+          const res = await axios.get(`${API_URL}/api/notifications/unread-count`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setUnreadCount(res.data.count);
+        } catch (e) {
+          console.log("Bildirim sayısı alınamadı:", e.message);
+        }
+      };
+
+      checkUnread();
+      
+      const interval = setInterval(checkUnread, 5000);
+      return () => clearInterval(interval);
+      
+    }, [])
+  );
+
   return (
-    <TouchableOpacity 
-      onPress={() => navigation.navigate('Profile')} 
-      style={{ marginRight: 15 }}
-    >
-      <Ionicons name="person-circle-outline" size={32} color="#000" />
-    </TouchableOpacity>
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
+      
+      {/* --- BİLDİRİM BUTONU --- */}
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('Notifications')} 
+        style={{ marginRight: 15, position: 'relative' }} // Profil ile arasında boşluk
+      >
+        <Ionicons name="notifications-outline" size={28} color="#000" />
+        
+        {/* Kırmızı Badge (Sayı) */}
+        {unreadCount > 0 && (
+          <View style={{
+            position: 'absolute',
+            right: -2,
+            top: -2,
+            backgroundColor: 'red',
+            borderRadius: 8,
+            width: 16,
+            height: 16,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#fff' // İkonun üstünde daha net durması için beyaz kenarlık
+          }}>
+            <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
+      {/* --- PROFİL BUTONU (Senin Mevcut Kodun) --- */}
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('Profile')}
+      >
+        <Ionicons name="person-circle-outline" size={32} color="#000" />
+      </TouchableOpacity>
+
+    </View>
   );
 };
 
@@ -169,6 +234,11 @@ export default function App() {
             name="MyRecipes" 
             component={MyRecipesScreen} 
             options={{ title: 'My Recipe'}} 
+            />
+            <Stack.Screen 
+              name="Notifications" 
+              component={NotificationScreen} 
+              options={{ title: 'Notifications' }} 
             />
           </>
         )}
