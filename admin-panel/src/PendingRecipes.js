@@ -1,10 +1,14 @@
 // admin-panel/src/PendingRecipes.js
 import React, { useState, useEffect } from 'react';
 import api from './api';
+import RecipeDetailsModal from './RecipeDetailsModal';
 
 function PendingRecipes() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  //modal statei
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
 
   useEffect(() => {
     fetchPendingRecipes();
@@ -48,6 +52,7 @@ function PendingRecipes() {
               <th>Title</th>
               <th>Author</th>
               <th>Date</th>
+              <th>Details</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -64,8 +69,17 @@ function PendingRecipes() {
                       <strong>{recipe.title}</strong>
                       <br/><small>{recipe.calories} kcal • {recipe.prep_time} m</small>
                   </td>
-                  <td>{recipe.author || 'Anonim'}</td>
+                  <td>{recipe.username || 'Anonim'}</td>
                   <td>{new Date(recipe.created_at).toLocaleDateString()}</td>
+                  <td>
+                <button 
+                  className="btn-details"
+                  style={{ backgroundColor: '#17a2b8', color: 'white', border:'none', padding:'5px 10px', borderRadius:'4px', cursor:'pointer' }}
+                  onClick={() => setSelectedRecipe(recipe)}
+                >
+                  Details
+                </button>
+              </td>
                   <td className="actions-cell">
                     <button className="btn-approve" onClick={() => handleAction(recipe.id, 'approve')}>✅ Approve</button>
                     <button className="btn-verify" onClick={() => handleAction(recipe.id, 'verify')}>🏅 Verify</button>
@@ -76,6 +90,12 @@ function PendingRecipes() {
             )}
           </tbody>
         </table>
+      )}
+      {selectedRecipe && (
+        <RecipeDetailsModal 
+          recipe={selectedRecipe} 
+          onClose={() => setSelectedRecipe(null)} 
+        />
       )}
     </div>
   );

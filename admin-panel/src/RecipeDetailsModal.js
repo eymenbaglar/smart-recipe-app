@@ -1,0 +1,128 @@
+import React from 'react';
+import './RecipeDetailsModal.css';
+
+const RecipeDetailsModal = ({ recipe, onClose }) => {
+  if (!recipe) return null;
+
+  // Malzemeleri güvenli bir şekilde listeye çevirme
+  let ingredientsList = [];
+  try {
+    if (typeof recipe.ingredients === 'string') {
+      ingredientsList = JSON.parse(recipe.ingredients);
+    } else if (Array.isArray(recipe.ingredients)) {
+      ingredientsList = recipe.ingredients;
+    }
+  } catch (e) {
+    console.error("Malzeme parse hatası:", e);
+  }
+
+  // Adımları (Yapılışı) güvenli parse etme
+  let stepsList = [];
+  try {
+     if (typeof recipe.instructions === 'string') {
+        if(recipe.instructions.startsWith('[')) {
+            stepsList = JSON.parse(recipe.instructions);
+        } else {
+            stepsList = [recipe.instructions]; 
+        }
+     } else if (Array.isArray(recipe.instructions) || Array.isArray(recipe.steps)) {
+        stepsList = recipe.instructions || recipe.steps;
+     }
+  } catch(e) {
+      stepsList = [recipe.instructions];
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content details-modal">
+        <div className="modal-header">
+          <h2>📄 Tarif Detayları: {recipe.title}</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        
+        <div className="modal-body scrollable">
+          
+          {/* Görsel */}
+          {recipe.image_url && (
+            <div className="detail-image-container">
+                <img src={recipe.image_url} alt={recipe.title} className="detail-image" />
+            </div>
+          )}
+
+          {/* Temel Bilgiler Grid */}
+          <div className="detail-grid">
+            <div className="detail-item">
+                <label>Created Date:</label>
+                <span>{new Date(recipe.created_at).toLocaleDateString('tr-TR')}</span>
+            </div>
+            <div className="detail-item">
+                <label>Hazırlama Süresi:</label>
+                <span>{recipe.prep_time || recipe.preparation_time} dk</span>
+            </div>
+            <div className="detail-item">
+                <label>Kalori:</label>
+                <span>{recipe.calories} kcal</span>
+            </div>
+            <div className="detail-item">
+                <label>Porsiyon:</label>
+                <span>{recipe.serving} Kişilik</span>
+            </div>
+          </div>
+
+          <hr />
+
+          {/* Statü Bilgileri */}
+          <div className="status-section">
+             <p><strong>Durum:</strong> <span className={`status-badge ${recipe.status}`}>{recipe.status}</span></p>
+             <p><strong>Onaylı mı (Verified):</strong> {recipe.is_verified ? '✅ Evet' : '❌ Hayır'}</p>
+             {recipe.rejection_reason && (
+                 <div className="rejection-box">
+                     <strong>⚠️ Önceki Red Nedeni:</strong>
+                     <p>{recipe.rejection_reason}</p>
+                 </div>
+             )}
+          </div>
+
+          <hr />
+
+          {/* Açıklama */}
+          <div className="detail-section">
+            <h3>Açıklama</h3>
+            <p>{recipe.description}</p>
+          </div>
+
+          {/* Malzemeler */}
+          <div className="detail-section">
+            <h3>Malzemeler</h3>
+            <ul className="ingredient-list">
+              {ingredientsList.map((ing, idx) => (
+                <li key={idx}>
+                   {ing.name} ({ing.quantity} {ing.unit})
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Yapılışı */}
+          <div className="detail-section">
+            <h3>Yapılışı</h3>
+            <div className="instructions-text">
+                {stepsList.map((step, index) => (
+                    <p key={index} className="step-item">
+                        <strong>{index + 1}.</strong> {step}
+                    </p>
+                ))}
+            </div>
+          </div>
+
+        </div>
+        
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>Kapat</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RecipeDetailsModal;

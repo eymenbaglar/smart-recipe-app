@@ -1,0 +1,121 @@
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content.details-modal {
+  background: white;
+  padding: 0; /* Header/Footer için */
+  border-radius: 12px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh; /* Ekran dışına taşmasın */
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-body.scrollable {
+  padding: 20px;
+  overflow-y: auto; /* İçerik uzunsa kaydır */
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  text-align: right;
+  background-color: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+.detail-image-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.detail-image {
+  max-width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-item label {
+  font-weight: bold;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.status-section {
+  background-color: #e3f2fd;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.rejection-box {
+  background-color: #ffebee;
+  border: 1px solid #ffcdd2;
+  color: #c62828;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 5px;
+}
+
+.ingredient-list li {
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.step-item {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}

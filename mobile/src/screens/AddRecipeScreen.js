@@ -53,7 +53,7 @@ export default function AddRecipeScreen({ navigation , route}) {
       setTitle(recipe.title || '');
       setDescription(recipe.description || '');
       setInstructions(recipe.instructions || recipe.steps || ''); 
-      setPrepTime(recipe.preparation_time ? String(recipe.preparation_time) : '');
+      setPrepTime(recipe.prep_time ? String(recipe.prep_time) : '');
       setCalories(recipe.calories ? String(recipe.calories) : '');
       setServing(recipe.serving ? String(recipe.serving) : '');
       

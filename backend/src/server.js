@@ -7,6 +7,7 @@ const auth = require('./middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const adminAuth = require('./middleware/adminAuth');
+const { debug } = require('console');
 
 const app = express();
 app.use(cors());
@@ -29,16 +30,33 @@ const upload = multer({ storage: storage });
 //pending olan tarifleri getir
 app.get('/api/admin/recipes/pending', adminAuth, async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT r.*, u.username as author 
-       FROM recipes r
-       LEFT JOIN users u ON r.created_by = u.id
-       WHERE r.status = 'pending'
-       ORDER BY r.created_at ASC`
-    );
+    const result = await db.query(`
+      SELECT 
+        r.*, 
+        u.username,
+        (
+          -- Tarifin malzemelerini JSON listesi olarak çekiyoruz
+          SELECT json_agg(
+            json_build_object(
+              'name', i.name,
+              'quantity', ri.quantity,
+              'unit', ri.unit_type
+            )
+          )
+          FROM recipe_ingredients ri
+          JOIN ingredients i ON ri.ingredient_id = i.id
+          WHERE ri.recipe_id = r.id
+        ) as ingredients
+      FROM recipes r
+      JOIN users u ON r.created_by = u.id
+      WHERE r.status = 'pending'
+      ORDER BY r.created_at ASC
+    `);
+    
     res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+  } catch (err) {
+    console.error('Admin Pending Error:', err);
+    res.status(500).json({ error: 'Tarifler getirilemedi.' });
   }
 });
 
@@ -1582,12 +1600,7 @@ app.put('/api/recipes/:id', auth, async (req, res) => {
   const client = await db.connect();
 
   try {
-    await client.query('BEGIN'); // İşlemi başlat
-
-    // 1. ADIM: Tarif bilgilerini güncelle
-    // status='pending' yapıyoruz ki admin tekrar onaylasın.
-    // rejection_reason=NULL yapıyoruz ki eski red mesajı silinsin.
-    // WHERE koşulunda userId kontrolü yaparak başkasının tarifini değiştirmeyi engelliyoruz.
+    await client.query('BEGIN');
     
     const updateResult = await client.query(
       `UPDATE recipes 
@@ -1596,11 +1609,9 @@ app.put('/api/recipes/:id', auth, async (req, res) => {
            instructions = $3, 
            prep_time = $4, 
            calories = $5, 
-           image_url = COALESCE($6, image_url), -- Yeni resim yoksa eskisini koru
+           image_url = COALESCE($6, image_url),
            serving = $7,
-           status = 'pending',      -- Tekrar onaya gönder
-           is_verified = false,     -- Onayı kaldır
-           rejection_reason = NULL  -- Red nedenini temizle
+           status = 'pending' 
        WHERE id = $8 AND created_by = $9
        RETURNING id`,
       [title, description, instructions, prepTime, calories, imageUrl, serving, recipeId, userId]
