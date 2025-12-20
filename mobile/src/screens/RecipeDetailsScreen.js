@@ -310,7 +310,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         </TouchableOpacity>
 
         <View style={styles.content}>
-          <Text style={styles.title}>{recipe.title}</Text>
+          <Text style={styles.title}>{recipe.title}{recipe.is_verified ? '  ✅' : ''}</Text>
           
           {/* Puanlama Satırı */}
           <View style={styles.ratingRow}>
@@ -323,6 +323,11 @@ export default function RecipeDetailsScreen({ route, navigation }) {
             <View style={styles.dot} />
             <Ionicons name="chatbubble-outline" size={14} color="#666" />
             <Text style={styles.commentText}>{ratingStats.comments} comments</Text>
+            <View style={styles.dot} />
+            <View style={[styles.statItem, {paddingLeft:10,flexDirection: 'row' }]}>
+              <Ionicons name="person-circle-outline" size={18} color="#555" />
+            < Text style={styles.statText}> {recipe.username || 'Admin'}</Text>
+            </View>
           </View>
 
           {/* Meta Bilgileri ve Porsiyon */}
@@ -350,6 +355,15 @@ export default function RecipeDetailsScreen({ route, navigation }) {
                 <Ionicons name="add-circle" size={24} color="#4CAF50" />
               </TouchableOpacity>
             </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.descriptionText}>
+              {recipe.description ? recipe.description : 'Bu tarif için henüz bir açıklama girilmemiş.'}
+            </Text>
           </View>
 
           <View style={styles.divider} />

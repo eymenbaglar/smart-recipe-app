@@ -798,6 +798,8 @@ app.get('/api/recipes/match', auth, async (req, res) => {
         r.prep_time,
         r.calories,
         r.serving,
+        r.is_verified,
+        COALESCE(u.username, 'Admin') as username,
         (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
 
         -- Eşleşme oranı hesabı
@@ -818,7 +820,8 @@ app.get('/api/recipes/match', auth, async (req, res) => {
 
       FROM recipes r
       JOIN CalculatedScores cs ON r.id = cs.recipe_id
-      GROUP BY r.id
+      LEFT JOIN users u ON r.created_by = u.id
+      GROUP BY r.id , u.username
       HAVING ROUND(
           (SUM(cs.score) FILTER (WHERE cs.is_staple = FALSE) / 
            NULLIF(COUNT(*) FILTER (WHERE cs.is_staple = FALSE), 0)) * 100
@@ -881,7 +884,10 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
         r.prep_time,
         r.calories,
         r.serving,
+        r.is_verified,
+        COALESCE(u.username, 'Admin') as username,
         (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
+      
         
         -- Eşleşme istatistikleri
         COALESCE(rs.total_required, 0) AS total_ingredients,
@@ -908,6 +914,7 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
       FROM recipes r
       JOIN RecipeStats rs ON r.id = rs.recipe_id
       JOIN Matches m ON r.id = m.recipe_id -- Sadece eşleşmesi olanları getir (INNER JOIN)
+      LEFT JOIN users u ON r.created_by = u.id
       
       ORDER BY 
         m.matching_count DESC, 
@@ -996,7 +1003,9 @@ app.get('/api/favorites', auth, async (req, res) => {
         r.prep_time,
         r.calories,
         r.serving,
+        r.is_verified,
         f.added_at,
+        COALESCE(u.username, 'Admin') as username,
         (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
         
         -- Eşleşme oranı
@@ -1022,7 +1031,8 @@ app.get('/api/favorites', auth, async (req, res) => {
       JOIN recipes r ON f.recipe_id = r.id
       LEFT JOIN RecipeStats rs ON r.id = rs.recipe_id
       LEFT JOIN Matches m ON r.id = m.recipe_id
-      
+      LEFT JOIN users u ON r.created_by = u.id
+
       WHERE f.user_id = $1
       
       ORDER BY f.added_at DESC;
@@ -1164,6 +1174,9 @@ app.get('/api/history', auth, async (req, res) => {
          r.calories,
          r.prep_time,
          r.serving,
+         r.description,
+         r.is_verified,
+         COALESCE(u.username, 'Admin') as username,
          
          -- KULLANICININ VERDİĞİ PUAN VE YORUM (Varsa)
          rv.rating AS my_rating,
@@ -1174,6 +1187,7 @@ app.get('/api/history', auth, async (req, res) => {
        FROM meal_history mh
        JOIN recipes r ON mh.recipe_id = r.id
        LEFT JOIN reviews rv ON r.id = rv.recipe_id AND rv.user_id = $1
+       LEFT JOIN users u ON r.created_by = u.id
        
        WHERE mh.user_id = $1
        ORDER BY mh.cooked_at DESC`,
@@ -1203,7 +1217,7 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
     if (historyCount === 0) {
       // Eğer Cold Startsa
       const randomRecipes = await db.query(`
-        SELECT r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving , (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating 
+        SELECT r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving , r.is_verified, (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating 
         FROM recipes r
         ORDER BY RANDOM() 
         LIMIT 10
@@ -1243,7 +1257,7 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
       )
       -- Sonuçları sırala
       SELECT 
-        r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving,(SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
+        r.id, r.title, r.description, r.image_url, r.prep_time, r.calories, r.serving, r.is_verified, (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
         cr.total_score,
         cr.hit_count
       FROM recipes r
@@ -1469,6 +1483,7 @@ app.get('/my-recipes', auth, async (req, res) => {
     const result = await db.query(`
       SELECT 
         r.*, 
+        COALESCE(u.username, 'Admin') as username,
         COALESCE(AVG(rv.rating), 0)::NUMERIC(10,1) as average_rating,
         (
           -- Bu alt sorgu, tarifin malzemelerini JSON listesi olarak getirir
@@ -1486,8 +1501,9 @@ app.get('/my-recipes', auth, async (req, res) => {
         ) as ingredients
       FROM recipes r
       LEFT JOIN reviews rv ON r.id = rv.recipe_id
+      LEFT JOIN users u ON r.created_by = u.id
       WHERE r.created_by = $1
-      GROUP BY r.id
+      GROUP BY r.id , u.username
       ORDER BY r.created_at DESC
     `, [req.user.id]);
 
@@ -1505,32 +1521,6 @@ app.get('/my-recipes', auth, async (req, res) => {
     res.status(500).json({ error: 'Tarifler getirilemedi.' });
   }
 });
-
-
-//rejected tarifi sil
- /* app.delete('/recipes/:id', auth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Önce tarifin bu kullanıcıya ait olup olmadığını kontrol et
-    const check = await db.query(
-      'SELECT * FROM recipes WHERE id = $1 AND created_by = $2',
-      [id, req.user.id]
-    );
-
-    if (check.rows.length === 0) {
-      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok veya tarif bulunamadı.' });
-    }
-
-    // Silme işlemi
-    await db.query('DELETE FROM recipes WHERE id = $1', [id]);
-    res.json({ message: 'Tarif başarıyla silindi.' });
-
-  } catch (err) {
-    console.error('Delete recipe error:', err);
-    res.status(500).json({ error: 'Silme işlemi başarısız.' });
-  }
-}); */
 
 app.delete('/api/recipes/:id', auth, async (req, res) => {
   const { id } = req.params;
