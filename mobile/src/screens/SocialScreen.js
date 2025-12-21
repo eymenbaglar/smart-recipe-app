@@ -14,20 +14,19 @@ const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.44;
 
-
-// --- 1. PARÇA: HEADER BİLEŞENİ ---
+// ==================================================
+// 1. PARÇA: HEADER BİLEŞENİ (Sabit Kısım)
+// ==================================================
 const SocialHeader = ({ 
   searchTerm, setSearchTerm, handleSearchFocus, 
   mode, setMode, 
   categories, selectedCategory, handleCategorySelect, 
-  trends, newest, toggleFavorite,
-  navigation 
+  trends, newest, 
+  navigation,
+  toggleFavorite 
 }) => {
   
-  // Filtreleme aktif mi? (Raf gizleme mantığı için)
   const isFilterActive = searchTerm.length > 0 || selectedCategory !== 'Tümü';
-
-  // YENİ: Chips Gözüksün mü? (Sadece arama kutusu BOŞSA gözüksün)
   const showChips = searchTerm.length === 0;
 
   const renderHorizontalCard = ({ item }) => (
@@ -37,7 +36,7 @@ const SocialHeader = ({
     >
       <Image source={{ uri: item.image_url }} style={styles.hImage} />
       
-      {/* 1. RATING ROZETİ (SOL ÜST) */}
+      {/* Rating (Sol Üst) */}
       <View style={styles.ratingBadge}>
           <Ionicons name="star" size={10} color="#fff" />
           <Text style={styles.ratingText}>
@@ -45,9 +44,9 @@ const SocialHeader = ({
           </Text>
       </View>
 
-      {/* 2. FAVORİ BUTONU (SAĞ ÜST) */}
+      {/* Favori (Sağ Üst) */}
       <TouchableOpacity 
-        style={styles.likeBtnHorizontal} // Yeni stil ismi verdik
+        style={styles.likeBtnHorizontal} 
         onPress={() => toggleFavorite(item)}
       >
          <Ionicons 
@@ -57,7 +56,6 @@ const SocialHeader = ({
          />
       </TouchableOpacity>
 
-      {/* BİLGİ KISMI */}
       <View style={styles.hInfo}>
         <Text style={styles.hTitle} numberOfLines={1}>{item.title}</Text>
         <View style={styles.row}>
@@ -89,7 +87,7 @@ const SocialHeader = ({
             )}
         </View>
         
-        {/* SWITCH (Filtre Varsa Gözükür) */}
+        {/* SWITCH */}
         {isFilterActive && (
           <View style={styles.switchContainer}>
             <Text style={styles.switchLabel}>
@@ -107,8 +105,7 @@ const SocialHeader = ({
         )}
       </View>
 
-      {/* --- DEĞİŞİKLİK BURADA: CHIPS (KATEGORİLER) --- */}
-      {/* Sadece showChips (yani arama boşsa) true ise render et */}
+      {/* KATEGORİLER (Chips) */}
       {showChips && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsContainer}>
           {categories.map((cat, index) => (
@@ -125,19 +122,19 @@ const SocialHeader = ({
         </ScrollView>
       )}
 
-      {/* RAFLAR (Filtre Yoksa Gözükür) */}
+      {/* RAFLAR */}
       {!isFilterActive && (
         <>
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>🔥 Haftanın Trendleri</Text>
                 <TouchableOpacity 
-        onPress={() => navigation.navigate('RecipeList', { 
-            title: '🔥 Haftanın Trendleri', 
-            type: 'trends' // Backend endpointi için anahtar kelime
-        })}
-    >
-        <Text style={styles.seeAll}>Tümü</Text>
-    </TouchableOpacity>
+                    onPress={() => navigation.navigate('RecipeList', { 
+                        title: '🔥 Haftanın Trendleri', 
+                        type: 'trends' 
+                    })}
+                >
+                    <Text style={styles.seeAll}>Tümü</Text>
+                </TouchableOpacity>
             </View>
             <FlatList 
                 horizontal
@@ -150,14 +147,14 @@ const SocialHeader = ({
 
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>💎 Son Eklenenler</Text>
-    <TouchableOpacity 
-        onPress={() => navigation.navigate('RecipeList', { 
-            title: '💎 Son Eklenenler', 
-            type: 'newest' 
-        })}
-    >
-        <Text style={styles.seeAll}>Tümü</Text>
-    </TouchableOpacity>
+                <TouchableOpacity 
+                    onPress={() => navigation.navigate('RecipeList', { 
+                        title: '💎 Son Eklenenler', 
+                        type: 'newest' 
+                    })}
+                >
+                    <Text style={styles.seeAll}>Tümü</Text>
+                </TouchableOpacity>
             </View>
             <FlatList 
                 horizontal
@@ -181,110 +178,47 @@ const SocialHeader = ({
 };
 
 
-// --- 2. PARÇA: ANA EKRAN ---
+// ==================================================
+// 2. PARÇA: ANA EKRAN (SocialScreen)
+// ==================================================
 export default function SocialScreen() {
   const navigation = useNavigation();
   
+  // --- STATE TANIMLARI ---
   const [mode, setMode] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   
+  // Veri State'leri
   const [trends, setTrends] = useState([]);
   const [newest, setNewest] = useState([]);
   const [feed, setFeed] = useState([]);
   
-  // Loading state'i SADECE ilk açılış için kullanacağız
+  // Yükleme State'leri
   const [initialLoading, setInitialLoading] = useState(true); 
   const [refreshing, setRefreshing] = useState(false);
+  
+  // --- SONSUZ KAYDIRMA (PAGINATION) ---
+  const [page, setPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(true);
+  
+  // SEED: Oturum boyunca sabit kalacak rastgele sayı
+  // Bu sayede sayfa 2'ye geçince liste yeniden karışmaz.
+  const [seed] = useState(Math.random().toString()); 
 
   const categories = ['Tümü', 'Kahvaltılık', 'Akşam Yemeği', 'Tatlı', 'Vegan', 'Pratik', 'Hamur İşi'];
 
-  // --- API FONKSİYONLARI ---
-  // isSilent: true ise ekranda loading göstermez (Arama yaparken klavye kapanmasın diye)
-  const refreshAllData = async (isSilent = false) => {
-    
-    // Eğer sessiz mod değilse ve refresh yapılmıyorsa loading göster
-    if (!isSilent && !refreshing) setInitialLoading(true);
-
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-
-      // Sadece 'Tümü' seçiliyse trendleri güncelle (Search yaparken gereksiz trafik olmasın)
-      if (searchTerm === '' && selectedCategory === 'Tümü') {
-          const [trendsRes, newestRes] = await Promise.all([
-            axios.get(`${API_URL}/api/recipes/social/trends`, { headers,params: { limit: 10 } }),
-            axios.get(`${API_URL}/api/recipes/social/newest`, { headers,params: { limit: 10 } })
-          ]);
-          setTrends(trendsRes.data);
-          setNewest(newestRes.data);
-      }
-
-      // Feed Kısmını Güncelle
-      if (searchTerm.length > 0 || selectedCategory !== 'Tümü') {
-         const searchRes = await axios.get(`${API_URL}/api/recipes/social/search`, {
-            params: { q: searchTerm, category: selectedCategory, mode: mode },
-            headers: { Authorization: `Bearer ${token}` }
-         });
-         setFeed(searchRes.data);
-      } else {
-         const randomRes = await axios.get(`${API_URL}/api/recipes/social/random`, { headers });
-         setFeed(randomRes.data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setInitialLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  // --- USE EFFECTS ---
-
-  // 1. Ekran ilk açıldığında veya Odaklanıldığında çalışır (Initial Load)
-  useFocusEffect(
-    useCallback(() => {
-      // Eğer arama yapıyorsak focus effect verileri ezmesin
-      if (searchTerm === '') {
-          refreshAllData(false); // Loading göstererek yükle
-      }
-    }, []) // Dependency array boş, sadece mount/focus anında
-  );
-
-  // 2. Arama Terimi, Kategori veya Mod Değişince Çalışır (Search Effect)
-  useEffect(() => {
-      // BURASI KRİTİK: isSilent = true gönderiyoruz.
-      // Böylece loading state değişmiyor, liste unmount olmuyor, klavye kapanmıyor.
-      refreshAllData(true); 
-  }, [searchTerm, selectedCategory, mode]);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    refreshAllData(true); // Pull to refresh zaten kendi loading'ini gösterir
-  };
-
-  const handleSearchFocus = () => {
-    setMode('all'); 
-  };
-
-  const handleCategorySelect = (cat) => {
-    setSelectedCategory(cat);
-    if (searchTerm === '') setMode('standard');
-    if (cat === 'Tümü') setSearchTerm('');
-  };
-
+  // --- FAVORİ İŞLEMİ ---
   const toggleFavorite = async (recipe) => {
     try {
-      // 1. Backend'e istek at
       const token = await AsyncStorage.getItem('token');
       await axios.post(`${API_URL}/api/favorites/toggle`, 
         { recipeId: recipe.id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // 2. UI'ı Güncelle (Local State Update)
-      // Hangi listedeyse (Feed, Trends, Newest) oradaki 'is_favorited' değerini tersine çevir.
-      
       const updateList = (list) => list.map(item => 
         item.id === recipe.id ? { ...item, is_favorited: !item.is_favorited } : item
       );
@@ -295,26 +229,133 @@ export default function SocialScreen() {
 
     } catch (error) {
       console.error("Favori hatası:", error);
-      alert("İşlem sırasında bir hata oluştu.");
     }
   };
 
+  // --- ANA VERİ ÇEKME (REFRESH / FIRST LOAD) ---
+  const refreshAllData = async (isSilent = false) => {
+    if (!isSilent && !refreshing) setInitialLoading(true);
+    setError(false);
+
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // 1. Trendler ve Yeni Eklenenler (Sadece Search Boşsa)
+      if (searchTerm === '' && selectedCategory === 'Tümü') {
+          const [trendsRes, newestRes] = await Promise.all([
+            axios.get(`${API_URL}/api/recipes/social/trends`, { headers, params: { limit: 10 } }),
+            axios.get(`${API_URL}/api/recipes/social/newest`, { headers, params: { limit: 10 } })
+          ]);
+          setTrends(trendsRes.data);
+          setNewest(newestRes.data);
+      }
+
+      // 2. Feed Kısmı (Sayfa 1)
+      setPage(1);
+      setHasMoreData(true);
+
+      if (searchTerm.length > 0 || selectedCategory !== 'Tümü') {
+         // Arama Modu
+         const searchRes = await axios.get(`${API_URL}/api/recipes/social/search`, {
+            params: { q: searchTerm, category: selectedCategory, mode: mode },
+            headers
+         });
+         setFeed(searchRes.data);
+      } else {
+         // Random Feed (Sayfa 1) - seed parametresini kullanıyoruz
+         const randomRes = await axios.get(`${API_URL}/api/recipes/social/random`, { 
+            headers,
+            params: { page: 1, limit: 20, seed: seed } 
+         });
+         setFeed(randomRes.data);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setInitialLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // --- SONSUZ KAYDIRMA FONKSİYONU ---
+  const loadMoreFeed = async () => {
+    // EĞER HATA VARSA (error) ÇALIŞMA (Döngüyü Engeller)
+    if (isLoadingMore || !hasMoreData || searchTerm.length > 0 || selectedCategory !== 'Tümü' || error) return;
+
+    setIsLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/recipes/social/random`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { page: nextPage, limit: 20, seed: seed }
+      });
+
+      if (res.data.length === 0) {
+        setHasMoreData(false);
+      } else {
+        setFeed(prevFeed => {
+          const existingIds = new Set(prevFeed.map(item => item.id));
+          const uniqueNewItems = res.data.filter(item => !existingIds.has(item.id));
+          return [...prevFeed, ...uniqueNewItems];
+        });
+        setPage(nextPage);
+      }
+    } catch (error) {
+      console.error("Daha fazla yüklenemedi:", error);
+      setError(true); // <--- YENİ: Hata olduğunu sisteme bildir (Freni Çek)
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  // --- EFFECT HOOKS ---
+  useFocusEffect(
+    useCallback(() => {
+      if (searchTerm === '') {
+          refreshAllData(false); 
+      }
+    }, [])
+  );
+
+  useEffect(() => {
+      refreshAllData(true); // Search/Filter değişirse sessiz yenile
+  }, [searchTerm, selectedCategory, mode]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    refreshAllData(true);
+  };
+
+  const handleSearchFocus = () => { setMode('all'); };
+
+  const handleCategorySelect = (cat) => {
+    setSelectedCategory(cat);
+    if (searchTerm === '') setMode('standard');
+    if (cat === 'Tümü') setSearchTerm('');
+  };
+
+  // Grid Kart Render
   const renderGridCard = ({ item }) => (
     <TouchableOpacity 
       style={styles.gridCard}
       onPress={() => navigation.navigate('RecipeDetails', { item })}
     >
       <Image source={{ uri: item.image_url }} style={styles.gImage} />
+      
       <TouchableOpacity 
         style={styles.likeBtn} 
-        onPress={() => toggleFavorite(item)} // Fonksiyonu bağladık
+        onPress={() => toggleFavorite(item)}
       >
          <Ionicons 
-            name={item.is_favorited ? "heart" : "heart-outline"} // Dolu veya Boş kalp
+            name={item.is_favorited ? "heart" : "heart-outline"} 
             size={20} 
-            color={item.is_favorited ? "#FF0000" : "#fff"} // Kırmızı veya Beyaz
+            color={item.is_favorited ? "#FF0000" : "#fff"} 
          />
       </TouchableOpacity>
+
       <View style={styles.gInfo}>
         <Text style={styles.gTitle} numberOfLines={2}>{item.title}</Text>
         <View style={styles.row}>
@@ -325,7 +366,6 @@ export default function SocialScreen() {
     </TouchableOpacity>
   );
 
-  // Header'ı Memoize ediyoruz (Gereksiz render'ı önlemek için ekstra güvenlik)
   const headerComponent = useMemo(() => (
     <SocialHeader 
         searchTerm={searchTerm}
@@ -341,25 +381,33 @@ export default function SocialScreen() {
         navigation={navigation}
         toggleFavorite={toggleFavorite}
     />
-  ), [searchTerm, mode, selectedCategory, trends, newest]);
+  ), [searchTerm, mode, selectedCategory, trends, newest, feed]); 
 
   return (
     <View style={styles.container}>
-      {/* Sadece sayfa ilk açılırken dönen loading, arama yaparken GÖZÜKMEYECEK */}
       {initialLoading ? (
         <ActivityIndicator size="large" color="#FF6F61" style={{marginTop: 50}} />
       ) : (
         <FlatList
           data={feed}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => item.id.toString() + index}
           renderItem={renderGridCard}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 15 }}
           
-          ListHeaderComponent={headerComponent} // Memoize edilmiş header
+          ListHeaderComponent={headerComponent}
           
+          // --- PAGINATION PROPS ---
+          onEndReached={loadMoreFeed}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isLoadingMore ? (
+              <ActivityIndicator size="small" color="#FF6F61" style={{ marginVertical: 20 }} />
+            ) : null
+          }
+
           contentContainerStyle={{ paddingBottom: 20 }}
-          keyboardShouldPersistTaps="handled" // Klavye dışına basınca kapansın ama butonlara basınca algılasın
+          keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
               <Text style={{textAlign:'center', marginTop: 20, color:'#999'}}>
                   Sonuç bulunamadı.
@@ -374,6 +422,7 @@ export default function SocialScreen() {
   );
 }
 
+// STYLES (Değişmedi ama eksik kalmasın diye ekliyorum)
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAFAFA', paddingTop: 10 },
   row: { flexDirection: 'row', alignItems: 'center' },
@@ -395,38 +444,13 @@ const styles = StyleSheet.create({
   hInfo: { padding: 8 },
   hTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 4 },
   hUser: { fontSize: 10, color: '#777', marginRight: 4 },
-  ratingBadge: { 
-    position: 'absolute', 
-    top: 10,      // Resmin tepesinden boşluk
-    left: 10,     // Resmin solundan boşluk (SOLA ALDIK)
-    backgroundColor: 'rgba(0,0,0,0.6)', 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
-    borderRadius: 8,
-    zIndex: 1 // Resmin üstünde kalsın
-  },
-  
-  ratingText: { 
-    color: '#fff', 
-    fontSize: 10, 
-    marginLeft: 3, 
-    fontWeight: 'bold' 
-  },
+  ratingBadge: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(0,0,0,0.6)', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, zIndex: 1 },
+  ratingText: { color: '#fff', fontSize: 10, marginLeft: 3, fontWeight: 'bold' },
+  likeBtnHorizontal: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.3)', padding: 6, borderRadius: 20, zIndex: 1 },
   gridCard: { width: CARD_WIDTH, marginBottom: 15, backgroundColor: '#fff', borderRadius: 12, elevation: 2, overflow: 'hidden' },
   gImage: { width: '100%', height: CARD_WIDTH }, 
   gInfo: { padding: 10 },
   gTitle: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 5, height: 40 }, 
   gUser: { fontSize: 11, color: '#888', marginLeft: 4 },
-  likeBtn: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.3)', padding: 6, borderRadius: 20 },
-  likeBtnHorizontal: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    padding: 6,
-    borderRadius: 20,
-    zIndex: 1
-  },
+  likeBtn: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.3)', padding: 6, borderRadius: 20 }
 });

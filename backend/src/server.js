@@ -1996,20 +1996,31 @@ app.get('/api/recipes/social/newest', auth, async (req, res) => {
 
 //random akışı
 app.get('/api/recipes/social/random', auth, async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const offset = (page - 1) * limit;
+  
+  // Seed'i string olarak alıyoruz
+  const seed = req.query.seed || '0.5'; 
+
   try {
     const query = `
       SELECT 
-        r.*,
+        r.*, 
         u.username,
         (SELECT COALESCE(AVG(rating), 0)::NUMERIC(10,1) FROM reviews WHERE recipe_id = r.id) as average_rating,
         EXISTS(SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = r.id) as is_favorited
       FROM recipes r
       LEFT JOIN users u ON r.created_by = u.id
       WHERE r.status = 'approved'
-      ORDER BY RANDOM() -- PostgreSQL'in rastgele sıralama fonksiyonu
-      LIMIT 20; -- Pagination için ileride buraya OFFSET eklenecek
+      -- DÜZELTME: MD5 yerine HASHTEXT kullanıyoruz.
+      -- ID ve Seed'i birleştirip hashliyoruz. Bu her zaman aynı sırayı verir.
+      ORDER BY HASHTEXT(r.id::text || $4::text) 
+      LIMIT $2 OFFSET $3;
     `;
-    const result = await db.query(query,[req.user.id]);
+    
+    // Parametreler: [User ID, Limit, Offset, Seed]
+    const result = await db.query(query, [req.user.id, limit, offset, seed]);
     res.json(result.rows);
   } catch (err) {
     console.error('Random Feed Error:', err);
