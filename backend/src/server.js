@@ -557,6 +557,73 @@ app.delete('/api/admin/suggestions/:id', adminAuth, async (req, res) => {
   }
 });
 
+//tüm yorumları getir
+app.get('/api/admin/reviews', adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        r.id, 
+        r.comment, 
+        r.rating, 
+        r.created_at,
+        u.username,
+        rec.title as recipe_title
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      JOIN recipes rec ON r.recipe_id = rec.id
+      ORDER BY r.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Yorumlar getirilemedi.' });
+  }
+});
+
+//yorum silme
+app.delete('/api/admin/reviews/:id', adminAuth, async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body; // Adminin yazdığı silme sebebi
+
+  try {
+    // 1. Silmeden önce kullanıcıyı ve tarifi bul (Bildirim için)
+    const reviewInfo = await db.query(`
+      SELECT r.user_id, r.comment, rec.title 
+      FROM reviews r
+      JOIN recipes rec ON r.recipe_id = rec.id
+      WHERE r.id = $1
+    `, [id]);
+
+    if (reviewInfo.rows.length === 0) {
+      return res.status(404).json({ error: 'Yorum bulunamadı.' });
+    }
+
+    const { user_id, title, comment } = reviewInfo.rows[0];
+
+    // 2. Yorumu Sil
+    await db.query('DELETE FROM reviews WHERE id = $1', [id]);
+
+    // 3. Kullanıcıya Bildirim Gönder
+    if (user_id) {
+        // Yorum çok uzunsa bildirimde göstermek için kısaltalım
+        const shortComment = comment.length > 20 ? comment.substring(0, 20) + '...' : comment;
+        
+        await sendNotification(
+            user_id, 
+            "Yorumunuz Kaldırıldı ⚠️", 
+            `"${title}" tarifine yaptığınız "${shortComment}" içerikli yorum, topluluk kurallarımıza uymadığı için kaldırılmıştır. \nSebep: ${reason}`, 
+            "warning"
+        );
+    }
+
+    res.json({ message: 'Yorum silindi ve kullanıcı bilgilendirildi.' });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Silme işlemi başarısız.' });
+  }
+});
+
 {/* USER API'LERİ*/}
 // Register endpoint
 app.post('/auth/register', async (req, res) => {
@@ -1861,6 +1928,193 @@ app.put('/api/notifications/read-all', auth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'İşlem başarısız.' });
+  }
+});
+
+{/*Social API'leri*/}
+//haftanın trendleri (son 7 gün)
+app.get('/api/recipes/social/trends', auth, async (req, res) => {
+  // Frontend'den limit gelirse onu kullan, gelmezse 50 kullan
+  const limit = req.query.limit || 20; 
+
+  try {
+    const query = `
+      SELECT 
+        r.*, 
+        u.username,
+        COUNT(rv.id) as review_count,
+        COALESCE(AVG(rv.rating), 0) as raw_rating,
+        EXISTS(SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = r.id) as is_favorited,
+        (
+          (COUNT(rv.id) / (COUNT(rv.id) + 2.0)) * COALESCE(AVG(rv.rating), 0) +
+          (2.0 / (COUNT(rv.id) + 2.0)) * 3.5
+        ) as weighted_score
+      FROM recipes r
+      LEFT JOIN reviews rv ON r.id = rv.recipe_id
+      LEFT JOIN users u ON r.created_by = u.id
+      WHERE r.status = 'approved'
+      AND (rv.created_at >= NOW() - INTERVAL '14 days' OR r.created_at >= NOW() - INTERVAL '14 days')
+      GROUP BY r.id, u.username
+      HAVING COUNT(rv.id) >= 1
+      ORDER BY weighted_score DESC
+      LIMIT $2; -- <-- DEĞİŞİKLİK BURADA ($2 oldu)
+    `;
+    
+    // Parametre dizisine limiti ekledik: [req.user.id, limit]
+    const result = await db.query(query, [req.user.id, limit]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Trends Error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//son eklenen tarifler
+app.get('/api/recipes/social/newest', auth, async (req, res) => {
+  const limit = req.query.limit || 20;
+
+  try {
+    const query = `
+      SELECT 
+        r.*,
+        u.username,
+        (SELECT COALESCE(AVG(rating), 0)::NUMERIC(10,1) FROM reviews WHERE recipe_id = r.id) as average_rating,
+        EXISTS(SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = r.id) as is_favorited
+      FROM recipes r
+      LEFT JOIN users u ON r.created_by = u.id
+      WHERE r.status = 'approved'
+      ORDER BY r.created_at DESC
+      LIMIT $2; -- <-- DEĞİŞİKLİK BURADA ($2 oldu)
+    `;
+    const result = await db.query(query, [req.user.id, limit]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Newest Error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//random akışı
+app.get('/api/recipes/social/random', auth, async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        r.*,
+        u.username,
+        (SELECT COALESCE(AVG(rating), 0)::NUMERIC(10,1) FROM reviews WHERE recipe_id = r.id) as average_rating,
+        EXISTS(SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = r.id) as is_favorited
+      FROM recipes r
+      LEFT JOIN users u ON r.created_by = u.id
+      WHERE r.status = 'approved'
+      ORDER BY RANDOM() -- PostgreSQL'in rastgele sıralama fonksiyonu
+      LIMIT 20; -- Pagination için ileride buraya OFFSET eklenecek
+    `;
+    const result = await db.query(query,[req.user.id]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Random Feed Error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//search bar filtresi
+app.get('/api/recipes/social/search', auth, async (req, res) => {
+  const { q, category, mode } = req.query;
+  const userId = req.user.id; // Auth middleware'den gelen User ID
+
+  try {
+    // 1. Temel Sorgu
+    // user_id = $1 diyoruz, bu yüzden values dizisinin ilk elemanı userId olmalı.
+    let queryText = `
+      SELECT 
+        r.*, 
+        u.username,
+        (SELECT COALESCE(AVG(rating), 0)::NUMERIC(10,1) FROM reviews WHERE recipe_id = r.id) as average_rating,
+        EXISTS(SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = r.id) as is_favorited
+      FROM recipes r
+      LEFT JOIN users u ON r.created_by = u.id
+      WHERE r.status = 'approved'
+    `;
+
+    // 2. Parametre Dizisi
+    // İlk eleman User ID ($1 buna denk gelir)
+    const values = [userId]; 
+    
+    // Dinamik parametreler $2'den başlayacak
+    let paramIndex = 2; 
+
+    // A. Switch Filtresi (Standart modda verified'ları gizle)
+    if (mode === 'standard') {
+      queryText += ` AND r.is_verified = FALSE`;
+    } 
+
+    // B. Arama Kelimesi Filtresi
+    if (q) {
+      queryText += ` AND (r.title ILIKE $${paramIndex} OR r.description ILIKE $${paramIndex})`;
+      values.push(`%${q}%`);
+      paramIndex++;
+    }
+
+    // C. Kategori Filtresi
+    if (category && category !== 'Tümü') {
+       // Kategori varsa title/description içinde arıyoruz (veya category sütunu varsa oraya bakılır)
+       queryText += ` AND (r.title ILIKE $${paramIndex} OR r.description ILIKE $${paramIndex})`;
+       values.push(`%${category}%`);
+       paramIndex++;
+    }
+
+    // Sıralama
+    if (q) {
+        queryText += ` ORDER BY r.created_at DESC`; 
+    } else {
+        queryText += ` ORDER BY RANDOM()`;
+    }
+
+    queryText += ` LIMIT 30`;
+
+    // Sorguyu çalıştır
+    const result = await db.query(queryText, values);
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error('Search Error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//favoriye ekleme
+app.post('/api/favorites/toggle', auth, async (req, res) => {
+  const { recipeId } = req.body;
+  const userId = req.user.id; // auth middleware'den gelen ID
+
+  try {
+    // Önce favorilerde var mı kontrol et
+    const check = await db.query(
+      'SELECT * FROM favorites WHERE user_id = $1 AND recipe_id = $2',
+      [userId, recipeId]
+    );
+
+    if (check.rows.length > 0) {
+      // Varsa sil (Unlike)
+      await db.query(
+        'DELETE FROM favorites WHERE user_id = $1 AND recipe_id = $2',
+        [userId, recipeId]
+      );
+      res.json({ message: 'Removed from favorites', isFavorited: false });
+    } else {
+      // Yoksa ekle (Like)
+      await db.query(
+        'INSERT INTO favorites (user_id, recipe_id) VALUES ($1, $2)',
+        [userId, recipeId]
+      );
+      
+      // (Opsiyonel) Tarif sahibine bildirim gönderilebilir buraya eklenebilir.
+      
+      res.json({ message: 'Added to favorites', isFavorited: true });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

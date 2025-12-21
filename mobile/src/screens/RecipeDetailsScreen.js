@@ -12,7 +12,7 @@ const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
 import RateRecipeModal from '../components/RateRecipeModal';
 
 export default function RecipeDetailsScreen({ route, navigation }) {
-  const { recipe } = route.params;
+  const recipe = route.params.item || route.params.recipe;
   
   // state tanımları
   const [fullIngredients, setFullIngredients] = useState([]);

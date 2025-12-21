@@ -23,6 +23,7 @@ import MyReviewsScreen from './src/screens/MyReviewsScreen';
 import AddRecipeScreen from './src/screens/AddRecipeScreen';
 import MyRecipesScreen from './src/screens/MyRecipesScreen';
 import NotificationScreen from './src/screens/NotificationScreen';
+import RecipeListScreen from './src/screens/RecipeListScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -239,6 +240,11 @@ export default function App() {
               name="Notifications" 
               component={NotificationScreen} 
               options={{ title: 'Notifications' }} 
+            />
+            <Stack.Screen 
+            name="RecipeList" 
+            component={RecipeListScreen} 
+            options={{ headerShown: false }} // Kendi header'ımızı yaptık
             />
           </>
         )}

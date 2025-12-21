@@ -9,6 +9,7 @@ import Recipes from './Recipes';
 import Users from './Users';
 import Ingredients from './Ingredients';
 import Suggestions from './Suggestions';
+import Reviews from './Reviews';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('adminToken'));
@@ -49,6 +50,7 @@ function App() {
             <Route path="/users" element={<Users />} />
             <Route path="/ingredients" element={<Ingredients />} />
             <Route path="/suggestions" element={<Suggestions />} />
+            <Route path="/reviews" element={<Reviews/>} />
           </Routes>
         </div>
       </div>

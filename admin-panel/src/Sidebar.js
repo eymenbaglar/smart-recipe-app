@@ -33,6 +33,9 @@ function Sidebar({ onLogout }) {
         <NavLink to="/suggestions" className={({isActive}) => (isActive ? 'nav-item active' : 'nav-item')}>
         💡 Ingredient Suggestions
         </NavLink>
+        <NavLink to="/reviews" className={({isActive}) => (isActive ? 'nav-item active' : 'nav-item')}>
+        💬 Reviews
+        </NavLink>
 
       </nav>
 

@@ -1,0 +1,107 @@
+.reviews-container {
+  padding: 20px;
+}
+
+.reviews-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.reviews-table th, .reviews-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.reviews-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #333;
+}
+
+.comment-cell {
+  max-width: 250px;
+  color: #555;
+  font-style: italic;
+}
+
+.btn-view {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-view:hover { background-color: #2980b9; }
+.btn-delete:hover { background-color: #c0392b; }
+
+/* Modal Stilleri */
+.review-modal {
+    max-width: 500px;
+    width: 90%;
+}
+
+.full-comment {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    line-height: 1.6;
+    color: #333;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Header Düzeni: Başlık solda, Arama sağda */
+.reviews-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Arama Kutusu Stilleri */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  padding: 10px 10px 10px 35px; /* İkon için soldan boşluk */
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 20px; /* Yuvarlak hatlar */
+  outline: none;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.search-input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+  width: 280px; /* Tıklayınca hafif uzasın */
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  font-size: 16px;
+  color: #888;
+  pointer-events: none; /* Tıklamayı engelle */
+}

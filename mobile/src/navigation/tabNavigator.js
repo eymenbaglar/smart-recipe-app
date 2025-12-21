@@ -9,11 +9,7 @@ import MyStockScreen from '../screens/MyStockScreen';
 import ProfileScreen from '../screens/ProfileScreen'; 
 import RecipeWizardScreen from '../screens/RecipeWizardScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
-
-//geçici ekranlar
-function SocialScreen() {
-  return <View style={styles.center}><Text>Social Screen</Text></View>;
-}
+import SocialScreen from '../screens/SocialScreen';
 
 const Tab = createBottomTabNavigator();
 
