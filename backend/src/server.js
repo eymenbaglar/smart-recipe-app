@@ -1882,13 +1882,16 @@ app.post('/api/ingredients/suggest', auth, async (req, res) => {
 app.get('/api/notifications', auth, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC`,
+      `SELECT * FROM notifications 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC 
+       LIMIT 50`,
       [req.user.id]
     );
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Bildirimler alınamadı.' });
+    console.error('Notifications Error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -1896,12 +1899,13 @@ app.get('/api/notifications', auth, async (req, res) => {
 app.get('/api/notifications/unread-count', auth, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE`,
+      'SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE',
       [req.user.id]
     );
     res.json({ count: parseInt(result.rows[0].count) });
   } catch (err) {
-    res.status(500).json({ error: 'Hata.' });
+    console.error('Notification Count Error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -1909,12 +1913,13 @@ app.get('/api/notifications/unread-count', auth, async (req, res) => {
 app.put('/api/notifications/:id/read', auth, async (req, res) => {
   try {
     await db.query(
-      `UPDATE notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2`,
+      'UPDATE notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2',
       [req.params.id, req.user.id]
     );
-    res.json({ success: true });
+    res.json({ message: 'Notification marked as read' });
   } catch (err) {
-    res.status(500).json({ error: 'İşlem başarısız.' });
+    console.error('Mark Read Error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -1922,12 +1927,13 @@ app.put('/api/notifications/:id/read', auth, async (req, res) => {
 app.put('/api/notifications/read-all', auth, async (req, res) => {
   try {
     await db.query(
-      `UPDATE notifications SET is_read = TRUE WHERE user_id = $1`,
+      'UPDATE notifications SET is_read = TRUE WHERE user_id = $1',
       [req.user.id]
     );
-    res.json({ success: true });
+    res.json({ message: 'All marked as read' });
   } catch (err) {
-    res.status(500).json({ error: 'İşlem başarısız.' });
+    console.error('Read All Error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
