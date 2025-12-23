@@ -143,7 +143,7 @@ export default function AddRecipeScreen({ navigation , route}) {
     }
     try {
       const token = await AsyncStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/ingredients/search?query=${text}`, {
+      const response = await axios.get(`${API_URL}/api/ingredients/search2?query=${text}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSearchResults(response.data);
@@ -161,7 +161,7 @@ export default function AddRecipeScreen({ navigation , route}) {
     const unit = defaultUnit ? defaultUnit.toLowerCase() : '';
 
     if (['ml', 'l', 'lt'].includes(unit)) return liquidUnits;
-    if (['gr', 'g', 'kg'].includes(unit)) return solidUnits;
+    if (['gr', 'g', 'kg' , 'gram'].includes(unit)) return solidUnits;
     if (['qty', 'adet', 'count'].includes(unit)) return countUnits;
     
     return [defaultUnit || 'birim'];

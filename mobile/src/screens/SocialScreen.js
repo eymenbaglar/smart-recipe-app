@@ -27,7 +27,7 @@ const SocialHeader = ({
   toggleFavorite 
 }) => {
   
-  const isFilterActive = searchTerm.length > 0 || selectedCategory !== 'Tümü';
+  const isFilterActive = searchTerm.length > 0 || selectedCategory !== 'All';
   const showChips = searchTerm.length === 0;
 
 const renderHorizontalCard = ({ item }) => {
@@ -128,7 +128,7 @@ const renderHorizontalCard = ({ item }) => {
                   style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
                 />
                 <Text style={styles.switchLabel}>
-                  {mode === 'all' ? 'Tümü' : 'Std'}
+                  {mode === 'all' ? 'All' : 'Std'}
                 </Text>
               </View>
             )}
@@ -164,7 +164,7 @@ const renderHorizontalCard = ({ item }) => {
                 <TouchableOpacity 
                     onPress={() => navigation.navigate('RecipeList', { title: '🔥 Haftanın Trendleri', type: 'trends' })}
                 >
-                    <Text style={styles.seeAll}>Tümü</Text>
+                    <Text style={styles.seeAll}>All</Text>
                 </TouchableOpacity>
             </View>
             <FlatList 
@@ -192,7 +192,7 @@ const renderHorizontalCard = ({ item }) => {
                 <TouchableOpacity 
                     onPress={() => navigation.navigate('RecipeList', { title: '💎 Son Eklenenler', type: 'newest' })}
                 >
-                    <Text style={styles.seeAll}>Tümü</Text>
+                    <Text style={styles.seeAll}>All</Text>
                 </TouchableOpacity>
             </View>
             <FlatList 
@@ -231,7 +231,7 @@ export default function SocialScreen() {
   // --- STATE TANIMLARI ---
   const [mode, setMode] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Tümü');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   
   // Veri State'leri
   const [trends, setTrends] = useState([]);
@@ -252,7 +252,16 @@ export default function SocialScreen() {
   // Bu sayede sayfa 2'ye geçince liste yeniden karışmaz.
   const [seed] = useState(Math.random().toString()); 
 
-  const categories = ['Tümü', 'Kahvaltılık', 'Akşam Yemeği', 'Tatlı', 'Vegan', 'Pratik', 'Hamur İşi'];
+  const categories = [
+    'All', 
+    'Breakfast', 
+    'Soup', 
+    'Main Course', 
+    'Salad & Appetizer', 
+    'Dessert', 
+    'Bakery', 
+    'Beverage'
+  ];
 
   // --- FAVORİ İŞLEMİ ---
   const toggleFavorite = async (recipe) => {
@@ -286,7 +295,7 @@ export default function SocialScreen() {
       const headers = { Authorization: `Bearer ${token}` };
 
       // 1. Trendler ve Yeni Eklenenler (Sadece Search Boşsa)
-      if (searchTerm === '' && selectedCategory === 'Tümü') {
+      if (searchTerm === '' && selectedCategory === 'All') {
           const [trendsRes, newestRes] = await Promise.all([
             axios.get(`${API_URL}/api/recipes/social/trends`, { headers, params: { limit: 10 } }),
             axios.get(`${API_URL}/api/recipes/social/newest`, { headers, params: { limit: 10 } })
@@ -299,7 +308,7 @@ export default function SocialScreen() {
       setPage(1);
       setHasMoreData(true);
 
-      if (searchTerm.length > 0 || selectedCategory !== 'Tümü') {
+      if (searchTerm.length > 0 || selectedCategory !== 'All') {
          // Arama Modu
          const searchRes = await axios.get(`${API_URL}/api/recipes/social/search`, {
             params: { q: searchTerm, category: selectedCategory, mode: mode },
@@ -325,7 +334,7 @@ export default function SocialScreen() {
   // --- SONSUZ KAYDIRMA FONKSİYONU ---
   const loadMoreFeed = async () => {
     // EĞER HATA VARSA (error) ÇALIŞMA (Döngüyü Engeller)
-    if (isLoadingMore || !hasMoreData || searchTerm.length > 0 || selectedCategory !== 'Tümü' || error) return;
+    if (isLoadingMore || !hasMoreData || searchTerm.length > 0 || selectedCategory !== 'All' || error) return;
 
     setIsLoadingMore(true);
     const nextPage = page + 1;
@@ -358,10 +367,7 @@ export default function SocialScreen() {
   // --- EFFECT HOOKS ---
   useFocusEffect(
     useCallback(() => {
-      if (searchTerm === '') {
-          refreshAllData(false); 
-      }
-    }, [])
+    }, [searchTerm, selectedCategory, mode])
   );
 
   useEffect(() => {
@@ -378,7 +384,7 @@ export default function SocialScreen() {
   const handleCategorySelect = (cat) => {
     setSelectedCategory(cat);
     if (searchTerm === '') setMode('standard');
-    if (cat === 'Tümü') setSearchTerm('');
+    if (cat === 'All') setSearchTerm('');
   };
 
   // Grid Kart Render

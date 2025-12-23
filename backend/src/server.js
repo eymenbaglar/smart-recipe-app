@@ -813,6 +813,30 @@ app.get('/api/ingredients/search', auth, async (req, res) => {
   try {
     // databasede ara
     const result = await db.query(
+      'SELECT id, name, unit, unit_category, calories_per_unit FROM ingredients WHERE name ILIKE $1 AND is_staple = FALSE LIMIT 10',
+      [`%${query}%`]
+    );
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error('Search Error:', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+//Add recipe için staple dahil search
+app.get('/api/ingredients/search2', auth, async (req, res) => {
+  const { query } = req.query; // query'i al
+
+  //min 2 harf giriyor
+  if (!query || query.length < 2) {
+    return res.status(400).json({ error: 'Please enter at least 2 letters.' });
+  }
+
+  try {
+    // databasede ara
+    const result = await db.query(
       'SELECT id, name, unit, unit_category, calories_per_unit FROM ingredients WHERE name ILIKE $1 LIMIT 10',
       [`%${query}%`]
     );
@@ -1012,6 +1036,7 @@ app.get('/api/recipes/match', auth, async (req, res) => {
       FROM recipes r
       JOIN CalculatedScores cs ON r.id = cs.recipe_id
       LEFT JOIN users u ON r.created_by = u.id
+      WHERE r.is_verified = TRUE
       GROUP BY r.id , u.username
       HAVING ROUND(
           (SUM(cs.score) FILTER (WHERE cs.is_staple = FALSE) / 
@@ -1107,6 +1132,7 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
       JOIN RecipeStats rs ON r.id = rs.recipe_id
       JOIN Matches m ON r.id = m.recipe_id -- Sadece eşleşmesi olanları getir (INNER JOIN)
       LEFT JOIN users u ON r.created_by = u.id
+      WHERE r.is_verified = TRUE
       
       ORDER BY 
         m.matching_count DESC, 
@@ -1413,6 +1439,7 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
       const randomRecipes = await db.query(`
         SELECT r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving , r.category, r.is_verified, (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating 
         FROM recipes r
+        WHERE r.is_verified = TRUE
         ORDER BY RANDOM() 
         LIMIT 10
       `);
@@ -1446,7 +1473,7 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
         FROM recipes r
         JOIN recipe_ingredients ri ON r.id = ri.recipe_id
         JOIN IngredientScores ibs ON ri.ingredient_id = ibs.ingredient_id
-        WHERE r.id NOT IN (SELECT recipe_id FROM LastHistory)
+        WHERE r.id NOT IN (SELECT recipe_id FROM LastHistory) AND r.is_verified = TRUE
         GROUP BY r.id
       )
       -- Sonuçları sırala
@@ -2041,11 +2068,9 @@ app.get('/api/recipes/social/random', auth, async (req, res) => {
 //search bar filtresi
 app.get('/api/recipes/social/search', auth, async (req, res) => {
   const { q, category, mode } = req.query;
-  const userId = req.user.id; // Auth middleware'den gelen User ID
+  const userId = req.user.id; 
 
   try {
-    // 1. Temel Sorgu
-    // user_id = $1 diyoruz, bu yüzden values dizisinin ilk elemanı userId olmalı.
     let queryText = `
       SELECT 
         r.*, 
@@ -2057,34 +2082,29 @@ app.get('/api/recipes/social/search', auth, async (req, res) => {
       WHERE r.status = 'approved'
     `;
 
-    // 2. Parametre Dizisi
-    // İlk eleman User ID ($1 buna denk gelir)
     const values = [userId]; 
-    
-    // Dinamik parametreler $2'den başlayacak
     let paramIndex = 2; 
 
-    // A. Switch Filtresi (Standart modda verified'ları gizle)
+    // Verified Filtresi
     if (mode === 'standard') {
       queryText += ` AND r.is_verified = FALSE`;
     } 
 
-    // B. Arama Kelimesi Filtresi
+    // Kelime Araması (Title veya Description)
     if (q) {
       queryText += ` AND (r.title ILIKE $${paramIndex} OR r.description ILIKE $${paramIndex})`;
       values.push(`%${q}%`);
       paramIndex++;
     }
 
-    // C. Kategori Filtresi
-    if (category && category !== 'Tümü') {
-       // Kategori varsa title/description içinde arıyoruz (veya category sütunu varsa oraya bakılır)
-       queryText += ` AND (r.title ILIKE $${paramIndex} OR r.description ILIKE $${paramIndex})`;
-       values.push(`%${category}%`);
+    // Kategori Filtresi (YENİ: Gerçek category sütununu kullanıyoruz)
+    // 'All' veya 'Tümü' gelirse filtreleme yapmıyoruz
+    if (category && category !== 'All' && category !== 'Tümü') {
+       queryText += ` AND r.category = $${paramIndex}`;
+       values.push(category);
        paramIndex++;
     }
 
-    // Sıralama
     if (q) {
         queryText += ` ORDER BY r.created_at DESC`; 
     } else {
@@ -2093,7 +2113,6 @@ app.get('/api/recipes/social/search', auth, async (req, res) => {
 
     queryText += ` LIMIT 30`;
 
-    // Sorguyu çalıştır
     const result = await db.query(queryText, values);
     res.json(result.rows);
 

@@ -20,6 +20,38 @@ export default function RecipeListScreen({ route, navigation }) {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+    // --- FAVORİLEME FONKSİYONU ---
+  const handleToggleFavorite = async (recipe) => {
+    // 1. Optimistic Update (Anında UI Güncelleme)
+    // Listeyi map ile dönüyoruz, ID'si eşleşen tarifin 'is_favorited' değerini tersine çeviriyoruz.
+    const updatedList = recipes.map((item) => {
+      if (item.id === recipe.id) {
+        return { 
+            ...item, 
+            is_favorited: !item.is_favorited // True ise False, False ise True yap
+        };
+      }
+      return item;
+    });
+    
+    setRecipes(updatedList); // State'i güncelle (Ekranda kalp anında değişir)
+
+    // 2. API İsteği (Arka Planda)
+    try {
+      const token = await AsyncStorage.getItem('token');
+      await axios.post(
+        `${API_URL}/api/favorites/toggle`,
+        { recipeId: recipe.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (error) {
+      console.error('Fav Error:', error);
+      // Hata olursa işlemi geri al (Rollback)
+      // Burada eski listeyi geri yükleyebilirsin veya kullanıcıya uyarı verebilirsin.
+      alert("İşlem başarısız oldu.");
+    }
+  };
+
   useEffect(() => {
     fetchRecipes();
   }, []);
@@ -58,13 +90,18 @@ export default function RecipeListScreen({ route, navigation }) {
         />
         
         {/* Kalp İkonu */}
-        <View style={styles.likeBtn}>
-           <Ionicons 
-              name={item.is_favorited ? "heart" : "heart-outline"} 
-              size={20} 
-              color={item.is_favorited ? "#FF453A" : "#1A1A1A"} 
-           />
-        </View>
+        <TouchableOpacity 
+        style={styles.favoriteButton} 
+        onPress={() => handleToggleFavorite(item)} // Fonksiyonu buraya bağladık
+        >
+        <Ionicons 
+          // Eğer is_favorited true ise dolu kalp, değilse boş kalp
+          name={item.is_favorited ? "heart" : "heart-outline"} 
+          size={24} 
+          // Doluysa Kırmızı (#FF6F61), Boşsa Gri/Beyaz
+          color={item.is_favorited ? "#FF6F61" : "#fff"} 
+          />
+        </TouchableOpacity>
   
         <View style={styles.gInfo}>
           {/* 1. BAŞLIK VE TİK */}
@@ -191,11 +228,12 @@ const styles = StyleSheet.create({
 
   row: { flexDirection: 'row', alignItems: 'center' },
   gUser: { fontSize: 11, color: '#888', marginLeft: 4, fontWeight: '500' },
-  
-  likeBtn: { 
-    position: 'absolute', top: 10, right: 10, 
-    backgroundColor: 'rgba(255,255,255,0.95)', padding: 7, 
-    borderRadius: 20, 
-    shadowColor: "#000", shadowOpacity: 0.1, elevation: 2 
+  favoriteButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: 8,
+    borderRadius: 20,
   }
 });
