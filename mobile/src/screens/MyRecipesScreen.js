@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
@@ -113,7 +114,10 @@ export default function MyRecipesScreen({ navigation }) {
             <Image 
               source={{ uri: item.image_url }} 
               style={styles.recipeImage} 
-              resizeMode="cover" 
+              resizeMode="cover"
+              contentFit="cover"
+              transition={500}
+              cachePolicy="memory-disk"  
             />
           ) : (
             <View style={[styles.recipeImage, styles.placeholderImage]}>
@@ -209,6 +213,10 @@ export default function MyRecipesScreen({ navigation }) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={<Text style={styles.emptyText}>Henüz yayınlanmış tarifin yok.</Text>}
         contentContainerStyle={{ paddingBottom: 20 }}
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}  
+        windowSize={5}              
+        removeClippedSubviews={true}
       />
     </View>
   );
@@ -222,6 +230,10 @@ export default function MyRecipesScreen({ navigation }) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={<Text style={styles.emptyText}>İşlem bekleyen tarifin yok.</Text>}
         contentContainerStyle={{ paddingBottom: 20 }}
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}  
+        windowSize={5}              
+        removeClippedSubviews={true}
       />
     </View>
   );

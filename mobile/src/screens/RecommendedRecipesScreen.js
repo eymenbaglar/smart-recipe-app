@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator 
+  View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator 
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,7 +38,11 @@ export default function RecommendedRecipesScreen({ navigation }) {
       style={styles.card}
       onPress={() => navigation.navigate('RecipeDetails', { recipe: item })}
     >
-      <Image source={{ uri: item.image_url }} style={styles.image} />
+      <Image source={{ uri: item.image_url }} 
+      style={styles.image}
+      contentFit="cover" 
+      transition={500}  
+      cachePolicy="memory-disk" />
       <View style={styles.content}>
         <Text style={styles.title}>{item.title}</Text>
         <View style={styles.metaContainer}>
@@ -84,6 +89,10 @@ export default function RecommendedRecipesScreen({ navigation }) {
         keyExtractor={item => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 20 }}
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}  
+        windowSize={5}              
+        removeClippedSubviews={true}
       />
     </View>
   );

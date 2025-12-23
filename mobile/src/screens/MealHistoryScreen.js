@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, Image, ActivityIndicator, TouchableOpacity, Alert 
+  View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert 
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -91,7 +92,11 @@ export default function MealHistoryScreen({ navigation }) {
           onPress={() => navigation.navigate('RecipeDetails', { recipe: item })}
         >
           <View style={{flexDirection: 'row'}}>
-            <Image source={{ uri: item.image_url }} style={styles.image} />
+            <Image source={{ uri: item.image_url }} 
+            style={styles.image}
+            contentFit="cover"
+            transition={500}
+            cachePolicy="memory-disk" />
             
             <View style={styles.content}>
               <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
@@ -169,6 +174,10 @@ export default function MealHistoryScreen({ navigation }) {
             <Text style={styles.emptySubText}>Use the recipe wizard to cook your first meal!</Text>
           </View>
         }
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}  
+        windowSize={5}              
+        removeClippedSubviews={true}
       />
 
       {/* Puanlama Modalı */}

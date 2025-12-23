@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator 
+  View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator 
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -59,7 +60,11 @@ export default function RecommendationRow() {
             style={styles.card}
             onPress={() => navigation.navigate('RecipeDetails', { recipe: item })}
           >
-            <Image source={{ uri: item.image_url }} style={styles.image} />
+            <Image source={{ uri: item.image_url }} 
+            style={styles.image} 
+            contentFit="cover"
+            transition={500}
+            cachePolicy="memory-disk" />
             <View style={styles.overlay}>
               <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
               <Text style={styles.cardMeta}>{item.calories} kcal • {item.prep_time}m • <Ionicons name="star" size={10} color="#FFD700" />
@@ -69,6 +74,10 @@ export default function RecommendationRow() {
             </View>
           </TouchableOpacity>
         )}
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}  
+        windowSize={5}              
+        removeClippedSubviews={true}
       />
     </View>
   );

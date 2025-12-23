@@ -988,6 +988,7 @@ app.get('/api/recipes/match', auth, async (req, res) => {
         r.prep_time,
         r.calories,
         r.serving,
+        r.category,
         r.is_verified,
         COALESCE(u.username, 'Admin') as username,
         (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
@@ -1074,6 +1075,7 @@ app.post('/api/recipes/match-manual', auth, async (req, res) => {
         r.prep_time,
         r.calories,
         r.serving,
+        r.category,
         r.is_verified,
         COALESCE(u.username, 'Admin') as username,
         (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
@@ -1193,6 +1195,7 @@ app.get('/api/favorites', auth, async (req, res) => {
         r.prep_time,
         r.calories,
         r.serving,
+        r.category,
         r.is_verified,
         f.added_at,
         COALESCE(u.username, 'Admin') as username,
@@ -1364,6 +1367,7 @@ app.get('/api/history', auth, async (req, res) => {
          r.calories,
          r.prep_time,
          r.serving,
+         r.category,
          r.description,
          r.is_verified,
          COALESCE(u.username, 'Admin') as username,
@@ -1407,7 +1411,7 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
     if (historyCount === 0) {
       // Eğer Cold Startsa
       const randomRecipes = await db.query(`
-        SELECT r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving , r.is_verified, (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating 
+        SELECT r.id, r.title, r.image_url, r.prep_time, r.calories, r.serving , r.category, r.is_verified, (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating 
         FROM recipes r
         ORDER BY RANDOM() 
         LIMIT 10
@@ -1447,7 +1451,7 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
       )
       -- Sonuçları sırala
       SELECT 
-        r.id, r.title, r.description, r.image_url, r.prep_time, r.calories, r.serving, r.is_verified, (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
+        r.id, r.title, r.description, r.image_url, r.prep_time, r.calories, r.serving,r.category, r.is_verified, (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
         cr.total_score,
         cr.hit_count
       FROM recipes r

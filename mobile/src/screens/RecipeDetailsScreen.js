@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, Alert 
+  View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
@@ -298,7 +299,11 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     <View style={{flex: 1, backgroundColor: '#fff'}}>
       <ScrollView contentContainerStyle={styles.container}>
         
-        <Image source={{ uri: recipe.image_url }} style={styles.image} />
+        <Image source={{ uri: recipe.image_url }} 
+        style={styles.image}
+        contentFit="cover"
+        transition={500}
+        cachePolicy="memory-disk" />
         
         {/* Üst Butonlar */}
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -355,6 +360,9 @@ export default function RecipeDetailsScreen({ route, navigation }) {
                 <Ionicons name="add-circle" size={24} color="#4CAF50" />
               </TouchableOpacity>
             </View>
+          </View>
+          <View style={styles.metaItem2}>
+              <Text style={styles.metaText}>{recipe.category} </Text>
           </View>
 
           <View style={styles.divider} />
@@ -453,6 +461,7 @@ const styles = StyleSheet.create({
   metaContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems:'center', marginBottom: 20 },
   metaItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F5F5', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20 },
   metaText: { marginLeft: 5, color: '#555', fontWeight: '600', fontSize: 13 },
+  metaItem2: {backgroundColor: '#F5F5F5', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20 , alignItems:'center',justifyContent:'center'},
   
   divider: { height: 1, backgroundColor: '#EEE', marginVertical: 20 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 15 },

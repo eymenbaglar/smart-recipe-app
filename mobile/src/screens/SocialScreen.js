@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
-  View, Text, TextInput, FlatList, Image, TouchableOpacity, 
+  View, Text, TextInput, FlatList, TouchableOpacity, 
   StyleSheet, Dimensions, ActivityIndicator, ScrollView, RefreshControl, 
   Switch 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -38,7 +39,13 @@ const renderHorizontalCard = ({ item }) => {
         onPress={() => navigation.navigate('RecipeDetails', { item })}
         activeOpacity={0.9}
       >
-        <Image source={{ uri: item.image_url }} style={styles.hImage} />
+        <Image 
+          source={{ uri: item.image_url }} 
+          style={styles.hImage} 
+          contentFit="cover" // resizeMode yerine contentFit
+          transition={500}   // 500ms yumuşak geçiş (fade-in) efekti
+          cachePolicy="memory-disk" // Hem RAM hem Disk önbelleği kullan
+        />
         
         {/* Rating */}
         <View style={styles.ratingBadge}>
@@ -76,6 +83,8 @@ const renderHorizontalCard = ({ item }) => {
               <Image 
                   source={{ uri: 'https://ui-avatars.com/api/?name=' + authorName + '&background=random' }} 
                   style={styles.avatarSmall} 
+                  contentFit="cover"
+                  transition={0}
               />
               <Text style={styles.hUser}>@{authorName}</Text>
           </View>
@@ -165,6 +174,10 @@ const renderHorizontalCard = ({ item }) => {
                 keyExtractor={item => item.id.toString()}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 15 }}
+                initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
+                maxToRenderPerBatch={4}     // Kaydırdıkça dörder dörder yükle
+                windowSize={5}              // Ekranın sadece 5 katı kadar alanı hafızada tut
+                removeClippedSubviews={true}
             />
 
             {/* AYIRICI ÇİZGİ */}
@@ -189,6 +202,10 @@ const renderHorizontalCard = ({ item }) => {
                 keyExtractor={item => item.id.toString()}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 15 }}
+                initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
+                maxToRenderPerBatch={4}     // Kaydırdıkça dörder dörder yükle
+                windowSize={5}              // Ekranın sadece 5 katı kadar alanı hafızada tut
+                removeClippedSubviews={true}
             />
         </View>
       )}
@@ -373,8 +390,14 @@ export default function SocialScreen() {
           style={styles.gridCard}
           onPress={() => navigation.navigate('RecipeDetails', { item })}
         >
-          <Image source={{ uri: item.image_url }} style={styles.gImage} />
-          
+          <Image 
+            source={{ uri: item.image_url }} 
+            style={styles.gImage} 
+            contentFit="cover"
+            transition={500}
+            cachePolicy="memory-disk"
+          />
+                  
           <TouchableOpacity 
             style={styles.likeBtn} 
             onPress={() => toggleFavorite(item)}
@@ -466,6 +489,11 @@ export default function SocialScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#FF6F61']} tintColor="#FF6F61" />
           }
+
+          initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
+          maxToRenderPerBatch={4}     // Kaydırdıkça dörder dörder yükle
+          windowSize={5}              // Ekranın sadece 5 katı kadar alanı hafızada tut
+          removeClippedSubviews={true}
         />
       )}
     </View>

@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert 
+  View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert 
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -105,7 +106,11 @@ export default function MyReviewsScreen({ navigation }) {
     return (
       <View style={styles.card}>
         <View style={styles.headerRow}>
-          <Image source={{ uri: item.image_url }} style={styles.image} />
+          <Image source={{ uri: item.image_url }} 
+          style={styles.image}
+          contentFit="cover"
+          transition={500}
+          cachePolicy="memory-disk"  />
           <View style={styles.headerInfo}>
             <Text style={styles.recipeTitle} numberOfLines={1}>{item.recipe_title}</Text>
             <View style={styles.starsRow}>
@@ -159,6 +164,10 @@ export default function MyReviewsScreen({ navigation }) {
             <Text style={styles.emptyText}>No reviews yet.</Text>
           </View>
         }
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}  
+        windowSize={5}              
+        removeClippedSubviews={true}
       />
 
       <RateRecipeModal 

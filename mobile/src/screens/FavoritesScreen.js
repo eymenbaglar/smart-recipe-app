@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, Image, TouchableOpacity, 
+  View, Text, StyleSheet, FlatList, TouchableOpacity, 
   ActivityIndicator, Modal, TouchableWithoutFeedback, ScrollView 
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
@@ -88,7 +89,11 @@ export default function FavoritesScreen({ navigation }) {
         onPress={() => navigation.navigate('RecipeDetails', { recipe: item })}
       >
         <View style={{flexDirection: 'row'}}>
-          <Image source={{ uri: item.image_url }} style={styles.cardImage} />
+          <Image source={{ uri: item.image_url }} 
+          style={styles.cardImage}
+          contentFit="cover"
+          transition={500}
+          cachePolicy="memory-disk" />
 
           <View style={styles.cardContent}>
             <View style={styles.rowBetween}>
@@ -174,6 +179,10 @@ export default function FavoritesScreen({ navigation }) {
             <Text style={styles.emptyText}>You don't have a favorite recipe yet.</Text>
           </View>
         }
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}  
+        windowSize={5}              
+        removeClippedSubviews={true}
       />
 
       {/* sıralama için modal ekran */}

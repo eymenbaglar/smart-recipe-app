@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, FlatList, Image, TouchableOpacity, 
+  View, Text, FlatList, TouchableOpacity, 
   StyleSheet, Dimensions, ActivityIndicator, StatusBar 
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -49,7 +50,12 @@ export default function RecipeListScreen({ route, navigation }) {
         onPress={() => navigation.navigate('RecipeDetails', { item })}
         activeOpacity={0.9}
       >
-        <Image source={{ uri: item.image_url }} style={styles.gImage} />
+        <Image source={{ uri: item.image_url }} 
+        style={styles.gImage}
+        contentFit="cover"
+        transition={500}
+        cachePolicy="memory-disk" 
+        />
         
         {/* Kalp İkonu */}
         <View style={styles.likeBtn}>
@@ -120,6 +126,10 @@ export default function RecipeListScreen({ route, navigation }) {
                 Henüz tarif eklenmemiş.
             </Text>
           }
+          initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
+          maxToRenderPerBatch={4}     // Kaydırdıkça dörder dörder yükle
+          windowSize={5}              // Ekranın sadece 5 katı kadar alanı hafızada tut
+          removeClippedSubviews={true}
         />
       )}
     </View>
