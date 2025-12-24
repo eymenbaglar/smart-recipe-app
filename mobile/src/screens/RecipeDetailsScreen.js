@@ -32,6 +32,44 @@ export default function RecipeDetailsScreen({ route, navigation }) {
   //yorum statei
   const [reviews, setReviews] = useState([]);
 
+  // --- GEÇMİŞE KAYDETME (YENİ EKLENEN KISIM) ---
+  useEffect(() => {
+    if (recipe) {
+      addToHistory(recipe);
+    }
+  }, [recipe]);
+
+  const addToHistory = async (item) => {
+    try {
+      // 1. Mevcut geçmişi çek
+      const existingHistory = await AsyncStorage.getItem('recipe_history');
+      let newHistory = existingHistory ? JSON.parse(existingHistory) : [];
+
+      // 2. Bu tarif daha önce listede varsa onu çıkar (En başa eklemek için)
+      newHistory = newHistory.filter(h => h.id !== item.id);
+
+      // 3. Tarifi listenin başına ekle (Sadece gerekli bilgileri alarak)
+      newHistory.unshift({
+        id: item.id,
+        title: item.title,
+        image_url: item.image_url,
+        prep_time: item.prep_time,
+        calories: item.calories
+      });
+
+      // 4. Listeyi 10 elemanla sınırla (Hafıza şişmesin)
+      if (newHistory.length > 10) {
+        newHistory = newHistory.slice(0, 10);
+      }
+
+      // 5. Geri kaydet
+      await AsyncStorage.setItem('recipe_history', JSON.stringify(newHistory));
+    } catch (error) {
+      console.log("Geçmişe kaydedilemedi:", error);
+    }
+  };
+  // ---------------------------------------------
+
   //başlangıç
   useEffect(() => {
     fetchIngredients();

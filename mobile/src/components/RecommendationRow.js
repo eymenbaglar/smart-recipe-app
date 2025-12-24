@@ -85,14 +85,14 @@ export default function RecommendationRow() {
 
 const styles = StyleSheet.create({
   container: { marginVertical: 20 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 10, gap: 5 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 3, marginBottom: 10, gap: 5 },
   title: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   
   card: {
     width: 160, height: 220, marginRight: 15,
-    borderRadius: 15, overflow: 'hidden', backgroundColor: '#f0f0f0'
+    borderRadius: 15, overflow: 'hidden', backgroundColor: '#f0f0f0', left: -9
   },
-  image: { width: '100%', height: '100%', resizeMode: 'cover' },
+  image: { width: '100%', height: '100%', resizeMode: 'cover'},
   overlay: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(0,0,0,0.6)', padding: 10

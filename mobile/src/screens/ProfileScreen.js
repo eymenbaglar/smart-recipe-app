@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,23 +8,34 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
-  Platform // Platform eklendi
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ImagePicker from 'expo-image-picker'; // EKLENDİ
-import axios from 'axios'; // EKLENDİ
+import * as ImagePicker from 'expo-image-picker';
+import axios from 'axios';
+import { useFocusEffect } from '@react-navigation/native'; // EKLENDİ
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function ProfileScreen({ navigation, onLogout }) { 
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [uploading, setUploading] = useState(false); // EKLENDİ: Yükleme durumu
+  const [uploading, setUploading] = useState(false);
+  
+  // EKLENDİ: Tarif Sayısı State'i
+  const [recipeCount, setRecipeCount] = useState(0);
 
   useEffect(() => {
     loadUserData();
   }, []);
+
+  // EKLENDİ: Sayfa her odaklandığında tarif sayısını güncelle
+  useFocusEffect(
+    useCallback(() => {
+      fetchRecipeCount();
+    }, [])
+  );
 
   const loadUserData = async () => {
     setIsLoading(true);
@@ -40,7 +51,27 @@ export default function ProfileScreen({ navigation, onLogout }) {
     }
   };
 
-  // --- EKLENDİ: RESİM SEÇME FONKSİYONU ---
+  // EKLENDİ: Tarif Sayısını Çeken Fonksiyon
+  const fetchRecipeCount = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+
+      // '/api/recipes/my-recipes' endpoint'inin kullanıcının tariflerini döndürdüğünü varsayıyoruz.
+      // Eğer endpoint ismin farklıysa burayı güncelle (Örn: '/api/user/recipes' vb.)
+      const response = await axios.get(`${API_URL}/my-recipes`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (Array.isArray(response.data)) {
+        setRecipeCount(response.data.length);
+      }
+    } catch (error) {
+      // Hata olursa konsola yazdır ama kullanıcıya hata gösterme (Sayı 0 kalır)
+      console.log('Tarif sayısı alınamadı:', error);
+    }
+  };
+
   const handlePickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -61,7 +92,6 @@ export default function ProfileScreen({ navigation, onLogout }) {
     }
   };
 
-  // --- EKLENDİ: RESİM YÜKLEME FONKSİYONU ---
   const uploadProfilePhoto = async (imageAsset) => {
     setUploading(true);
     try {
@@ -86,7 +116,6 @@ export default function ProfileScreen({ navigation, onLogout }) {
         },
       });
 
-      // Yerel veriyi güncelle
       const updatedPath = response.data.filePath;
       const updatedUser = { ...user, profile_picture: updatedPath };
       setUser(updatedUser);
@@ -102,7 +131,6 @@ export default function ProfileScreen({ navigation, onLogout }) {
     }
   };
 
-  // --- EKLENDİ: RESİM URL BELİRLEME ---
   const getProfileImage = () => {
     if (user?.profile_picture) {
       const cleanPath = user.profile_picture.replace(/\\/g, '/');
@@ -143,7 +171,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
     { icon: 'add-circle-outline', title: 'Share A Recipe', count: null, screen: 'AddRecipe' },
     { icon: 'book-outline', title: 'My Recipes', count: null , screen: 'MyRecipes'},
     { icon: 'time-outline', title: 'Meal History', count: null, screen: 'MealHistory' },
-    { icon: 'star-outline', title: 'My Reviews', count: null, screen: 'MyReviews' },,
+    { icon: 'star-outline', title: 'My Reviews', count: null, screen: 'MyReviews' },
     { icon: 'settings-outline', title: 'Settings', count: null, screen: 'Settings' },
   ];
 
@@ -151,7 +179,6 @@ export default function ProfileScreen({ navigation, onLogout }) {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         
-        {/* --- GÜNCELLENDİ: PROFİL FOTOĞRAFI ALANI --- */}
         <View style={styles.profileImageContainer}>
           {uploading ? (
             <View style={[styles.profileImage, styles.center]}>
@@ -168,14 +195,14 @@ export default function ProfileScreen({ navigation, onLogout }) {
             <Ionicons name="camera-outline" size={20} color="white" />
           </TouchableOpacity>
         </View>
-        {/* ------------------------------------------- */}
         
         <Text style={styles.username}>{user?.username || 'Kullanıcı'}</Text>
         <Text style={styles.email}>{user?.email || 'email@example.com'}</Text>
         
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>28</Text>
+            {/* GÜNCELLENDİ: Dinamik Sayı */}
+            <Text style={styles.statNumber}>{recipeCount}</Text>
             <Text style={styles.statLabel}>Recipes</Text>
           </View>
         </View>
@@ -214,7 +241,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  center: { // EKLENDİ: Ortalamak için
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

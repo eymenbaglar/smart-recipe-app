@@ -84,7 +84,7 @@ export default function MyRecipesScreen({ navigation }) {
     return encodeURI(`${API_URL}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`);
   };
 
-  // --- KART TASARIMI (SmartRecipeResultsScreen REFERANS ALINARAK) ---
+  // --- KART TASARIMI ---
   const renderRecipeCard = ({ item }) => {
     const isRejected = item.status === 'rejected';
     const isApproved = item.status === 'approved';
@@ -129,7 +129,7 @@ export default function MyRecipesScreen({ navigation }) {
           <View style={styles.recipeInfo}>
             <View style={styles.headerRow}>
               <Text style={styles.recipeTitle} numberOfLines={1}>{item.title}</Text>
-              {/* Statü Rozeti (Match Badge yerine) */}
+              {/* Statü Rozeti */}
               <Text style={[styles.statusBadge, { color: statusColor }]}>
                 {statusText}
               </Text>
@@ -154,11 +154,11 @@ export default function MyRecipesScreen({ navigation }) {
                   </Text>
                 </View>
                 <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 2}}>
-                                  <Ionicons name="star" size={12} color="#FFD700" />
-                                  <Text style={{fontSize: 12, color: '#666', marginLeft: 4, fontWeight:'bold'}}>
-                                  {parseFloat(item.average_rating).toFixed(1)}
-                                  </Text>
-                                </View>
+                  <Ionicons name="star" size={12} color="#FFD700" />
+                  <Text style={{fontSize: 12, color: '#666', marginLeft: 4, fontWeight:'bold'}}>
+                  {parseFloat(item.average_rating).toFixed(1)}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -172,35 +172,30 @@ export default function MyRecipesScreen({ navigation }) {
           </View>
         )}
 
-        {/* Butonlar (Yayında olmayanlar için alt kısma ekledim) */}
-        
+        {/* Butonlar */}
         <View style={styles.actionContainer}>
-  
-        {/* Düzenle Butonu (Her zaman görünür) */}
-        <TouchableOpacity 
-            style={[styles.actionBtn, styles.editBtn]}
-            onPress={() => navigation.navigate('AddRecipe', { recipeToEdit: item })}
-        >
-            <Ionicons name="create-outline" size={18} color="#FFF" />
-            <Text style={styles.actionBtnText}>Düzenle</Text>
-        </TouchableOpacity>
+          {/* Düzenle Butonu */}
+          <TouchableOpacity 
+              style={[styles.actionBtn, styles.editBtn]}
+              onPress={() => navigation.navigate('AddRecipe', { recipeToEdit: item })}
+          >
+              <Ionicons name="create-outline" size={18} color="#FFF" />
+              <Text style={styles.actionBtnText}>Düzenle</Text>
+          </TouchableOpacity>
 
-        {/* Sil Butonu (Sadece Onaylı Değilse Görünür - is_verified: false) */}
-        {!item.is_verified && (
-            <TouchableOpacity 
-            style={[styles.actionBtn, styles.deleteBtn]}
-            onPress={() => handleDelete(item.id)}
-            >
-            <Ionicons name="trash-outline" size={18} color="#FFF" />
-            <Text style={styles.actionBtnText}>Sil</Text>
-            </TouchableOpacity>
-        )}
-
+          {/* Sil Butonu */}
+          {!item.is_verified && (
+              <TouchableOpacity 
+              style={[styles.actionBtn, styles.deleteBtn]}
+              onPress={() => handleDelete(item.id)}
+              >
+              <Ionicons name="trash-outline" size={18} color="#FFF" />
+              <Text style={styles.actionBtnText}>Sil</Text>
+              </TouchableOpacity>
+          )}
         </View>
       </View>
-      
     );
-    
   };
 
   // Sekmeler
@@ -240,6 +235,10 @@ export default function MyRecipesScreen({ navigation }) {
 
   if (loading) return <View style={styles.loadingCenter}><ActivityIndicator size="large" color="#333" /></View>;
 
+  // --- YENİ EKLENEN KISIM: Sayıları Hesapla ---
+  const publishedCount = recipes.filter(r => r.status === 'approved').length;
+  const pendingCount = recipes.filter(r => r.status === 'pending' || r.status === 'rejected').length;
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -250,29 +249,37 @@ export default function MyRecipesScreen({ navigation }) {
         tabBarStyle: { backgroundColor: '#fff' }
       }}
     >
-      <Tab.Screen name="Yayında" component={PublishedTab} />
-      <Tab.Screen name="Bekleyenler" component={PendingTab} />
+      <Tab.Screen 
+        name="Yayında" 
+        component={PublishedTab} 
+        options={{ title: `Yayında (${publishedCount})` }} // Dinamik Başlık
+      />
+      <Tab.Screen 
+        name="Bekleyenler" 
+        component={PendingTab} 
+        options={{ title: `Bekleyenler (${pendingCount})` }} // Dinamik Başlık
+      />
     </Tab.Navigator>
   );
 }
 
-// --- STİLLER (SmartRecipeResultsScreen ile Eşleştirildi) ---
+// --- STİLLER ---
 const styles = StyleSheet.create({
   loadingCenter: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  tabContainer: { flex: 1, backgroundColor: '#f5f5f5', padding: 15 }, // Arka plan rengi gri yapıldı
+  tabContainer: { flex: 1, backgroundColor: '#f5f5f5', padding: 15 },
   
-  // Kart Stili (Referans dosyadan uyarlandı)
+  // Kart Stili
   recipeCard: {
     backgroundColor: 'white',
-    borderRadius: 15, // Yuvarlak köşeler artırıldı
+    borderRadius: 15, 
     padding: 12,
     marginBottom: 15,
-    elevation: 3, // Android gölge
-    shadowColor: '#000', // iOS gölge
+    elevation: 3, 
+    shadowColor: '#000', 
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    flexDirection: 'column', // İçerik + Butonlar alt alta olsun diye column yaptım, üst kısım row
+    flexDirection: 'column', 
   },
   rejectedBorder: {
     borderWidth: 1,
@@ -323,7 +330,7 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
 
-  // Alt Bilgi (Footer) - Süre ve Kalori
+  // Alt Bilgi (Footer)
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -362,42 +369,14 @@ const styles = StyleSheet.create({
   },
 
   // Butonlar Alanı
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    gap: 15
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4
-  },
-  actionText: {
-    marginLeft: 4,
-    fontSize: 13,
-    fontWeight: '600'
-  },
-
-  emptyText: {
-    textAlign: 'center',
-    color: '#999',
-    marginTop: 50,
-    fontSize: 15
-  },
-
   actionContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end', // Sağ tarafa yasla
+    justifyContent: 'flex-end', 
     marginTop: 15,
     borderTopWidth: 1,
     borderTopColor: '#eee',
     paddingTop: 10,
-    gap: 10, // Butonlar arası boşluk
+    gap: 10, 
   },
   actionBtn: {
     flexDirection: 'row',
@@ -407,15 +386,21 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   editBtn: {
-    backgroundColor: '#4CAF50', // Yeşil
+    backgroundColor: '#4CAF50', 
   },
   deleteBtn: {
-    backgroundColor: '#F44336', // Kırmızı
+    backgroundColor: '#F44336', 
   },
   actionBtnText: {
     color: '#FFF',
     fontSize: 12,
     fontWeight: 'bold',
     marginLeft: 5,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#999',
+    marginTop: 50,
+    fontSize: 15
   },
 });
