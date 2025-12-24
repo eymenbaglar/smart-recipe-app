@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert 
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons , MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -315,7 +315,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         </TouchableOpacity>
 
         <View style={styles.content}>
-          <Text style={styles.title}>{recipe.title}{recipe.is_verified ? '  ✅' : ''}</Text>
+          <Text style={styles.title}>{recipe.title}{recipe.is_verified ?  <MaterialIcons name="verified" size={24} color="green" /> : ''}</Text>
           
           {/* Puanlama Satırı */}
           <View style={styles.ratingRow}>

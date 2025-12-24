@@ -10,6 +10,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
+// Config dosyanızdan API_URL'i çekebilirsiniz veya buraya yazabilirsiniz.
+// import { API_URL } from '../config'; 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 const { width } = Dimensions.get('window');
@@ -24,13 +26,15 @@ const SocialHeader = ({
   categories, selectedCategory, handleCategorySelect, 
   trends, newest, 
   navigation,
-  toggleFavorite 
+  toggleFavorite,
+  // --- YENİ EKLENEN PROPLAR (Sıralama İçin) ---
+  sortBy, setSortBy, showSortOptions, setShowSortOptions 
 }) => {
   
-  const isFilterActive = searchTerm.length > 0 || selectedCategory !== 'All';
+  const isFilterActive = searchTerm.length > 0 || selectedCategory !== 'All' || sortBy !== 'random'; // Sort kontrolü eklendi
   const showChips = searchTerm.length === 0;
 
-const renderHorizontalCard = ({ item }) => {
+  const renderHorizontalCard = ({ item }) => {
     const authorName = item.username || 'Admin'; 
 
     return (
@@ -42,9 +46,9 @@ const renderHorizontalCard = ({ item }) => {
         <Image 
           source={{ uri: item.image_url }} 
           style={styles.hImage} 
-          contentFit="cover" // resizeMode yerine contentFit
-          transition={500}   // 500ms yumuşak geçiş (fade-in) efekti
-          cachePolicy="memory-disk" // Hem RAM hem Disk önbelleği kullan
+          contentFit="cover" 
+          transition={500}   
+          cachePolicy="memory-disk" 
         />
         
         {/* Rating */}
@@ -78,7 +82,7 @@ const renderHorizontalCard = ({ item }) => {
               )}
           </View>
 
-          {/* Kullanıcı Bilgisi (Buradan tiki kaldırdık) */}
+          {/* Kullanıcı Bilgisi */}
           <View style={styles.row}>
               <Image 
                   source={{ uri: 'https://ui-avatars.com/api/?name=' + authorName + '&background=random' }} 
@@ -92,6 +96,7 @@ const renderHorizontalCard = ({ item }) => {
       </TouchableOpacity>
     );
   };
+  
   return (
     <View style={{ marginBottom: 10 }}>
       {/* --- ÜST KISIM (BEYAZ BLOK) --- */}
@@ -150,10 +155,51 @@ const renderHorizontalCard = ({ item }) => {
               ))}
             </ScrollView>
           )}
+
+          {/* --- YENİ EKLENEN: SIRALAMA ÇUBUĞU (Filter Bar) --- */}
+          <View style={styles.filterBar}>
+             <Text style={styles.resultText}>
+                {selectedCategory === 'All' && searchTerm === '' ? 'Keşfet' : (selectedCategory === 'All' ? 'Arama Sonuçları' : selectedCategory)}
+             </Text>
+
+             <TouchableOpacity 
+               style={styles.sortButton} 
+               onPress={() => setShowSortOptions(!showSortOptions)}
+             >
+               <Ionicons name="filter" size={16} color="#333" />
+               <Text style={styles.sortButtonText}>
+                 {sortBy === 'random' ? 'Random' : 'Top Rated'}
+               </Text>
+               <Ionicons name="chevron-down" size={16} color="#666" />
+             </TouchableOpacity>
+          </View>
+
+          {/* --- YENİ EKLENEN: SIRALAMA SEÇENEKLERİ (Açılır Menü) --- */}
+          {showSortOptions && (
+            <View style={styles.sortOptionsContainer}>
+               <TouchableOpacity 
+                  style={[styles.sortOption, sortBy === 'random' && styles.sortOptionActive]}
+                  onPress={() => { setSortBy('random'); setShowSortOptions(false); }}
+               >
+                  <Text style={[styles.sortOptionText, sortBy === 'random' && {color: '#333'}]}>Random Shuffle</Text>
+                  {sortBy === 'random' && <Ionicons name="checkmark" size={18} color="#333" />}
+               </TouchableOpacity>
+               
+               <TouchableOpacity 
+                  style={[styles.sortOption, sortBy === 'rating' && styles.sortOptionActive]}
+                  onPress={() => { setSortBy('rating'); setShowSortOptions(false); }}
+               >
+                  <Text style={[styles.sortOptionText, sortBy === 'rating' && {color: '#333'}]}>Highest Rated</Text>
+                  {sortBy === 'rating' && <Ionicons name="checkmark" size={18} color="#333" />}
+               </TouchableOpacity>
+            </View>
+          )}
+
       </View>
 
-      {/* --- RAFLAR BÖLÜMÜ (AYRI BİR BLOK) --- */}
-      {!isFilterActive && (
+      {/* --- RAFLAR BÖLÜMÜ --- */}
+      {/* Sadece Vitrin Modunda (Her şey varsayılan) Göster */}
+      {!isFilterActive && searchTerm === '' && selectedCategory === 'All' && sortBy === 'random' && (
         <View style={styles.shelfContainer}>
             {/* RAF 1: TRENDLER */}
             <View style={styles.sectionHeader}>
@@ -174,9 +220,9 @@ const renderHorizontalCard = ({ item }) => {
                 keyExtractor={item => item.id.toString()}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 15 }}
-                initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
-                maxToRenderPerBatch={4}     // Kaydırdıkça dörder dörder yükle
-                windowSize={5}              // Ekranın sadece 5 katı kadar alanı hafızada tut
+                initialNumToRender={6}
+                maxToRenderPerBatch={4}
+                windowSize={5}
                 removeClippedSubviews={true}
             />
 
@@ -202,9 +248,9 @@ const renderHorizontalCard = ({ item }) => {
                 keyExtractor={item => item.id.toString()}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 15 }}
-                initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
-                maxToRenderPerBatch={4}     // Kaydırdıkça dörder dörder yükle
-                windowSize={5}              // Ekranın sadece 5 katı kadar alanı hafızada tut
+                initialNumToRender={6}
+                maxToRenderPerBatch={4}
+                windowSize={5}
                 removeClippedSubviews={true}
             />
         </View>
@@ -213,7 +259,7 @@ const renderHorizontalCard = ({ item }) => {
       {/* --- GRID BAŞLIĞI --- */}
       <View style={styles.feedTitleContainer}>
          <Text style={styles.feedTitle}>
-             {isFilterActive ? '🔍 Arama Sonuçları' : '🎲 Sizin İçin Seçtiklerimiz'}
+             {isFilterActive ? '🔍 Sonuçlar' : '🎲 Sizin İçin Seçtiklerimiz'}
          </Text>
          {!isFilterActive && <Text style={styles.feedSubtitle}>Sonsuz keşif dünyası</Text>}
       </View>
@@ -233,6 +279,10 @@ export default function SocialScreen() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   
+  // YENİ STATE'LER (Sıralama İçin)
+  const [sortBy, setSortBy] = useState('random'); // 'random' | 'rating'
+  const [showSortOptions, setShowSortOptions] = useState(false);
+
   // Veri State'leri
   const [trends, setTrends] = useState([]);
   const [newest, setNewest] = useState([]);
@@ -248,19 +298,11 @@ export default function SocialScreen() {
   const [error, setError] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
   
-  // SEED: Oturum boyunca sabit kalacak rastgele sayı
-  // Bu sayede sayfa 2'ye geçince liste yeniden karışmaz.
   const [seed] = useState(Math.random().toString()); 
 
   const categories = [
-    'All', 
-    'Breakfast', 
-    'Soup', 
-    'Main Course', 
-    'Salad & Appetizer', 
-    'Dessert', 
-    'Bakery', 
-    'Beverage'
+    'All', 'Breakfast', 'Soup', 'Main Course', 
+    'Salad & Appetizer', 'Dessert', 'Bakery', 'Beverage'
   ];
 
   // --- FAVORİ İŞLEMİ ---
@@ -294,35 +336,40 @@ export default function SocialScreen() {
       const token = await AsyncStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      // 1. Trendler ve Yeni Eklenenler (Sadece Search Boşsa)
-      if (searchTerm === '' && selectedCategory === 'All') {
+      // SENARYO 1: Vitrin Modu (Search Yok, Kategori All, Sıralama Random)
+      if (searchTerm === '' && selectedCategory === 'All' && sortBy === 'random') {
           const [trendsRes, newestRes] = await Promise.all([
             axios.get(`${API_URL}/api/recipes/social/trends`, { headers, params: { limit: 10 } }),
             axios.get(`${API_URL}/api/recipes/social/newest`, { headers, params: { limit: 10 } })
           ]);
           setTrends(trendsRes.data);
           setNewest(newestRes.data);
+
+          // Feed Kısmı (Random)
+          const randomRes = await axios.get(`${API_URL}/api/recipes/social/random`, { 
+            headers,
+            params: { page: 1, limit: 20, seed: seed } 
+          });
+          setFeed(randomRes.data);
+      } 
+      else {
+          // SENARYO 2: Filtreleme Modu (Search VAR veya Kategori SEÇİLİ veya Sıralama RATING)
+          // Artık her türlü filtrelemede /search endpointini kullanıyoruz
+          const searchRes = await axios.get(`${API_URL}/api/recipes/social/search`, {
+            params: { 
+                q: searchTerm, 
+                category: selectedCategory, 
+                mode: mode,
+                sort: sortBy // <-- Sıralama bilgisini gönderiyoruz
+            },
+            headers
+          });
+          setFeed(searchRes.data);
       }
 
-      // 2. Feed Kısmı (Sayfa 1)
       setPage(1);
       setHasMoreData(true);
 
-      if (searchTerm.length > 0 || selectedCategory !== 'All') {
-         // Arama Modu
-         const searchRes = await axios.get(`${API_URL}/api/recipes/social/search`, {
-            params: { q: searchTerm, category: selectedCategory, mode: mode },
-            headers
-         });
-         setFeed(searchRes.data);
-      } else {
-         // Random Feed (Sayfa 1) - seed parametresini kullanıyoruz
-         const randomRes = await axios.get(`${API_URL}/api/recipes/social/random`, { 
-            headers,
-            params: { page: 1, limit: 20, seed: seed } 
-         });
-         setFeed(randomRes.data);
-      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -333,8 +380,9 @@ export default function SocialScreen() {
 
   // --- SONSUZ KAYDIRMA FONKSİYONU ---
   const loadMoreFeed = async () => {
-    // EĞER HATA VARSA (error) ÇALIŞMA (Döngüyü Engeller)
-    if (isLoadingMore || !hasMoreData || searchTerm.length > 0 || selectedCategory !== 'All' || error) return;
+    // Sadece "Vitrin Modu"ndaysak (Random) sayfalama yapıyoruz. 
+    // Filtreleme sonuçlarında backend sayfalama desteklemiyorsa burayı bu şekilde bırakıyoruz.
+    if (isLoadingMore || !hasMoreData || searchTerm.length > 0 || selectedCategory !== 'All' || sortBy !== 'random' || error) return;
 
     setIsLoadingMore(true);
     const nextPage = page + 1;
@@ -358,7 +406,7 @@ export default function SocialScreen() {
       }
     } catch (error) {
       console.error("Daha fazla yüklenemedi:", error);
-      setError(true); // <--- YENİ: Hata olduğunu sisteme bildir (Freni Çek)
+      setError(true);
     } finally {
       setIsLoadingMore(false);
     }
@@ -367,12 +415,13 @@ export default function SocialScreen() {
   // --- EFFECT HOOKS ---
   useFocusEffect(
     useCallback(() => {
-    }, [searchTerm, selectedCategory, mode])
+    }, [searchTerm, selectedCategory, mode, sortBy])
   );
 
+  // Filtreler değişince veriyi yenile
   useEffect(() => {
-      refreshAllData(true); // Search/Filter değişirse sessiz yenile
-  }, [searchTerm, selectedCategory, mode]);
+      refreshAllData(true); 
+  }, [searchTerm, selectedCategory, mode, sortBy]); // sortBy eklendi
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -426,7 +475,7 @@ export default function SocialScreen() {
                 )}
             </View>
 
-            {/* 2. YENİ EKLENEN: RATING SATIRI (Başlık ve İsim Arası) */}
+            {/* 2. RATING SATIRI */}
             <View style={styles.gridRatingRow}>
               <Ionicons name="star" size={12} color="#FFD700" />
               <Text style={styles.gridRatingText}>
@@ -459,8 +508,13 @@ export default function SocialScreen() {
         newest={newest}
         navigation={navigation}
         toggleFavorite={toggleFavorite}
+        // Sıralama state'lerini prop olarak gönderiyoruz
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        showSortOptions={showSortOptions}
+        setShowSortOptions={setShowSortOptions}
     />
-  ), [searchTerm, mode, selectedCategory, trends, newest, feed]); 
+  ), [searchTerm, mode, selectedCategory, trends, newest, feed, sortBy, showSortOptions]); 
 
   return (
     <View style={styles.container}>
@@ -476,7 +530,6 @@ export default function SocialScreen() {
           
           ListHeaderComponent={headerComponent}
           
-          // --- PAGINATION PROPS ---
           onEndReached={loadMoreFeed}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
@@ -496,9 +549,9 @@ export default function SocialScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#FF6F61']} tintColor="#FF6F61" />
           }
 
-          initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
-          maxToRenderPerBatch={4}     // Kaydırdıkça dörder dörder yükle
-          windowSize={5}              // Ekranın sadece 5 katı kadar alanı hafızada tut
+          initialNumToRender={6}
+          maxToRenderPerBatch={4}
+          windowSize={5}
           removeClippedSubviews={true}
         />
       )}
@@ -506,12 +559,11 @@ export default function SocialScreen() {
   );
 }
 
-// STYLES (Değişmedi ama eksik kalmasın diye ekliyorum)
 const styles = StyleSheet.create({
   headerBlock: {
     backgroundColor: '#fff',
     paddingTop: 10,
-    paddingBottom: 5,
+    paddingBottom: 0, // Alt padding'i sıfırladık çünkü filtre barı en alta geldi
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     shadowColor: "#000",
@@ -519,15 +571,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 3,
-    marginBottom: 15, // Alttaki raflarla mesafe
+    marginBottom: 15,
     zIndex: 10
   },
   container: { flex: 1, backgroundColor: '#F5F7FA' },
   row: { flexDirection: 'row', alignItems: 'center' },
   topContainer: { flexDirection: 'row', paddingHorizontal: 15, marginBottom: 15, alignItems: 'center', height: 50 },
   searchBar: { 
-    flex: 1, flexDirection: 'row', backgroundColor: '#F0F2F5', // Hafif gri input zemini
-    paddingHorizontal: 15, borderRadius: 25, alignItems: 'center', // Daha yuvarlak (Pill shape)
+    flex: 1, flexDirection: 'row', backgroundColor: '#F0F2F5', 
+    paddingHorizontal: 15, borderRadius: 25, alignItems: 'center', 
     height: 46
   },
   input: { flex: 1, marginLeft: 10, fontSize: 15, color: '#333', fontWeight: '500' },
@@ -540,16 +592,15 @@ const styles = StyleSheet.create({
   },
   shelfContainer: {
     backgroundColor: '#fff',
-    marginHorizontal: 0, // Tam genişlik
+    marginHorizontal: 0, 
     marginBottom: 10,
     paddingTop: 10,
     paddingBottom: 5,
-    // Alt ve üst çizgilerle ayrıştır
     borderTopWidth: 1, borderTopColor: '#eee',
     borderBottomWidth: 1, borderBottomColor: '#eee',
   },
   divider: { height: 1, backgroundColor: '#F0F0F0', marginHorizontal: 15, marginVertical: 10 },
-  chipActive: { backgroundColor: '#333' }, // Canlı mercan rengi
+  chipActive: { backgroundColor: '#333' },
   chipText: { color: '#666', fontWeight: '600', fontSize: 13 },
   chipTextActive: { color: '#fff' },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 15, alignItems: 'center', marginBottom: 12, marginTop: 5 },
@@ -559,9 +610,9 @@ const styles = StyleSheet.create({
   seeAll: { color: '#FF6F61', fontWeight: '600', fontSize: 13 },
   horizontalCard: { 
     width: 160, marginRight: 15, backgroundColor: '#fff', 
-    borderRadius: 16, // Daha yuvarlak köşeler
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4, // Soft Shadow
-    marginBottom: 5 // Gölge kesilmesin diye
+    borderRadius: 16, 
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4, 
+    marginBottom: 5 
   },
   hImage: { width: '100%', height: 110, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
   hInfo: { padding: 10 },
@@ -574,14 +625,13 @@ const styles = StyleSheet.create({
   ratingBadge: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(255,255,255,0.9)', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 8, zIndex: 1 },
   ratingText: { color: '#333', fontSize: 10, marginLeft: 3, fontWeight: '800' },
   likeBtnHorizontal: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.9)', padding: 6, borderRadius: 20, zIndex: 1 },
-  row: { flexDirection: 'row', alignItems: 'center' },
   gridCard: { 
-    width: (width / 2) - 20, // Hesaplamalı genişlik
+    width: (width / 2) - 20, 
     marginBottom: 20, backgroundColor: '#fff', 
     borderRadius: 16, 
     shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3
   },
-  gImage: { width: '100%', height: (width / 2) - 20, borderTopLeftRadius: 16, borderTopRightRadius: 16 }, // Kare
+  gImage: { width: '100%', height: (width / 2) - 20, borderTopLeftRadius: 16, borderTopRightRadius: 16 }, 
   gInfo: { padding: 12 },
   gTitle: { 
     fontSize: 14, 
@@ -589,13 +639,12 @@ const styles = StyleSheet.create({
     color: '#222', 
     height: 18, 
     lineHeight: 19 
-    // marginBottom sildik çünkü altına rating geldi
   },
   gridRatingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,    // Başlıktan uzaklık
-    marginBottom: 6  // Kullanıcı isminden uzaklık
+    marginTop: 6,    
+    marginBottom: 6  
   },
   gridRatingText: {
     fontSize: 12,
@@ -609,5 +658,59 @@ const styles = StyleSheet.create({
     marginLeft: 2
   },
   gUser: { fontSize: 11, color: '#888', marginLeft: 4 },
-  likeBtn: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.95)', padding: 7, borderRadius: 20, shadowColor: "#000", shadowOpacity: 0.1, elevation: 2 }
+  likeBtn: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.95)', padding: 7, borderRadius: 20, shadowColor: "#000", shadowOpacity: 0.1, elevation: 2 },
+  
+  // --- YENİ EKLENEN STİLLER (Filtre Barı ve Dropdown) ---
+  filterBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,     // Çiplerden ayırmak için üst çizgi
+    borderTopColor: '#f0f0f0',
+  },
+  resultText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  sortButtonText: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '600',
+    marginHorizontal: 6,
+  },
+  // Dropdown Seçenekleri
+  sortOptionsContainer: {
+    backgroundColor: '#fff',
+    paddingVertical: 5,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  sortOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  sortOptionActive: {
+    backgroundColor: '#f4f3f3', // Hafif kırmızı arka plan
+  },
+  sortOptionText: {
+    fontSize: 14,
+    color: '#333',
+  },
 });

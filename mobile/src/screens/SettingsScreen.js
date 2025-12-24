@@ -9,6 +9,7 @@ import {
   ActivityIndicator 
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
@@ -38,6 +39,56 @@ export default function SettingsScreen({ navigation }) {
     };
     loadUserData();
   }, []);
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('token');
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Welcome' }],
+    });
+  };
+
+  // --- HESAP SİLME (YENİ) ---
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Hesabını Sil", // Başlık
+      "Hesabını kalıcı olarak silmek istediğine emin misin? Bu işlem geri alınamaz.\n\nNot: Paylaştığın ve onaylanan tarifler silinmez, anonim olarak kalır.", // Mesaj
+      [
+        {
+          text: "Vazgeç",
+          style: "cancel"
+        },
+        {
+          text: "Evet, Hesabımı Sil",
+          style: "destructive", // iOS'ta kırmızı yapar
+          onPress: performDelete // Onaylarsa silme fonksiyonunu çalıştır
+        }
+      ]
+    );
+  };
+
+  // API'ye İstek Atan Fonksiyon
+  const performDelete = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/users/delete`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Silme başarılıysa çıkış yap ve ana ekrana at
+      await AsyncStorage.removeItem('token');
+      Alert.alert("Hoşçakal", "Hesabın başarıyla silindi.");
+      
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Welcome' }],
+      });
+
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Hata", "Hesap silinirken bir sorun oluştu.");
+    }
+  };
 
   //kaydet butonu
   const handleSave = async () => {
@@ -131,6 +182,11 @@ export default function SettingsScreen({ navigation }) {
       >
         <Text style={styles.linkButtonText}>Change Password</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+          <Ionicons name="trash-outline" size={20} color="#fff" />
+          <Text style={styles.deleteText}>Hesabımı Kalıcı Olarak Sil</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -196,5 +252,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  deleteButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#FF3B30', // Kırmızı renk
+    padding: 15, borderRadius: 12,
+    marginTop: 20
+  },
+  deleteText: {
+    color: '#fff', fontWeight: 'bold', fontSize: 14, marginLeft: 8
+  }
 });
 

@@ -801,6 +801,49 @@ app.patch('/api/profile/change-password', auth, async (req, res) => {
   }
 });
 
+//kullanıcının hesabını silmesi
+app.delete('/api/users/delete', auth, async (req, res) => {
+  const userId = req.user.id;
+  
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN'); // İşlemi başlat
+
+    // 1. ADIM: Verified tariflerin yazarını NULL yap
+    await client.query(
+      `UPDATE recipes 
+       SET created_by = NULL 
+       WHERE created_by = $1 AND is_verified = TRUE`,
+      [userId]
+    );
+
+    // 2. ADIM : Standart tariflerini sil
+    await client.query(
+      `DELETE FROM recipes WHERE created_by = $1`, 
+      [userId]
+    );
+
+    // 3. ADIM: Kullanıcıyı Sil
+    await client.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    await client.query('COMMIT'); // İşlemi onayla
+    res.json({ message: 'Hesap başarıyla silindi.' });
+
+  } catch (error) {
+    await client.query('ROLLBACK'); // Hata olursa her şeyi geri al
+    console.error('Delete Account Error:', error);
+    
+    // Hatayı daha net görebilmek için detaylı log
+    res.status(500).json({ 
+        error: 'Server error while deleting account.',
+        details: error.message 
+    });
+  } finally {
+    client.release();
+  }
+});
+
 //kullanıcının MyStock add kısmında ekleme yaparken istediği ingredient'ı bulması
 app.get('/api/ingredients/search', auth, async (req, res) => {
   const { query } = req.query; // query'i al
@@ -2067,7 +2110,7 @@ app.get('/api/recipes/social/random', auth, async (req, res) => {
 
 //search bar filtresi
 app.get('/api/recipes/social/search', auth, async (req, res) => {
-  const { q, category, mode } = req.query;
+  const { q, category, mode, sort } = req.query; // 'sort' parametresi eklendi
   const userId = req.user.id; 
 
   try {
@@ -2090,24 +2133,29 @@ app.get('/api/recipes/social/search', auth, async (req, res) => {
       queryText += ` AND r.is_verified = FALSE`;
     } 
 
-    // Kelime Araması (Title veya Description)
+    // Kelime Araması
     if (q) {
       queryText += ` AND (r.title ILIKE $${paramIndex} OR r.description ILIKE $${paramIndex})`;
       values.push(`%${q}%`);
       paramIndex++;
     }
 
-    // Kategori Filtresi (YENİ: Gerçek category sütununu kullanıyoruz)
-    // 'All' veya 'Tümü' gelirse filtreleme yapmıyoruz
+    // Kategori Filtresi
     if (category && category !== 'All' && category !== 'Tümü') {
        queryText += ` AND r.category = $${paramIndex}`;
        values.push(category);
        paramIndex++;
     }
 
-    if (q) {
-        queryText += ` ORDER BY r.created_at DESC`; 
+    // --- SIRALAMA MANTIĞI (GÜNCELLENDİ) ---
+    if (sort === 'rating') {
+        // Puana göre (En yüksekten düşüğe), eşitse yeniye göre
+        queryText += ` ORDER BY average_rating DESC, r.created_at DESC`;
+    } else if (sort === 'newest') {
+        // En yeniye göre
+        queryText += ` ORDER BY r.created_at DESC`;
     } else {
+        // Varsayılan: Random
         queryText += ` ORDER BY RANDOM()`;
     }
 
