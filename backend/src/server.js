@@ -1382,7 +1382,7 @@ app.get('/api/favorites', auth, async (req, res) => {
 //tarifle kullanıcı stoğu eşleştirme
 app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
   const { id } = req.params;
-  const userId = req.user.id; // Auth middleware'den gelen user id
+  const userId = req.user.id; 
 
   try {
     const result = await db.query(
@@ -1391,14 +1391,26 @@ app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
          ri.quantity, 
          ri.unit_type,
          i.is_staple,
-         -- Kullanıcının dolabındaki miktar (Yoksa 0 döner)
-         COALESCE(rf.quantity, 0) AS user_stock_quantity
+         -- Kullanıcının stoğundaki tüm eşleşenleri TOPLA (SUM)
+         -- Eğer yoksa 0 döndür
+         COALESCE(SUM(rf.quantity), 0) AS user_stock_quantity
        FROM recipe_ingredients ri
        JOIN ingredients i ON ri.ingredient_id = i.id
-       -- Kullanıcının stoğuyla eşleştiriyoruz
+       
+       -- KRİTİK DÜZELTME BURADA:
+       -- Önce kullanıcının sanal dolabını bul, SADECE oradaki itemlarla eşleştir.
+       -- Bu sayede başkasının stoğu veya hayalet stoklar karışmaz.
        LEFT JOIN refrigerator_items rf ON rf.ingredient_id = i.id 
-       LEFT JOIN virtual_refrigerator vr ON rf.virtual_refrigerator_id = vr.id AND vr.user_id = $2
-       WHERE ri.recipe_id = $1`,
+            AND rf.virtual_refrigerator_id IN (
+                SELECT id FROM virtual_refrigerator WHERE user_id = $2
+            )
+            
+       WHERE ri.recipe_id = $1
+       
+       -- GRUPLAMA:
+       -- Aynı malzemeden birden fazla satır oluşmasını engeller,
+       -- stokları tek satırda toplar.
+       GROUP BY i.id, i.name, ri.quantity, ri.unit_type, i.is_staple`,
       [id, userId]
     );
     res.json(result.rows);
