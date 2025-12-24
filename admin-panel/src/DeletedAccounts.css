@@ -1,0 +1,114 @@
+/* DeletedAccounts.css */
+
+/* Sayfa Genel Yapısı */
+.deleted-accounts-page {
+  padding: 24px;
+  background-color: #f3f4f6; /* Açık gri arka plan */
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24px;
+}
+
+/* Yükleniyor ve Hata Mesajları */
+.loading-message {
+  padding: 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  border: 1px solid #f87171;
+  color: #b91c1c;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+/* Tablo Konteyneri */
+.table-container {
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  overflow: hidden; /* Köşelerin yuvarlak kalması için */
+  overflow-x: auto; /* Mobilde taşarsa kaydırma çubuğu çıksın */
+}
+
+/* Tablo Stilleri */
+.data-table {
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 12px 20px;
+  border-bottom: 2px solid #e5e7eb;
+  background-color: #f9fafb;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  font-size: 14px;
+  color: #111827;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Kullanıcı Adı Alanı */
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-name {
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Badge (Kalan Gün) */
+.badge-warning {
+  position: relative;
+  display: inline-block;
+  padding: 4px 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: #7c2d12; /* Koyu turuncu */
+  background-color: #ffedd5; /* Açık turuncu */
+  border-radius: 9999px; /* Tam yuvarlak */
+  font-size: 12px;
+}
+
+/* Durum Badge (Waiting) */
+.status-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444; /* Kırmızı */
+  border: 1px solid #ef4444;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+/* Boş Veri Mesajı */
+.empty-message {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+}

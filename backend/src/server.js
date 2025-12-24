@@ -8,6 +8,7 @@ const multer = require('multer');
 const path = require('path');
 const adminAuth = require('./middleware/adminAuth');
 const { debug } = require('console');
+const cron = require('node-cron');
 
 const app = express();
 app.use(cors());
@@ -37,6 +38,57 @@ const sendNotification = async (userId, title, message, type = 'info') => {
     console.error(`Bildirim hatası (User: ${userId}):`, err.message);
   }
 };
+
+cron.schedule('0 0 * * *', async () => {
+  console.log('Running Account Deletion Cleanup Job...');
+  const client = await db.connect();
+
+  try {
+    // 1. Süresi dolmuş (30 günden eski) kullanıcıları bul
+    const result = await client.query(`
+      SELECT id FROM users 
+      WHERE is_deleted = TRUE 
+      AND deletion_requested_at < NOW() - INTERVAL '30 days'
+    `);
+
+    const usersToDelete = result.rows;
+
+    if (usersToDelete.length > 0) {
+      console.log(`${usersToDelete.length} users found for permanent deletion.`);
+
+      for (const user of usersToDelete) {
+        try {
+          await client.query('BEGIN');
+
+          // A. Verified Tariflerin Sahibini Admin Yap (veya NULL yap)
+          // Eğer sisteminde sabit bir Admin ID varsa NULL yerine o ID'yi yaz (örn: created_by = 1)
+          await client.query(`
+            UPDATE recipes 
+            SET created_by = NULL 
+            WHERE created_by = $1 AND is_verified = TRUE
+          `, [user.id]);
+
+          // B. Kullanıcıyı Kalıcı Olarak Sil (Hard Delete)
+          // Standart tarifler zaten talep anında silinmişti.
+          await client.query('DELETE FROM users WHERE id = $1', [user.id]);
+
+          await client.query('COMMIT');
+          console.log(`User ${user.id} permanently deleted.`);
+        } catch (err) {
+          await client.query('ROLLBACK');
+          console.error(`Failed to delete user ${user.id}:`, err);
+        }
+      }
+    } else {
+      console.log('No accounts pending for deletion today.');
+    }
+
+  } catch (error) {
+    console.error('Cron Job Error:', error);
+  } finally {
+    client.release();
+  }
+});
 
 {/* ADMİN API'LERİ*/}
 //pending olan tarifleri getir
@@ -624,6 +676,22 @@ app.delete('/api/admin/reviews/:id', adminAuth, async (req, res) => {
   }
 });
 
+//deletion istekleri
+app.get('/api/admin/pending-deletions', auth, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT id, username, email, deletion_requested_at 
+      FROM users 
+      WHERE is_deleted = TRUE
+      ORDER BY deletion_requested_at ASC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 {/* USER API'LERİ*/}
 // Register endpoint
 app.post('/auth/register', async (req, res) => {
@@ -675,6 +743,13 @@ app.post('/auth/login', async (req, res) => {
         }
 
         const user = result.rows[0];
+
+        if (user.is_deleted) {
+          // İsteğe bağlı: Kalan günü hesaplayıp mesajda gösterebilirsin
+          return res.status(403).json({ 
+          error: 'Bu hesap silinme sürecindedir. Erişim engellendi.' 
+          });
+        }
 
         if (user.role === 'banned') {
             return res.status(403).json({ error: 'Hesabınız erişime engellenmiştir (Banned).' });
@@ -804,41 +879,36 @@ app.patch('/api/profile/change-password', auth, async (req, res) => {
 //kullanıcının hesabını silmesi
 app.delete('/api/users/delete', auth, async (req, res) => {
   const userId = req.user.id;
-  
   const client = await db.connect();
 
   try {
-    await client.query('BEGIN'); // İşlemi başlat
+    await client.query('BEGIN');
 
-    // 1. ADIM: Verified tariflerin yazarını NULL yap
+    // 1. ADIM: Standart (Onaylanmamış) tarifleri HEMEN sil
     await client.query(
-      `UPDATE recipes 
-       SET created_by = NULL 
-       WHERE created_by = $1 AND is_verified = TRUE`,
+      `DELETE FROM recipes WHERE created_by = $1 AND is_verified = FALSE`,
       [userId]
     );
 
-    // 2. ADIM : Standart tariflerini sil
+    // 2. ADIM: Kullanıcıyı "Silinecek" olarak işaretle (Soft Delete)
+    // Hesabı ve Verified tarifleri şimdilik tutuyoruz.
     await client.query(
-      `DELETE FROM recipes WHERE created_by = $1`, 
+      `UPDATE users 
+       SET is_deleted = TRUE, deletion_requested_at = NOW() 
+       WHERE id = $1`,
       [userId]
     );
 
-    // 3. ADIM: Kullanıcıyı Sil
-    await client.query('DELETE FROM users WHERE id = $1', [userId]);
-
-    await client.query('COMMIT'); // İşlemi onayla
-    res.json({ message: 'Hesap başarıyla silindi.' });
+    await client.query('COMMIT');
+    
+    res.json({ 
+      message: 'Hesap silme talebiniz alındı. Standart tarifleriniz silindi. Hesabınız ve onaylı tarifleriniz 30 gün sonra kalıcı olarak silinecektir.' 
+    });
 
   } catch (error) {
-    await client.query('ROLLBACK'); // Hata olursa her şeyi geri al
-    console.error('Delete Account Error:', error);
-    
-    // Hatayı daha net görebilmek için detaylı log
-    res.status(500).json({ 
-        error: 'Server error while deleting account.',
-        details: error.message 
-    });
+    await client.query('ROLLBACK');
+    console.error('Delete Account Request Error:', error);
+    res.status(500).json({ error: 'Server error.' });
   } finally {
     client.release();
   }

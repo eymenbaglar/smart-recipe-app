@@ -10,6 +10,7 @@ import Users from './Users';
 import Ingredients from './Ingredients';
 import Suggestions from './Suggestions';
 import Reviews from './Reviews';
+import DeletedAccounts from './DeletedAccounts';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('adminToken'));
@@ -51,6 +52,7 @@ function App() {
             <Route path="/ingredients" element={<Ingredients />} />
             <Route path="/suggestions" element={<Suggestions />} />
             <Route path="/reviews" element={<Reviews/>} />
+            <Route path="/deleted-accounts" element={<DeletedAccounts />} />
           </Routes>
         </div>
       </div>

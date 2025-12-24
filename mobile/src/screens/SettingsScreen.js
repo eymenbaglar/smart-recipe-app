@@ -11,9 +11,10 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { CommonActions } from '@react-navigation/native';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
-export default function SettingsScreen({ navigation }) {
+export default function SettingsScreen({ navigation , onLogout}) {
   const [user, setUser] = useState(null);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -49,25 +50,17 @@ export default function SettingsScreen({ navigation }) {
   };
 
   // --- HESAP SİLME (YENİ) ---
-  const handleDeleteAccount = () => {
+const handleDeleteAccount = () => {
     Alert.alert(
-      "Hesabını Sil", // Başlık
-      "Hesabını kalıcı olarak silmek istediğine emin misin? Bu işlem geri alınamaz.\n\nNot: Paylaştığın ve onaylanan tarifler silinmez, anonim olarak kalır.", // Mesaj
+      "Hesap Silme Talebi", 
+      "Hesabın ve Onaylı tariflerin 30 gün boyunca 'Silinme Bekleyenler' listesinde tutulacaktır. Devam etmek istiyor musun?",
       [
-        {
-          text: "Vazgeç",
-          style: "cancel"
-        },
-        {
-          text: "Evet, Hesabımı Sil",
-          style: "destructive", // iOS'ta kırmızı yapar
-          onPress: performDelete // Onaylarsa silme fonksiyonunu çalıştır
-        }
+        { text: "Vazgeç", style: "cancel" },
+        { text: "Evet, Sil", style: "destructive", onPress: performDelete }
       ]
     );
   };
 
-  // API'ye İstek Atan Fonksiyon
   const performDelete = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -75,21 +68,26 @@ export default function SettingsScreen({ navigation }) {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Silme başarılıysa çıkış yap ve ana ekrana at
+      // Token'ı sil (App.js'deki handleLogout da siliyor ama garanti olsun)
       await AsyncStorage.removeItem('token');
-      Alert.alert("Hoşçakal", "Hesabın başarıyla silindi.");
       
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Welcome' }],
-      });
+      Alert.alert(
+        "İşlem Başarılı", 
+        "Hesap silme talebin alındı. Çıkış yapılıyor..."
+      );
+      
+      // --- DÜZELTME BURASI ---
+      // Navigasyon reset yerine, App.js'ten gelen çıkış fonksiyonunu çalıştırıyoruz.
+      // Bu fonksiyon isLoggedIn state'ini false yapacak ve uygulama otomatik olarak Login ekranına dönecek.
+      if (onLogout) {
+        onLogout();
+      }
 
     } catch (error) {
       console.error(error);
-      Alert.alert("Hata", "Hesap silinirken bir sorun oluştu.");
+      Alert.alert("Hata", "İşlem sırasında bir hata oluştu.");
     }
   };
-
   //kaydet butonu
   const handleSave = async () => {
     if (!username || !email) {
@@ -184,8 +182,8 @@ export default function SettingsScreen({ navigation }) {
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
-          <Ionicons name="trash-outline" size={20} color="#fff" />
-          <Text style={styles.deleteText}>Hesabımı Kalıcı Olarak Sil</Text>
+            <Ionicons name="trash-outline" size={20} color="#fff" />
+            <Text style={styles.deleteText}>Delete Account</Text>
       </TouchableOpacity>
     </View>
   );

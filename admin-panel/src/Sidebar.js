@@ -36,7 +36,9 @@ function Sidebar({ onLogout }) {
         <NavLink to="/reviews" className={({isActive}) => (isActive ? 'nav-item active' : 'nav-item')}>
         💬 Reviews
         </NavLink>
-
+        <NavLink to="/deleted-accounts" className={({isActive}) => (isActive ? 'nav-item active' : 'nav-item')}>
+        Deleted Accounts
+        </NavLink>
       </nav>
 
       <div className="sidebar-footer">

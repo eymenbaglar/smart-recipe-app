@@ -188,9 +188,12 @@ export default function App() {
             </Stack.Screen>
             <Stack.Screen 
               name="Settings" 
-              component={SettingsScreen} 
               options={{ title: 'Settings' }}
-            />
+            >
+              {(props) => (
+                <SettingsScreen {...props} onLogout={handleLogout} />
+              )}
+            </Stack.Screen>
             <Stack.Screen 
               name="ChangePassword" 
               component={ChangePasswordScreen} 
