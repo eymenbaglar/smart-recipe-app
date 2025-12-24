@@ -1,4 +1,3 @@
-// mobile/src/screens/LoginScreen.js
 import React, { useState } from 'react';
 import {
   View,
@@ -9,13 +8,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Image
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
-const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
+const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
 
 export default function LoginScreen({ navigation, onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -23,50 +22,33 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill all fields.');
+    if (!email || !password) {
+      Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
       return;
     }
 
     setLoading(true);
+
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
-        email: email.trim(),
-        password: password.trim()
+        email,
+        password
       });
 
+      // Token'ı kaydet
       const { token, user } = response.data;
+      await AsyncStorage.setItem('token', token);
+      await AsyncStorage.setItem('user', JSON.stringify(user));
 
-      // Token geldiyse kaydet
-      if (token) {
-        await AsyncStorage.setItem('token', token);
-        if (user) {
-          await AsyncStorage.setItem('user', JSON.stringify(user));
-        }
-
-        // 2. App.js'ye "Giriş yaptım" haberini yolla
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        }
-
-        // 3. Başarılı uyarısı
-        Alert.alert('Success', 'You have loged in!');
-
-      } else {
-        // Token gelmeme hatası
-        console.error("Sunucu yanıt döndü ama token içermiyor.");
-        Alert.alert("Hata", "Kimlik doğrulama anahtarı (token) alınamadı.");
+      // App.js'deki durumu güncelle
+      if (onLoginSuccess) {
+        onLoginSuccess();
       }
 
     } catch (error) {
-      console.log("Login hatası:", error.response ? error.response.data : error.message);
-      if (error.response) {
-        Alert.alert('Log In Error', error.response.data.error || 'Check your information.');
-      } else if (error.request) {
-        Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamıyor. İnternet bağlantınızı kontrol edin.');
-      } else {
-        Alert.alert('Hata', 'Beklenmedik bir hata oluştu.');
-      }
+      console.log("Giriş hatası:", error.response ? error.response.data : error.message);
+      const msg = error.response?.data?.error || 'Giriş yapılamadı. Bilgilerinizi kontrol edin.';
+      Alert.alert('Hata', msg);
     } finally {
       setLoading(false);
     }
@@ -77,49 +59,65 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.logoContainer}>
-        <Text style={styles.logo}>🍳</Text>
-        <Text style={styles.title}>Smart Recipe</Text>
-        <Text style={styles.subtitle}>Discover delicious recipes with your ingredients!</Text>
-      </View>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerContainer}>
+          <Text style={styles.logo}>👨‍🍳</Text>
+          <Text style={styles.title}>Giriş Yap</Text>
+          <Text style={styles.subtitle}>Tekrar hoş geldin!</Text>
+        </View>
 
-      <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="E-posta"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          placeholderTextColor="#999"
-        />
+        <View style={styles.formContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="E-posta"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholderTextColor="#999"
+          />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Şifre"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor="#999"
-        />
+          <TextInput
+            style={styles.input}
+            placeholder="Şifre"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#999"
+          />
 
-        <TouchableOpacity 
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Logging in...' : 'Log In'}
-          </Text>
-        </TouchableOpacity>
+          {/* --- YENİ EKLENEN KISIM: ŞİFREMİ UNUTTUM --- */}
+          <TouchableOpacity 
+            style={styles.forgotPasswordContainer} 
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
+            <Text style={styles.forgotPasswordText}>Şifremi Unuttum?</Text>
+          </TouchableOpacity>
+          {/* ------------------------------------------- */}
 
-        <TouchableOpacity 
-          style={styles.linkButton}
-          onPress={() => navigation.navigate('Register')}
-        >
-          <Text style={styles.linkText}>Don't have an account? Sign up</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity 
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Giriş Yap</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.linkButton}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.linkText}>Hesabın yok mu? Kayıt Ol</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -129,11 +127,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  logoContainer: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
+    padding: 20,
+  },
+  headerContainer: {
     alignItems: 'center',
-    paddingTop: 50,
+    marginBottom: 40,
   },
   logo: {
     fontSize: 80,
@@ -148,12 +149,9 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#666',
-    textAlign: 'center',
-    paddingHorizontal: 30,
   },
   formContainer: {
-    flex: 2,
-    padding: 20,
+    width: '100%',
   },
   input: {
     backgroundColor: 'white',
@@ -163,6 +161,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#e0e0e0',
+  },
+  // Şifremi unuttum için stil
+  forgotPasswordContainer: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    color: '#FF6F61', // Ana renklerinle uyumlu olması için
+    fontWeight: '600',
+    fontSize: 14,
   },
   button: {
     backgroundColor: '#333',

@@ -9,6 +9,7 @@ const path = require('path');
 const adminAuth = require('./middleware/adminAuth');
 const { debug } = require('console');
 const cron = require('node-cron');
+const nodemailer = require('nodemailer');
 
 const app = express();
 app.use(cors());
@@ -26,6 +27,26 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+// Mail Gönderme Servisi
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'eymenbaglar@gmail.com', // KENDİ MAİLİNİ YAZ
+    pass: 'dapq twbc ipuy jhtg'    // GMAIL "APP PASSWORD" (Uygulama Şifresi)
+  }
+});
+
+// Yardımcı Fonksiyon: Mail Gönder
+const sendVerificationEmail = async (email, code) => {
+  const mailOptions = {
+    from: '"Smart Recipe App" <seninmailin@gmail.com>',
+    to: email,
+    subject: 'Hesap Doğrulama Kodu',
+    text: `Merhaba! Uygulamaya hoş geldin. Doğrulama kodun: ${code}. Bu kod 15 dakika geçerlidir.`
+  };
+  await transporter.sendMail(mailOptions);
+};
 
 //bildirim için helper fonksion
 const sendNotification = async (userId, title, message, type = 'info') => {
@@ -694,41 +715,225 @@ app.get('/api/admin/pending-deletions', auth, async (req, res) => {
 
 {/* USER API'LERİ*/}
 // Register endpoint
-app.post('/auth/register', async (req, res) => {
-    const { username, email, password } = req.body;
+// --- REGISTER (GÜNCELLENMİŞ & LOG EKLENMİŞ) ---
+app.post('/api/auth/register', async (req, res) => {
+  const { username, email, password } = req.body;
 
-    if (!username || !email || !password) {
-        return res.status(400).json({ error: 'Lütfen tüm alanları doldurun.' });
+  try {
+    // 1. Önce Kullanıcıyı Kontrol Et
+    const userCheck = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    
+    // Şifreyi her durumda hash'lememiz lazım (Yeni kayıt veya güncelleme için)
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Yeni kod üret
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    if (userCheck.rows.length > 0) {
+      const existingUser = userCheck.rows[0];
+
+      // DURUM A: Kullanıcı ZATEN DOĞRULANMIŞSA -> Hata ver
+      if (existingUser.is_verified) {
+        return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanımda.' });
+      }
+
+      // DURUM B: Kullanıcı VAR AMA DOĞRULANMAMIŞSA -> GÜNCELLE (Update)
+      // Kullanıcı "Geri" tuşuna basıp tekrar kayıt olmaya çalışıyordur.
+      console.log("Doğrulanmamış hesap tekrar deneniyor, güncelleniyor:", email);
+
+      await db.query(
+        `UPDATE users 
+         SET username = $1, password_hash = $2, verification_code = $3, verification_code_expires_at = $4 
+         WHERE email = $5`,
+        [username, hashedPassword, verificationCode, expiresAt, email]
+      );
+
+      // Maili tekrar gönder (Arka planda)
+      sendVerificationEmail(email, verificationCode)
+        .catch(err => console.error("Mail Hatası:", err));
+
+      // Frontend'e "Başarılı" dön (201 Created veya 200 OK)
+      return res.status(201).json({ 
+        message: 'Doğrulama kodu tekrar gönderildi.',
+        email: email 
+      });
     }
 
-    try {
-        const userCheck = await db.query(
-            'SELECT * FROM users WHERE email = $1 OR username = $2',
-            [email, username]
-        );
+    // DURUM C: Kullanıcı HİÇ YOKSA -> YENİ KAYIT (Insert)
+    await db.query(
+      `INSERT INTO users (username, email, password_hash, is_verified, verification_code, verification_code_expires_at) 
+       VALUES ($1, $2, $3, FALSE, $4, $5)`,
+      [username, email, hashedPassword, verificationCode, expiresAt]
+    );
 
-        if (userCheck.rows.length > 0) {
-            return res.status(400).json({ error: 'Bu e-posta veya kullanıcı adı zaten kullanılıyor.' });
-        }
+    console.log("Yeni kayıt oluşturuldu. Mail gönderiliyor...");
+    sendVerificationEmail(email, verificationCode)
+      .catch(err => console.error("Mail Hatası:", err));
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+    res.status(201).json({ 
+      message: 'Kayıt başarılı! Kod gönderildi.',
+      email: email 
+    });
 
-        const newUser = await db.query(
-            'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email',
-            [username, email, hashedPassword]
-        );
+  } catch (error) {
+    console.error('Register Hatası:', error);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
 
-        console.log("✅ Yeni kullanıcı oluşturuldu:", newUser.rows[0]);
+//email verification
+app.post('/api/auth/verify', async (req, res) => {
+  const { email, code } = req.body;
 
-        res.status(201).json({
-            message: 'Kullanıcı başarıyla oluşturuldu!',
-            user: newUser.rows[0]
-        });
+  try {
+    // 1. Kullanıcıyı ve kod bilgilerini çek
+    const result = await db.query(
+      'SELECT * FROM users WHERE email = $1', 
+      [email]
+    );
 
-    } catch (err) {
-        console.error("Register Hatası:", err);
-        res.status(500).json({ error: 'Sunucu hatası oluştu.' });
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: 'Kullanıcı bulunamadı.' });
     }
+
+    const user = result.rows[0];
+
+    // 2. Halihazırda doğrulanmış mı?
+    if (user.is_verified) {
+      return res.status(400).json({ error: 'Bu hesap zaten doğrulanmış.' });
+    }
+
+    // 3. Kod doğru mu?
+    if (user.verification_code !== code) {
+      return res.status(400).json({ error: 'Geçersiz doğrulama kodu.' });
+    }
+
+    // 4. Süresi dolmuş mu?
+    if (new Date() > new Date(user.verification_code_expires_at)) {
+      return res.status(400).json({ error: 'Kodun süresi dolmuş. Lütfen tekrar kayıt olun veya yeni kod isteyin.' });
+    }
+
+    // 5. Her şey tamamsa: Hesabı doğrula ve kodu temizle
+    await db.query(
+      `UPDATE users 
+       SET is_verified = TRUE, verification_code = NULL, verification_code_expires_at = NULL 
+       WHERE id = $1`,
+      [user.id]
+    );
+
+    res.json({ message: 'Hesap başarıyla doğrulandı! Şimdi giriş yapabilirsiniz.' });
+
+  } catch (error) {
+    console.error('Verify Error:', error);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
+// --- 1. ŞİFRE SIFIRLAMA TALEBİ (Mail Gönder) ---
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Kullanıcı var mı?
+    const userCheck = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (userCheck.rows.length === 0) {
+      // Güvenlik gereği "Böyle bir mail yok" demek yerine "Varsa gönderdik" demek daha iyidir 
+      // ama şimdilik kullanıcı dostu olması için hata dönelim.
+      return res.status(404).json({ error: 'Bu e-posta adresiyle kayıtlı kullanıcı bulunamadı.' });
+    }
+
+    // Kod üret (6 haneli)
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 dk geçerli
+
+    // Kodu veritabanına kaydet (Eski kod varsa üzerine yazar)
+    await db.query(
+      `UPDATE users 
+       SET verification_code = $1, verification_code_expires_at = $2 
+       WHERE email = $3`,
+      [verificationCode, expiresAt, email]
+    );
+
+    // Mail Gönder (Fire and Forget - Beklemeden yanıt dön)
+    sendVerificationEmail(email, verificationCode) // Mevcut fonksiyonunu kullanıyoruz
+      .catch(err => console.error("Forgot Password Mail Hatası:", err));
+
+    res.json({ message: 'Doğrulama kodu e-posta adresinize gönderildi.' });
+
+  } catch (error) {
+    console.error('Forgot Password Error:', error);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
+// --- 2. KODU DOĞRULA (Ara Adım) ---
+// Kullanıcı kodu girdiğinde, yeni şifre ekranına geçmeden önce bu çalışacak.
+app.post('/api/auth/verify-reset-code', async (req, res) => {
+  const { email, code } = req.body;
+
+  try {
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    }
+
+    const user = result.rows[0];
+
+    // Kod kontrolü
+    if (user.verification_code !== code) {
+      return res.status(400).json({ error: 'Geçersiz kod.' });
+    }
+
+    // Süre kontrolü
+    if (new Date() > new Date(user.verification_code_expires_at)) {
+      return res.status(400).json({ error: 'Kodun süresi dolmuş. Lütfen tekrar deneyin.' });
+    }
+
+    res.json({ message: 'Kod doğrulandı.' });
+
+  } catch (error) {
+    console.error('Verify Reset Code Error:', error);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+});
+
+// --- 3. YENİ ŞİFREYİ KAYDET ---
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { email, code, newPassword } = req.body;
+
+  try {
+    // Güvenlik İçin: Kodu ve süreyi TEKRAR kontrol ediyoruz.
+    // (Biri araya girip direkt bu endpointi çağırmasın diye)
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    
+    const user = result.rows[0];
+
+    if (user.verification_code !== code) {
+      return res.status(400).json({ error: 'İşlem yetkisiz. Kod geçersiz.' });
+    }
+    if (new Date() > new Date(user.verification_code_expires_at)) {
+      return res.status(400).json({ error: 'Süre dolmuş.' });
+    }
+
+    // Yeni şifreyi hashle
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Şifreyi güncelle ve kodu temizle (Tekrar kullanılamasın)
+    await db.query(
+      `UPDATE users 
+       SET password_hash = $1, verification_code = NULL, verification_code_expires_at = NULL 
+       WHERE email = $2`,
+      [hashedPassword, email]
+    );
+
+    res.json({ message: 'Şifreniz başarıyla değiştirildi. Giriş yapabilirsiniz.' });
+
+  } catch (error) {
+    console.error('Reset Password Error:', error);
+    res.status(500).json({ error: 'Sunucu hatası.' });
+  }
 });
 
 // Login endpoint
@@ -755,6 +960,10 @@ app.post('/auth/login', async (req, res) => {
             return res.status(403).json({ error: 'Hesabınız erişime engellenmiştir (Banned).' });
         }
 
+        if (!user.is_verified) {
+          return res.status(403).json({ error: 'Hesabınız henüz doğrulanmamış. Lütfen tekrar kayıt olmayı deneyerek yeni kod alın.' });
+        }
+        
         const validPassword = await bcrypt.compare(password, user.password_hash);
 
         if (!validPassword) {

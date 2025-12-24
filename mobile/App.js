@@ -24,6 +24,10 @@ import AddRecipeScreen from './src/screens/AddRecipeScreen';
 import MyRecipesScreen from './src/screens/MyRecipesScreen';
 import NotificationScreen from './src/screens/NotificationScreen';
 import RecipeListScreen from './src/screens/RecipeListScreen';
+import VerificationScreen from './src/screens/VerificationScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import ResetVerificationScreen from './src/screens/ResetVerificationScreen';
+import NewPasswordScreen from './src/screens/NewPasswordScreen';
 
 // Navigator
 import TabNavigator from './src/navigation/tabNavigator'; 
@@ -160,6 +164,23 @@ export default function App() {
               name="Register" 
               component={RegisterScreen} 
               options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+            name="Verification" 
+            component={VerificationScreen} 
+            options={{ headerShown: false }} 
+            />
+            <Stack.Screen name="ForgotPassword" 
+            component={ForgotPasswordScreen} 
+            options={{ headerShown: false }} 
+            />
+            <Stack.Screen name="ResetVerification" 
+            component={ResetVerificationScreen} 
+            options={{ headerShown: false }} 
+            />
+            <Stack.Screen name="NewPassword" 
+            component={NewPasswordScreen} 
+            options={{ headerShown: false }} 
             />
           </>
         ) : (
