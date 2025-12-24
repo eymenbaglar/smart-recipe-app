@@ -1,3 +1,10 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+// KONTROL: Değişkenler gelmiş mi bakalım (Terminalde göreceksin)
+console.log("--- Server Başlatılıyor ---");
+console.log("DB_USER:", process.env.DB_USER); // Eğer undefined yazıyorsa dosya bulunamadı demektir.
+console.log("DB_PORT:", process.env.DB_PORT);
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
@@ -5,11 +12,11 @@ const jwt = require('jsonwebtoken');
 const db = require('./config/database');
 const auth = require('./middleware/auth');
 const multer = require('multer');
-const path = require('path');
 const adminAuth = require('./middleware/adminAuth');
 const { debug } = require('console');
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
+const { scheduleBackup, performBackup } = require('./backupService');
 
 const app = express();
 app.use(cors());
@@ -963,7 +970,7 @@ app.post('/auth/login', async (req, res) => {
         if (!user.is_verified) {
           return res.status(403).json({ error: 'Hesabınız henüz doğrulanmamış. Lütfen tekrar kayıt olmayı deneyerek yeni kod alın.' });
         }
-        
+
         const validPassword = await bcrypt.compare(password, user.password_hash);
 
         if (!validPassword) {
@@ -2496,6 +2503,9 @@ app.post('/api/favorites/toggle', auth, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+scheduleBackup();
+//performBackup();
 
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
