@@ -28,7 +28,7 @@ export default function MyRecipesScreen({ navigation }) {
       });
       setRecipes(response.data);
     } catch (error) {
-      console.log("API Hatası:", error);
+      console.log("API Error:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -49,12 +49,12 @@ export default function MyRecipesScreen({ navigation }) {
   // --- İŞLEMLER ---
   const handleDelete = (recipeId) => {
     Alert.alert(
-      "Tarifi Sil",
-      "Bu tarifi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+      "Delete Recipe",
+      "Are you sure you want to delete this recipe? This action is irreversible.",
       [
-        { text: "Vazgeç", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         { 
-          text: "Sil", 
+          text: "Delete", 
           style: "destructive", 
           onPress: async () => {
             try {
@@ -64,10 +64,10 @@ export default function MyRecipesScreen({ navigation }) {
               });
               // Listeyi güncelle (Silineni arayüzden kaldır)
               setRecipes(prev => prev.filter(item => item.id !== recipeId));
-              Alert.alert("Başarılı", "Tarif silindi.");
+              Alert.alert("Successful", "The recipe has been deleted.");
             } catch (error) {
               console.error(error);
-              Alert.alert("Hata", error.response?.data?.error || "Silme işlemi başarısız.");
+              Alert.alert("Error", error.response?.data?.error || "Deletion failed.");
             }
           }
         }
@@ -144,7 +144,7 @@ export default function MyRecipesScreen({ navigation }) {
                 <View style={styles.metaItem}>
                   <Ionicons name="time-outline" size={14} color="#666" />
                   <Text style={styles.metaText}>
-                    {item.prep_time ? `${item.prep_time} dk` : '-'}
+                    {item.prep_time ? `${item.prep_time} min` : '-'}
                   </Text>
                 </View>
                 <View style={styles.metaItem}>
@@ -167,7 +167,7 @@ export default function MyRecipesScreen({ navigation }) {
         {/* Red Nedeni (Sadece Reddedilenler İçin) */}
         {isRejected && item.rejection_reason && (
           <View style={styles.reasonContainer}>
-            <Text style={styles.reasonTitle}>Red Nedeni:</Text>
+            <Text style={styles.reasonTitle}>Reason for Rejection:</Text>
             <Text style={styles.reasonText}>{item.rejection_reason}</Text>
           </View>
         )}
@@ -180,7 +180,7 @@ export default function MyRecipesScreen({ navigation }) {
               onPress={() => navigation.navigate('AddRecipe', { recipeToEdit: item })}
           >
               <Ionicons name="create-outline" size={18} color="#FFF" />
-              <Text style={styles.actionBtnText}>Düzenle</Text>
+              <Text style={styles.actionBtnText}>Edit</Text>
           </TouchableOpacity>
 
           {/* Sil Butonu */}
@@ -190,7 +190,7 @@ export default function MyRecipesScreen({ navigation }) {
               onPress={() => handleDelete(item.id)}
               >
               <Ionicons name="trash-outline" size={18} color="#FFF" />
-              <Text style={styles.actionBtnText}>Sil</Text>
+              <Text style={styles.actionBtnText}>Delete</Text>
               </TouchableOpacity>
           )}
         </View>
@@ -206,7 +206,7 @@ export default function MyRecipesScreen({ navigation }) {
         keyExtractor={item => item.id.toString()}
         renderItem={renderRecipeCard}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={<Text style={styles.emptyText}>Henüz yayınlanmış tarifin yok.</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>There are no published recipes yet.</Text>}
         contentContainerStyle={{ paddingBottom: 20 }}
         initialNumToRender={6}
         maxToRenderPerBatch={4}  
@@ -223,7 +223,7 @@ export default function MyRecipesScreen({ navigation }) {
         keyExtractor={item => item.id.toString()}
         renderItem={renderRecipeCard}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={<Text style={styles.emptyText}>İşlem bekleyen tarifin yok.</Text>}
+        ListEmptyComponent={<Text style={styles.emptyText}>There are no pending recipe</Text>}
         contentContainerStyle={{ paddingBottom: 20 }}
         initialNumToRender={6}
         maxToRenderPerBatch={4}  
@@ -252,12 +252,12 @@ export default function MyRecipesScreen({ navigation }) {
       <Tab.Screen 
         name="Yayında" 
         component={PublishedTab} 
-        options={{ title: `Yayında (${publishedCount})` }} // Dinamik Başlık
+        options={{ title: `Approved (${publishedCount})` }} // Dinamik Başlık
       />
       <Tab.Screen 
         name="Bekleyenler" 
         component={PendingTab} 
-        options={{ title: `Bekleyenler (${pendingCount})` }} // Dinamik Başlık
+        options={{ title: `Waiting (${pendingCount})` }} // Dinamik Başlık
       />
     </Tab.Navigator>
   );

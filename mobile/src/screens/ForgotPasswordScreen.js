@@ -24,7 +24,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
   const handleSendCode = async () => {
     if (!email) {
-      Alert.alert("Hata", "Lütfen e-posta adresinizi girin.");
+      Alert.alert("Error", "Please enter your email address.");
       return;
     }
 
@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     try {
       await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
       
-      Alert.alert("Başarılı", "Doğrulama kodu gönderildi.", [
+      Alert.alert("Successful", "A verification code has been sent.", [
         { text: "Tamam", onPress: () => navigation.navigate('ResetVerification', { email: email }) }
       ]);
 

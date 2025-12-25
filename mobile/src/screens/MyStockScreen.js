@@ -100,7 +100,7 @@ export default function MyStockScreen() {
   //malzeme önerisi
   const handleSendSuggestion = async () => {
     if (!suggestionText.trim()) {
-      Alert.alert("Uyarı", "Lütfen bir malzeme ismi giriniz.");
+      Alert.alert("Warning", "Please enter a ingredient name.");
       return;
     }
 
@@ -113,10 +113,10 @@ export default function MyStockScreen() {
       
       setSuggestionModalVisible(false);
       setSuggestionText('');
-      Alert.alert("Teşekkürler", "Öneriniz başarıyla gönderildi! Admin onayından sonra listeye eklenecektir.");
+      Alert.alert("Thank you", "Your suggestion has been successfully submitted! It will be added to the list after admin approval.");
     } catch (error) {
       console.error(error);
-      Alert.alert("Hata", "Öneri gönderilirken bir sorun oluştu.");
+      Alert.alert("Error", "An error occurred while sending the suggestion.");
     }
   };
 
@@ -252,7 +252,7 @@ export default function MyStockScreen() {
         <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Malzeme ara..."
+          placeholder="Search for ingredient..."
           value={query}
           onChangeText={searchIngredients}
           editable={!editingItem}
@@ -418,15 +418,15 @@ export default function MyStockScreen() {
               {/* Tıklamaların arka plana (klavye kapamaya) gitmemesi için */}
               <TouchableWithoutFeedback> 
                 <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Malzeme Önerisi</Text>
+                  <Text style={styles.modalTitle}>Ingredient Suggestion</Text>
                   <Text style={styles.modalMessage}>
-                    İstediğiniz malzeme veritabanımızda yok mu?{"\n"}
-                    Bize öneride bulunun, ekleyelim.
+                    Is the ingredient you want not in our app?{"\n"}
+                    Make a suggestion, and we'll add it.
                   </Text>
                   
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="Malzeme İsmi (örn: Avokado)"
+                    placeholder="Ingredient Name (e.g., Avocado)"
                     value={suggestionText}
                     onChangeText={setSuggestionText}
                     autoFocus={true} 
@@ -437,14 +437,14 @@ export default function MyStockScreen() {
                       style={[styles.modalBtn, styles.cancelBtn]} 
                       onPress={() => setSuggestionModalVisible(false)}
                     >
-                      <Text style={styles.btnText}>İptal</Text>
+                      <Text style={styles.btnText}>Cancel</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
                       style={[styles.modalBtn, styles.sendBtn]} 
                       onPress={handleSendSuggestion}
                     >
-                      <Text style={styles.btnText}>Gönder</Text>
+                      <Text style={styles.btnText}>Submit</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

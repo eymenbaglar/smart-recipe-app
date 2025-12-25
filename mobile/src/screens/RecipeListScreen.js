@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 const { width } = Dimensions.get('window');
-// SocialScreen ile aynı matematik: (Ekran Genişliği / 2) - (Kenar Boşlukları)
+
 const CARD_WIDTH = (width / 2) - 20; 
 
 export default function RecipeListScreen({ route, navigation }) {
@@ -48,7 +48,7 @@ export default function RecipeListScreen({ route, navigation }) {
       console.error('Fav Error:', error);
       // Hata olursa işlemi geri al (Rollback)
       // Burada eski listeyi geri yükleyebilirsin veya kullanıcıya uyarı verebilirsin.
-      alert("İşlem başarısız oldu.");
+      alert("The operation failed.");
     }
   };
 
@@ -67,7 +67,7 @@ export default function RecipeListScreen({ route, navigation }) {
       });
       setRecipes(res.data);
     } catch (error) {
-      console.error("Liste çekme hatası:", error);
+      console.error("List retrieval error:", error);
     } finally {
       setLoading(false);
     }
@@ -92,7 +92,7 @@ export default function RecipeListScreen({ route, navigation }) {
         {/* Kalp İkonu */}
         <TouchableOpacity 
         style={styles.favoriteButton} 
-        onPress={() => handleToggleFavorite(item)} // Fonksiyonu buraya bağladık
+        onPress={() => handleToggleFavorite(item)} 
         >
         <Ionicons 
           // Eğer is_favorited true ise dolu kalp, değilse boş kalp
@@ -160,7 +160,7 @@ export default function RecipeListScreen({ route, navigation }) {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <Text style={{ textAlign: 'center', marginTop: 50, color: '#999', fontSize: 16 }}>
-                Henüz tarif eklenmemiş.
+                No recipe has been added yet.
             </Text>
           }
           initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 50, // Status Bar payı (SafeAreaView kullanmıyorsak)
+    paddingTop: 50, 
     paddingBottom: 15,
     paddingHorizontal: 15,
     // Header Gölgesi
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH, 
     marginBottom: 20, 
     backgroundColor: '#fff', 
-    borderRadius: 16, // Daha yuvarlak
+    borderRadius: 16, 
     // Soft Shadow
     shadowColor: "#000", 
     shadowOffset: { width: 0, height: 2 }, 

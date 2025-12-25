@@ -69,7 +69,7 @@ export default function AddRecipeScreen({ navigation , route}) {
             try {
                 parsedIngredients = JSON.parse(recipe.ingredients);
             } catch (e) {
-                console.log("Malzeme parse hatası:", e);
+                console.log("Ingredients parse error:", e);
             }
         } else if (Array.isArray(recipe.ingredients)) {
             parsedIngredients = recipe.ingredients;
@@ -116,7 +116,7 @@ export default function AddRecipeScreen({ navigation , route}) {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri izni vermelisiniz.');
+      Alert.alert('Permission Required', 'You must grant gallery permission to select photos.');
       return;
     }
 
@@ -183,7 +183,7 @@ export default function AddRecipeScreen({ navigation , route}) {
   // --- MALZEME EKLEME ---
   const addIngredientToList = () => {
     if (!selectedIngredient || !qty || !selectedUnit) {
-      Alert.alert("Eksik Bilgi", "Lütfen miktar ve birim giriniz.");
+      Alert.alert("Incomplete Information“, ”Please enter the quantity and unit.");
       return;
     }
 
@@ -216,7 +216,7 @@ export default function AddRecipeScreen({ navigation , route}) {
 
 const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert("Eksik Bilgi", "Lütfen zorunlu alanları doldurunuz.");
+      Alert.alert("Incomplete Information“, ”Please fill in the required fields.");
       return;
     }
 
@@ -238,12 +238,12 @@ const handleSubmit = async () => {
 
       let url = `${API_URL}/api/recipes`;
       let method = 'POST';
-      let successMessage = "Tarifiniz gönderildi! Admin onayından sonra yayınlanacaktır.";
+      let successMessage = "Your recipe has been submitted! It will be published after admin approval.";
 
       if (isEditing) {
         url = `${API_URL}/api/recipes/${editingId}`; 
         method = 'PUT'; 
-        successMessage = "Tarifiniz başarıyla güncellendi ve tekrar onaya gönderildi.";
+        successMessage = "Your recipe has been successfully updated and resubmitted for approval.";
       }
 
       await axios({
@@ -253,13 +253,13 @@ const handleSubmit = async () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      Alert.alert("Başarılı", successMessage, [
-        { text: "Tamam", onPress: () => navigation.goBack() }
+      Alert.alert("Successful", successMessage, [
+        { text: "Okay", onPress: () => navigation.goBack() }
       ]);
 
     } catch (error) {
       console.error(error);
-      Alert.alert("Hata", "İşlem başarısız oldu.");
+      Alert.alert("Error", "The operation failed.");
     } finally {
       setLoading(false);
     }
@@ -272,13 +272,13 @@ const handleSubmit = async () => {
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         
-        <Text style={styles.headerTitle}>{isEditing ? "Tarifi Düzenle" : "Yeni Tarif Paylaş"}</Text>
-        <Text style={styles.subTitle}>Tarifiniz admin onayından geçecektir.</Text>
+        <Text style={styles.headerTitle}>{isEditing ? "Edit Recipe" : "Share New Recipe"}</Text>
+        <Text style={styles.subTitle}>Your recipe will be subject to admin approval.</Text>
 
         {/* --- TEMEL BİLGİLER --- */}
         <View style={styles.section}>
           <Text style={styles.label}>
-            Tarif Adı <Text style={styles.requiredStar}>*</Text>
+            Recipe Name <Text style={styles.requiredStar}>*</Text>
           </Text>
           <TextInput 
             style={[styles.input, errors.title && styles.inputError]} 
@@ -287,42 +287,42 @@ const handleSubmit = async () => {
               setTitle(text);
               if(errors.title) setErrors({...errors, title: false});
             }} 
-            placeholder="Örn: Karnıyarık" 
+            placeholder="Example: Stuffed eggplant" 
           />
           
-          <Text style={styles.label}>Açıklama</Text>
+          <Text style={styles.label}>Description</Text>
           <TextInput 
             style={styles.input} 
             value={description} 
             onChangeText={setDescription} 
-            placeholder="Kısa özet..." 
+            placeholder="Brief summary..." 
           />
 
           {/* FOTOĞRAF */}
-          <Text style={styles.label}>Tarif Fotoğrafı</Text>
+          <Text style={styles.label}>Recipe Photo</Text>
           <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
             {imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.imagePreview} />
             ) : (
               <View style={styles.imagePlaceholder}>
                 <Ionicons name="camera-outline" size={40} color="#666" />
-                <Text style={{color:'#666', marginTop:5}}>Galeriden Seç</Text>
+                <Text style={{color:'#666', marginTop:5}}>Select from Gallery</Text>
               </View>
             )}
           </TouchableOpacity>
 
           <View style={styles.row}>
              <View style={{flex:1, marginRight:5}}>
-                <Text style={styles.label}>Süre (dk)</Text>
+                <Text style={styles.label}>Time (min)</Text>
                 <TextInput style={styles.input} value={prepTime} onChangeText={setPrepTime} keyboardType="numeric" />
              </View>
              <View style={{flex:1, marginHorizontal:5}}>
-                <Text style={styles.label}>Kalori</Text>
+                <Text style={styles.label}>Calorie</Text>
                 <TextInput style={styles.input} value={calories} onChangeText={setCalories} keyboardType="numeric" />
              </View>
              <View style={{flex:1, marginLeft:5}}>
                 <Text style={styles.label}>
-                  Kişi <Text style={styles.requiredStar}>*</Text>
+                  Serving <Text style={styles.requiredStar}>*</Text>
                 </Text>
                 <TextInput 
                   style={[styles.input, errors.serving && styles.inputError]} 
@@ -340,7 +340,7 @@ const handleSubmit = async () => {
         {/* --- MALZEMELER --- */}
         <View style={[styles.section, { zIndex: 1000 }]}> 
           <Text style={styles.sectionHeader}>
-            Malzemeler <Text style={styles.requiredStar}>*</Text>
+            Ingredients <Text style={styles.requiredStar}>*</Text>
           </Text>
 
           {!selectedIngredient ? (
@@ -349,7 +349,7 @@ const handleSubmit = async () => {
                 style={[styles.input, {borderColor: '#2196F3'}]} 
                 value={query} 
                 onChangeText={searchIngredients} 
-                placeholder="Malzeme ara... (örn: Süt)" 
+                placeholder="Search ingredients... (e.g.: Milk)" 
               />
               
               {/* DROPDOWN */}
@@ -363,7 +363,7 @@ const handleSubmit = async () => {
                         onPress={() => handleSelectIngredient(item)}
                       >
                         <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                        <Text style={{color:'#999', fontSize:10}}>Varsayılan: {item.unit}</Text>
+                        <Text style={{color:'#999', fontSize:10}}>Default: {item.unit}</Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -381,7 +381,7 @@ const handleSubmit = async () => {
               </View>
               
               <View style={{ marginTop: 15 }}>
-                <Text style={styles.label}>Miktar</Text>
+                <Text style={styles.label}>Amount</Text>
                 <TextInput 
                   style={[styles.input, {backgroundColor: 'white'}]} 
                   value={qty} 
@@ -392,7 +392,7 @@ const handleSubmit = async () => {
               </View>
 
               {/* BİRİM SEÇİMİ */}
-              <Text style={styles.label}>Birim</Text>
+              <Text style={styles.label}>Unit</Text>
               <View style={styles.unitContainer}>
                 {availableUnits.map((u, index) => (
                   <TouchableOpacity 
@@ -414,7 +414,7 @@ const handleSubmit = async () => {
               </View>
               
               <TouchableOpacity style={styles.addBtn} onPress={addIngredientToList}>
-                <Text style={{color:'white', fontWeight:'bold'}}>Listeye Ekle</Text>
+                <Text style={{color:'white', fontWeight:'bold'}}>Add to List</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -434,7 +434,7 @@ const handleSubmit = async () => {
           ) : (
             // Malzeme listesi boşsa ve hata varsa uyarı göster
             errors.ingredients && (
-              <Text style={styles.errorText}>Lütfen en az bir malzeme ekleyin.</Text>
+              <Text style={styles.errorText}>Please add at least one ingredient.</Text>
             )
           )}
         </View>
@@ -442,7 +442,7 @@ const handleSubmit = async () => {
         {/* --- YAPILIŞ --- */}
         <View style={styles.section}>
           <Text style={styles.label}>
-            Yapılışı <Text style={styles.requiredStar}>*</Text>
+            Preparation <Text style={styles.requiredStar}>*</Text>
           </Text>
           <TextInput 
             style={[
@@ -456,13 +456,13 @@ const handleSubmit = async () => {
               if(errors.instructions) setErrors({...errors, instructions: false});
             }} 
             multiline 
-            placeholder="Adım adım tarif..." 
+            placeholder="Step-by-step instructions..." 
           />
         </View>
 
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
           <Text style={styles.submitBtnText}>
-                {isEditing ? "Güncelle ve Gönder" : "Tarifi Paylaş"}
+                {isEditing ? "Update and Send" : "Share the Recipe"}
             </Text>
         </TouchableOpacity>
 

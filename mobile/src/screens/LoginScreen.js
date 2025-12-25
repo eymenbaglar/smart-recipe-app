@@ -24,7 +24,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
+      Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
 
@@ -47,9 +47,9 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
       }
 
     } catch (error) {
-      console.log("Giriş hatası:", error.response ? error.response.data : error.message);
-      const msg = error.response?.data?.error || 'Giriş yapılamadı. Bilgilerinizi kontrol edin.';
-      Alert.alert('Hata', msg);
+      console.log("Login error:", error.response ? error.response.data : error.message);
+      const msg = error.response?.data?.error || 'Login failed. Please check your information.';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
         <View style={styles.formContainer}>
           <TextInput
             style={styles.input}
-            placeholder="E-posta"
+            placeholder="Email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -94,7 +94,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
 
           <TextInput
             style={styles.input}
-            placeholder="Şifre"
+            placeholder="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -106,7 +106,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
             style={styles.forgotPasswordContainer} 
             onPress={() => navigation.navigate('ForgotPassword')}
           >
-            <Text style={styles.forgotPasswordText}>Şifremi Unuttum?</Text>
+            <Text style={styles.forgotPasswordText}>Forgot my password?</Text>
           </TouchableOpacity>
           {/* ------------------------------------------- */}
 
@@ -118,7 +118,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Giriş Yap</Text>
+              <Text style={styles.buttonText}>Log In</Text>
             )}
           </TouchableOpacity>
 
@@ -126,7 +126,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
             style={styles.linkButton}
             onPress={() => navigation.navigate('Register')}
           >
-            <Text style={styles.linkText}>Hesabın yok mu? Kayıt Ol</Text>
+            <Text style={styles.linkText}>Don't have an account? Sign up</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

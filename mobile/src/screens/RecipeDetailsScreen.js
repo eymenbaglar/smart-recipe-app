@@ -32,7 +32,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
   //yorum statei
   const [reviews, setReviews] = useState([]);
 
-  // --- GEÇMİŞE KAYDETME (YENİ EKLENEN KISIM) ---
+  // --- GEÇMİŞE KAYDETME 
   useEffect(() => {
     if (recipe) {
       addToHistory(recipe);
@@ -65,7 +65,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
       // 5. Geri kaydet
       await AsyncStorage.setItem('recipe_history', JSON.stringify(newHistory));
     } catch (error) {
-      console.log("Geçmişe kaydedilemedi:", error);
+      console.log("Could not be saved to history:", error);
     }
   };
   // ---------------------------------------------
@@ -408,7 +408,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Description</Text>
             <Text style={styles.descriptionText}>
-              {recipe.description ? recipe.description : 'Bu tarif için henüz bir açıklama girilmemiş.'}
+              {recipe.description ? recipe.description : 'No description has been entered for this recipe yet.'}
             </Text>
           </View>
 

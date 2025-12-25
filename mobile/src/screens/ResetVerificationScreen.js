@@ -25,7 +25,7 @@ export default function ResetVerificationScreen({ route, navigation }) {
 
   const handleVerify = async () => {
     if (code.length !== 6) {
-      Alert.alert("Hata", "Lütfen 6 haneli kodu girin.");
+      Alert.alert("Error", "Please enter the 6-digit code.");
       return;
     }
 

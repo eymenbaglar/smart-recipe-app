@@ -26,7 +26,7 @@ export default function HomeScreen({ navigation }) {
           }
         }
       } catch (error) {
-        console.log("Kullanıcı bilgisi yüklenemedi:", error);
+        console.log("User information could not be loaded:", error);
       }
     };
     loadUserInfo();
@@ -46,7 +46,7 @@ export default function HomeScreen({ navigation }) {
         setRecentRecipes(JSON.parse(history));
       }
     } catch (error) {
-      console.log("Geçmiş yüklenemedi:", error);
+      console.log("Past could not be loaded:", error);
     }
   };
 
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   wizardSubText: {
     fontSize: 14,
     color: '#666',
-    marginLeft: 34, // İkonun hizasına getirmek için
+    marginLeft: 34, 
   },
 
   sectionContainer: {
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#c7d7f9ff', // Hafif kırmızımsı
+    backgroundColor: '#c7d7f9ff', 
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
