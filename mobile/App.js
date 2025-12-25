@@ -53,7 +53,7 @@ const HeaderRightButton = () => {
           });
           setUnreadCount(res.data.count);
         } catch (e) {
-          console.log("Bildirim sayısı alınamadı:", e.message);
+          console.log("Number of notifications could not be retrieved:", e.message);
         }
       };
 
@@ -71,7 +71,7 @@ const HeaderRightButton = () => {
       {/* --- BİLDİRİM BUTONU --- */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Notifications')} 
-        style={{ marginRight: 15, position: 'relative' }} // Profil ile arasında boşluk
+        style={{ marginRight: 15, position: 'relative' }} 
       >
         <Ionicons name="notifications-outline" size={28} color="#000" />
         

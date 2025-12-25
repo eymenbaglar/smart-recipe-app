@@ -6,7 +6,7 @@ const nodemailer = require('nodemailer');
 const archiver = require('archiver');
 
 // KONTROL İÇİN (Eğer hala undefined gelirse bunu terminalde göreceğiz)
-console.log("Backup Servisi Başladı. DB_USER:", process.env.DB_USER ? "Okundu ✅" : "OKUNAMADI ❌");
+console.log("Backup Service has started. DB_USER:", process.env.DB_USER ? "READ ✅" : "UNREADABLE ❌");
 
 // Yedeklerin geçici olarak tutulacağı klasör
 const BACKUP_DIR = path.join(__dirname, '../backups');
@@ -22,8 +22,8 @@ if (!fs.existsSync(BACKUP_DIR)) {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER, // .env dosyasından çeker
-        pass: process.env.EMAIL_PASS  // .env dosyasından çeker
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS  
     }
 });
 
@@ -36,35 +36,33 @@ const performBackup = async () => {
     const dumpPath = path.join(BACKUP_DIR, dumpFileName);
     const zipPath = path.join(BACKUP_DIR, zipFileName);
 
-    console.log(`[Backup] İşlem başladı: ${timestamp}`);
+    console.log(`[Backup] Process started: ${timestamp}`);
 
-    // 1. PostgreSQL Veritabanı Yedeği Al (pg_dump)
-    // Windows'ta pg_dump komutu bazen tam yol ister. Şimdilik global komut deniyoruz.
-    // PGPASSWORD ortam değişkeni ile şifreyi geçiyoruz.
+    
     const pgCommand = `set PGPASSWORD=${process.env.DB_PASSWORD}&& pg_dump -U ${process.env.DB_USER} -h ${process.env.DB_HOST} -p ${process.env.DB_PORT} ${process.env.DB_NAME} > "${dumpPath}"`;
 
     exec(pgCommand, async (error, stdout, stderr) => {
         if (error) {
-            console.error(`[Backup Hatası] DB Dump alınamadı: ${error.message}`);
+            console.error(`[Backup Error] DB dump failed: ${error.message}`);
             return;
         }
 
-        console.log('[Backup] DB Dump oluşturuldu. Dosyalar zipleniyor...');
+        console.log('[Backup] DB Dump created. Files are being zipped....');
 
         // 2. SQL Dosyası ve Uploads Klasörünü Ziple
         const output = fs.createWriteStream(zipPath);
         const archive = archiver('zip', { zlib: { level: 9 } });
 
         output.on('close', async () => {
-            console.log(`[Backup] Zip tamamlandı (${archive.pointer()} bytes). Mail gönderiliyor...`);
+            console.log(`[Backup] Zip completed (${archive.pointer()} bytes). Email is being sent...`);
             
             // 3. Mail Gönder
             try {
                 await transporter.sendMail({
                     from: process.env.EMAIL_USER,
                     to: process.env.EMAIL_USER, // Kendine gönder
-                    subject: `📦 Günlük Sistem Yedeği - ${timestamp}`,
-                    text: 'Ekli dosyada veritabanı yedeği (.sql) ve yüklenen resimler (uploads) bulunmaktadır.',
+                    subject: `📦 Daily System Backup - ${timestamp}`,
+                    text: 'The attached file contains a database backup (.sql) and uploaded images (uploads).',
                     attachments: [
                         {
                             filename: zipFileName,
@@ -72,14 +70,14 @@ const performBackup = async () => {
                         }
                     ]
                 });
-                console.log('[Backup] Mail başarıyla gönderildi! ✅');
+                console.log('[Backup] Mail sent successfully! ✅');
             } catch (mailErr) {
-                console.error('[Backup Hatası] Mail gönderilemedi:', mailErr);
+                console.error('[Backup Error] Mail could not be sent:', mailErr);
             } finally {
-                // 4. Temizlik: Dosyaları sil (Yer kaplamasın)
+                // 4. Temizlik: Dosyaları sil 
                 fs.unlinkSync(dumpPath); // SQL'i sil
                 fs.unlinkSync(zipPath);  // Zip'i sil
-                console.log('[Backup] Geçici dosyalar temizlendi.');
+                console.log('[Backup] Temporary files have been cleared.');
             }
         });
 
@@ -96,7 +94,7 @@ const performBackup = async () => {
         if (fs.existsSync(UPLOADS_DIR)) {
             archive.directory(UPLOADS_DIR, 'uploads');
         } else {
-            console.log('[Backup Uyarısı] Uploads klasörü bulunamadı, sadece DB yedeklendi.');
+            console.log('[Backup Warning] The Uploads folder could not be found; only the database was backed up.');
         }
 
         archive.finalize();
@@ -108,10 +106,10 @@ const performBackup = async () => {
 // Test için '*/1 * * * *' yaparsan her dakika çalışır.
 const scheduleBackup = () => {
     cron.schedule('0 4 * * *', () => {
-        console.log('[Cron] Otomatik yedekleme tetiklendi.');
+        console.log('[Cron] Automatic backup triggered.');
         performBackup();
     });
-    console.log('[Sistem] Günlük yedekleme zamanlayıcısı kuruldu (04:00).');
+    console.log('[System] Daily backup scheduler set up (04:00).');
 };
 
 module.exports = { scheduleBackup, performBackup };

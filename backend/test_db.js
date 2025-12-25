@@ -13,25 +13,25 @@ async function kullanicilariGoster() {
     try {
         // Kapıyı çalıyoruz (Bağlan)
         await client.connect();
-        console.log("✅ Veritabanına bağlanıldı.");
+        console.log("✅ Connected to the database.");
 
         // Sorguyu atıyoruz
         const res = await client.query('SELECT * FROM users');
 
-        console.log("\n--- USERS TABLOSUNDAKİ VERİLER ---");
+        console.log("\n--- DATA IN THE USERS TABLE ---");
         if (res.rows.length === 0) {
-            console.log("Tablo şu an boş. (Hiç kullanıcı yok)");
+            console.log("The table is currently empty. (No users)");
         } else {
             console.table(res.rows); // Verileri tablo formatında güzel gösterir
         }
         console.log("----------------------------------\n");
 
     } catch (err) {
-        console.error("❌ Hata oluştu:", err.message);
+        console.error("❌ An error occurred:", err.message);
     } finally {
         // İş bitince bağlantıyı kapatıyoruz ki terminal takılı kalmasın
         await client.end();
-        console.log("Bağlantı kapatıldı.");
+        console.log("The connection has been closed.");
     }
 }
 

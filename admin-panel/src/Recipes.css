@@ -66,12 +66,12 @@
 }
 
 .icon-btn.verify:hover {
-  background-color: #3498db; /* Mavi */
+  background-color: #3498db; 
   border-color: #3498db;
 }
 
 .icon-btn.unverify:hover {
-  background-color: #7f8c8d; /* Gri */
+  background-color: #7f8c8d; 
   border-color: #7f8c8d;
 }
 
@@ -95,7 +95,7 @@
 .search-input {
   padding: 10px 15px;
   border: 1px solid #ddd;
-  border-radius: 20px; /* Yuvarlak kenarlar */
+  border-radius: 20px; 
   width: 250px;
   font-size: 0.95rem;
   outline: none;
@@ -106,5 +106,5 @@
 .search-input:focus {
   border-color: #3498db;
   box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
-  width: 300px; /* Odaklanınca biraz uzasın */
+  width: 300px; 
 }

@@ -48,9 +48,9 @@
 }
 
 .stat-card.warning .stat-number {
-  color: #f39c12; /* Turuncu renk bekleyenler için */
+  color: #f39c12; 
 }
 
 .stat-card.success .stat-number {
-  color: #27ae60; /* Yeşil renk başarı göstergesi için */
+  color: #27ae60; 
 }

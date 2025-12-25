@@ -1,6 +1,6 @@
 // backend/src/middleware/auth.js
 const jwt = require('jsonwebtoken');
-const db = require('../config/database'); // Veritabanı bağlantını buraya import etmelisin
+const db = require('../config/database'); 
 
 const auth = async (req, res, next) => {
   try {
@@ -8,7 +8,7 @@ const auth = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-      return res.status(401).json({ error: 'Lütfen giriş yapın.' });
+      return res.status(401).json({ error: 'Please log in.' });
     }
 
     // 2. Token'ı doğrula
@@ -21,12 +21,12 @@ const auth = async (req, res, next) => {
 
     // Kullanıcı silinmişse veya BULUNAMAZSA
     if (!user) {
-        return res.status(401).json({ error: 'Kullanıcı bulunamadı.' });
+        return res.status(401).json({ error: 'User not found.' });
     }
 
     // (YENİ) Kullanıcı BANLI MI?
     if (user.role === 'banned') {
-        return res.status(403).json({ error: 'Hesabınız yasaklanmıştır.' });
+        return res.status(403).json({ error: 'Your account has been banned.' });
     }
 
     // 4. Kullanıcıyı request'e ekle (Artık güncel veriyi ekliyoruz)
@@ -34,8 +34,8 @@ const auth = async (req, res, next) => {
     next();
 
   } catch (error) {
-    console.error("Auth hatası:", error.message);
-    res.status(401).json({ error: 'Oturum geçersiz.' });
+    console.error("Auth error:", error.message);
+    res.status(401).json({ error: 'Session is invalid.' });
   }
 };
 

@@ -39,8 +39,8 @@ const upload = multer({ storage: storage });
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'eymenbaglar@gmail.com', // KENDİ MAİLİNİ YAZ
-    pass: 'dapq twbc ipuy jhtg'    // GMAIL "APP PASSWORD" (Uygulama Şifresi)
+    user: 'eymenbaglar@gmail.com', 
+    pass: 'dapq twbc ipuy jhtg'    
   }
 });
 
@@ -49,8 +49,8 @@ const sendVerificationEmail = async (email, code) => {
   const mailOptions = {
     from: '"Smart Recipe App" <seninmailin@gmail.com>',
     to: email,
-    subject: 'Hesap Doğrulama Kodu',
-    text: `Merhaba! Uygulamaya hoş geldin. Doğrulama kodun: ${code}. Bu kod 15 dakika geçerlidir.`
+    subject: 'Account Verification Code',
+    text: `Hello! Welcome to the app. Your verification code is: ${code}. This code is valid for 15 minutes.`
   };
   await transporter.sendMail(mailOptions);
 };
@@ -63,7 +63,7 @@ const sendNotification = async (userId, title, message, type = 'info') => {
       [userId, title, message, type]
     );
   } catch (err) {
-    console.error(`Bildirim hatası (User: ${userId}):`, err.message);
+    console.error(`Notification error (User: ${userId}):`, err.message);
   }
 };
 
@@ -148,7 +148,7 @@ app.get('/api/admin/recipes/pending', adminAuth, async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Admin Pending Error:', err);
-    res.status(500).json({ error: 'Tarifler getirilemedi.' });
+    res.status(500).json({ error: 'Recipes could not be retrieved.' });
   }
 });
 
@@ -162,7 +162,7 @@ app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
     const recipeQuery = await db.query('SELECT created_by, title FROM recipes WHERE id = $1', [id]);
     
     if (recipeQuery.rows.length === 0) {
-      return res.status(404).json({ error: 'Tarif bulunamadı.' });
+      return res.status(404).json({ error: 'No recipe found.' });
     }
 
     const { created_by, title } = recipeQuery.rows[0];
@@ -174,7 +174,7 @@ app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
       
       // Eğer tarifi bir kullanıcı yazdıysa (Admin değilse) bildirim gönder
       if (userId) {
-        await sendNotification(userId, "Tarifiniz Onaylandı! 🎉", `"${title}" başlıklı tarifiniz yayına alındı.`, "success");
+        await sendNotification(userId, "Your recipe has been approved! 🎉", `"${title}" has been published.`, "success");
       }
       
       res.json({ message: 'Recipe approved.' });     
@@ -186,7 +186,7 @@ app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
       );
       
       if (userId) {
-        await sendNotification(userId, "Tarifiniz Reddedildi ⚠️", `"${title}" başlıklı tarifiniz reddedildi. Lütfen düzenleyip tekrar gönderin.`, "warning");
+        await sendNotification(userId, "Your recipe has been rejected ⚠️", `"${title}"  has been rejected. Please edit it and resubmit.`, "warning");
       }
       
       res.json({ message: 'Recipe rejected.' });
@@ -198,7 +198,7 @@ app.patch('/api/admin/recipes/:id/action', adminAuth, async (req, res) => {
         );
         
         if (userId) {
-          await sendNotification(userId, "Tarifiniz Doğrulandı! ✅", `"${title}" başlıklı tarifiniz editörlerimiz tarafından doğrulandı ve onaylandı.`, "success");
+          await sendNotification(userId, "Your recipe has been verified! ✅", `"${title}" has been verified and approved by our editors.`, "success");
         }
         
         res.json({ message: 'Recipe Verified and Approved.' });
@@ -276,8 +276,8 @@ app.delete('/api/admin/recipes/:id', adminAuth, async (req, res) => {
     if (recipeInfo.rows.length > 0) {
         await sendNotification(
             recipeInfo.rows[0].created_by, 
-            "Tarifiniz Silindi 🗑️", 
-            `"${recipeInfo.rows[0].title}" başlıklı tarifiniz yayından kaldırıldı.`, 
+            "Your recipe has been deleted 🗑️", 
+            `"${recipeInfo.rows[0].title}" has been removed from publication.`, 
             "error"
         );
     }
@@ -298,7 +298,7 @@ app.patch('/api/admin/recipes/:id/toggle-verify', adminAuth, async (req, res) =>
     const recipeQuery = await db.query('SELECT created_by, title FROM recipes WHERE id = $1', [id]);
 
     if (recipeQuery.rows.length === 0) {
-      return res.status(404).json({ error: 'Tarif bulunamadı.' });
+      return res.status(404).json({ error: 'No recipe found.' });
     }
 
     const { created_by, title } = recipeQuery.rows[0];
@@ -316,16 +316,16 @@ app.patch('/api/admin/recipes/:id/toggle-verify', adminAuth, async (req, res) =>
         // Verified Yapıldıysa
         await sendNotification(
             userId, 
-            "Tarifiniz Doğrulandı! 🌟", 
-            `Tebrikler! "${title}" başlıklı tarifiniz editörlerimiz tarafından 'Doğrulanmış Tarif' rozeti aldı.`, 
+            "Your recipe has been verified! 🌟", 
+            `Congratulations! "${title}" has received the 'Verified Recipe' badge from our editors.`, 
             "success"
         );
       } else {
         // Verified Geri Alındıysa
         await sendNotification(
             userId, 
-            "Doğrulama Kaldırıldı ℹ️", 
-            `"${title}" başlıklı tarifinizin doğrulanmış statüsü kaldırıldı.`, 
+            "Verification Removed ℹ️", 
+            `The verified status of your recipe titled "${title}" has been removed.`, 
             "warning"
         );
       }
@@ -379,12 +379,12 @@ app.put('/api/admin/recipes/:id', adminAuth, async (req, res) => {
   // Gelen verileri al
   const { title, description, instructions, prep_time, calories, serving, image_url, ingredients } = req.body;
 
-  // --- DÜZELTME BAŞLANGICI ---
+  
   // Boş string ("") gelirse veritabanına NULL gönder, yoksa sayıyı gönder.
   const safePrepTime = (prep_time === '' || prep_time === null) ? null : prep_time;
   const safeCalories = (calories === '' || calories === null) ? null : calories;
   const safeServing  = (serving === ''  || serving === null)  ? null : serving;
-  // --- DÜZELTME BİTİŞİ ---
+  
 
   const client = await db.connect();
 
@@ -430,8 +430,8 @@ app.put('/api/admin/recipes/:id', adminAuth, async (req, res) => {
     if (userId) {
         await sendNotification(
             userId, 
-            "Tarifiniz Düzenlendi ✏️", 
-            `Admin tarafından "${title}" tarifinizde bazı güncellemeler yapıldı.`, 
+            "Your recipe has been edited  ✏️", 
+            `The admin has made some updates to your  "${title}" recipe.`, 
             "info"
         );
     }
@@ -583,8 +583,8 @@ app.post('/api/admin/ingredients', adminAuth, async (req, res) => {
     allUsers.rows.forEach(async (user) => {
         await sendNotification(
             user.id, 
-            "Yeni Malzeme Eklendi! 🥑", 
-            `Veritabanımıza "${newItemName}" eklendi. Hemen dolabına ekle!`, 
+            "New Ingredient Added! 🥑", 
+            `"${newItemName}" has been added to our database. Add it to your stock now!`, 
             "success"
         );
     });
@@ -620,8 +620,8 @@ app.get('/api/admin/suggestions', adminAuth, async (req, res) => {
     const result = await db.query('SELECT * FROM ingredient_suggestions ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (err) {
-    console.error('SQL Hatası:', err.message); // Hatayı terminale yazdırır
-    res.status(500).json({ error: 'Öneriler getirilemedi.' });
+    console.error('SQL Hatası:', err.message); 
+    res.status(500).json({ error: 'No suggestions were made.' });
   }
 });
 
@@ -630,10 +630,10 @@ app.delete('/api/admin/suggestions/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
   try {
     await db.query('DELETE FROM ingredient_suggestions WHERE id = $1', [id]);
-    res.json({ message: 'Öneri listeden kaldırıldı.' });
+    res.json({ message: 'The suggestion has been removed from the list.' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Silme işlemi başarısız.' });
+    res.status(500).json({ error: 'Deletion failed.' });
   }
 });
 
@@ -656,7 +656,7 @@ app.get('/api/admin/reviews', adminAuth, async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Yorumlar getirilemedi.' });
+    res.status(500).json({ error: 'Comments could not be retrieved.' });
   }
 });
 
@@ -675,7 +675,7 @@ app.delete('/api/admin/reviews/:id', adminAuth, async (req, res) => {
     `, [id]);
 
     if (reviewInfo.rows.length === 0) {
-      return res.status(404).json({ error: 'Yorum bulunamadı.' });
+      return res.status(404).json({ error: 'No comments found.' });
     }
 
     const { user_id, title, comment } = reviewInfo.rows[0];
@@ -690,17 +690,17 @@ app.delete('/api/admin/reviews/:id', adminAuth, async (req, res) => {
         
         await sendNotification(
             user_id, 
-            "Yorumunuz Kaldırıldı ⚠️", 
-            `"${title}" tarifine yaptığınız "${shortComment}" içerikli yorum, topluluk kurallarımıza uymadığı için kaldırılmıştır. \nSebep: ${reason}`, 
+            "Your comment has been removed. ⚠️", 
+            `Your comment with the content "${shortComment}" on the "${title}" recipe has been removed because it violates our community guidelines. \nReason: ${reason}`, 
             "warning"
         );
     }
 
-    res.json({ message: 'Yorum silindi ve kullanıcı bilgilendirildi.' });
+    res.json({ message: 'The comment was deleted and the user was notified.' });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Silme işlemi başarısız.' });
+    res.status(500).json({ error: 'Deletion failed.' });
   }
 });
 
@@ -741,12 +741,12 @@ app.post('/api/auth/register', async (req, res) => {
 
       // DURUM A: Kullanıcı ZATEN DOĞRULANMIŞSA -> Hata ver
       if (existingUser.is_verified) {
-        return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanımda.' });
+        return res.status(400).json({ error: 'This email address is already in use.' });
       }
 
       // DURUM B: Kullanıcı VAR AMA DOĞRULANMAMIŞSA -> GÜNCELLE (Update)
       // Kullanıcı "Geri" tuşuna basıp tekrar kayıt olmaya çalışıyordur.
-      console.log("Doğrulanmamış hesap tekrar deneniyor, güncelleniyor:", email);
+      console.log("Unverified account is being tried again, updating:", email);
 
       await db.query(
         `UPDATE users 
@@ -757,11 +757,11 @@ app.post('/api/auth/register', async (req, res) => {
 
       // Maili tekrar gönder (Arka planda)
       sendVerificationEmail(email, verificationCode)
-        .catch(err => console.error("Mail Hatası:", err));
+        .catch(err => console.error("Mail Error:", err));
 
       // Frontend'e "Başarılı" dön (201 Created veya 200 OK)
       return res.status(201).json({ 
-        message: 'Doğrulama kodu tekrar gönderildi.',
+        message: 'The verification code has been sent again.',
         email: email 
       });
     }
@@ -773,18 +773,18 @@ app.post('/api/auth/register', async (req, res) => {
       [username, email, hashedPassword, verificationCode, expiresAt]
     );
 
-    console.log("Yeni kayıt oluşturuldu. Mail gönderiliyor...");
+    console.log("New entry created. Email sent....");
     sendVerificationEmail(email, verificationCode)
-      .catch(err => console.error("Mail Hatası:", err));
+      .catch(err => console.error("Mail Error:", err));
 
     res.status(201).json({ 
-      message: 'Kayıt başarılı! Kod gönderildi.',
+      message: 'Registration successful! Code sent.',
       email: email 
     });
 
   } catch (error) {
-    console.error('Register Hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası.' });
+    console.error('Register Error:', error);
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 
@@ -800,24 +800,24 @@ app.post('/api/auth/verify', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(400).json({ error: 'Kullanıcı bulunamadı.' });
+      return res.status(400).json({ error: 'User not found.' });
     }
 
     const user = result.rows[0];
 
     // 2. Halihazırda doğrulanmış mı?
     if (user.is_verified) {
-      return res.status(400).json({ error: 'Bu hesap zaten doğrulanmış.' });
+      return res.status(400).json({ error: 'This account is already verified.' });
     }
 
     // 3. Kod doğru mu?
     if (user.verification_code !== code) {
-      return res.status(400).json({ error: 'Geçersiz doğrulama kodu.' });
+      return res.status(400).json({ error: 'Invalid verification code.' });
     }
 
     // 4. Süresi dolmuş mu?
     if (new Date() > new Date(user.verification_code_expires_at)) {
-      return res.status(400).json({ error: 'Kodun süresi dolmuş. Lütfen tekrar kayıt olun veya yeni kod isteyin.' });
+      return res.status(400).json({ error: 'The code has expired. Please register again or request a new code.' });
     }
 
     // 5. Her şey tamamsa: Hesabı doğrula ve kodu temizle
@@ -828,11 +828,11 @@ app.post('/api/auth/verify', async (req, res) => {
       [user.id]
     );
 
-    res.json({ message: 'Hesap başarıyla doğrulandı! Şimdi giriş yapabilirsiniz.' });
+    res.json({ message: 'Your account has been successfully verified! You can now log in.' });
 
   } catch (error) {
     console.error('Verify Error:', error);
-    res.status(500).json({ error: 'Sunucu hatası.' });
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 
@@ -846,7 +846,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     if (userCheck.rows.length === 0) {
       // Güvenlik gereği "Böyle bir mail yok" demek yerine "Varsa gönderdik" demek daha iyidir 
       // ama şimdilik kullanıcı dostu olması için hata dönelim.
-      return res.status(404).json({ error: 'Bu e-posta adresiyle kayıtlı kullanıcı bulunamadı.' });
+      return res.status(404).json({ error: 'No user was found registered with this email address.' });
     }
 
     // Kod üret (6 haneli)
@@ -863,13 +863,13 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     // Mail Gönder (Fire and Forget - Beklemeden yanıt dön)
     sendVerificationEmail(email, verificationCode) // Mevcut fonksiyonunu kullanıyoruz
-      .catch(err => console.error("Forgot Password Mail Hatası:", err));
+      .catch(err => console.error("Forgot Password Mail Error:", err));
 
-    res.json({ message: 'Doğrulama kodu e-posta adresinize gönderildi.' });
+    res.json({ message: 'A verification code has been sent to your email address.' });
 
   } catch (error) {
     console.error('Forgot Password Error:', error);
-    res.status(500).json({ error: 'Sunucu hatası.' });
+    res.status(500).json({ error: 'Server Error.' });
   }
 });
 
@@ -882,26 +882,26 @@ app.post('/api/auth/verify-reset-code', async (req, res) => {
     const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+      return res.status(404).json({ error: 'User not found.' });
     }
 
     const user = result.rows[0];
 
     // Kod kontrolü
     if (user.verification_code !== code) {
-      return res.status(400).json({ error: 'Geçersiz kod.' });
+      return res.status(400).json({ error: 'Invalid code.' });
     }
 
     // Süre kontrolü
     if (new Date() > new Date(user.verification_code_expires_at)) {
-      return res.status(400).json({ error: 'Kodun süresi dolmuş. Lütfen tekrar deneyin.' });
+      return res.status(400).json({ error: 'The code has expired. Please try again.' });
     }
 
-    res.json({ message: 'Kod doğrulandı.' });
+    res.json({ message: 'The code has been verified.' });
 
   } catch (error) {
     console.error('Verify Reset Code Error:', error);
-    res.status(500).json({ error: 'Sunucu hatası.' });
+    res.status(500).json({ error: 'Server Error.' });
   }
 });
 
@@ -913,15 +913,15 @@ app.post('/api/auth/reset-password', async (req, res) => {
     // Güvenlik İçin: Kodu ve süreyi TEKRAR kontrol ediyoruz.
     // (Biri araya girip direkt bu endpointi çağırmasın diye)
     const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    if (result.rows.length === 0) return res.status(404).json({ error: 'User not found.' });
     
     const user = result.rows[0];
 
     if (user.verification_code !== code) {
-      return res.status(400).json({ error: 'İşlem yetkisiz. Kod geçersiz.' });
+      return res.status(400).json({ error: 'Unauthorized operation. Invalid code.' });
     }
     if (new Date() > new Date(user.verification_code_expires_at)) {
-      return res.status(400).json({ error: 'Süre dolmuş.' });
+      return res.status(400).json({ error: 'The time is up.' });
     }
 
     // Yeni şifreyi hashle
@@ -935,11 +935,11 @@ app.post('/api/auth/reset-password', async (req, res) => {
       [hashedPassword, email]
     );
 
-    res.json({ message: 'Şifreniz başarıyla değiştirildi. Giriş yapabilirsiniz.' });
+    res.json({ message: 'Your password has been successfully changed. You can log in now.' });
 
   } catch (error) {
     console.error('Reset Password Error:', error);
-    res.status(500).json({ error: 'Sunucu hatası.' });
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 
@@ -951,7 +951,7 @@ app.post('/auth/login', async (req, res) => {
         const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
 
         if (result.rows.length === 0) {
-            return res.status(401).json({ error: 'Kullanıcı bulunamadı' });
+            return res.status(401).json({ error: 'User not found' });
         }
 
         const user = result.rows[0];
@@ -959,22 +959,22 @@ app.post('/auth/login', async (req, res) => {
         if (user.is_deleted) {
           // İsteğe bağlı: Kalan günü hesaplayıp mesajda gösterebilirsin
           return res.status(403).json({ 
-          error: 'Bu hesap silinme sürecindedir. Erişim engellendi.' 
+          error: 'This account is in the process of being deleted. Access has been blocked.' 
           });
         }
 
         if (user.role === 'banned') {
-            return res.status(403).json({ error: 'Hesabınız erişime engellenmiştir (Banned).' });
+            return res.status(403).json({ error: 'Your account has been banned.' });
         }
 
         if (!user.is_verified) {
-          return res.status(403).json({ error: 'Hesabınız henüz doğrulanmamış. Lütfen tekrar kayıt olmayı deneyerek yeni kod alın.' });
+          return res.status(403).json({ error: 'Your account has not been verified yet. Please try registering again to receive a new code.' });
         }
 
         const validPassword = await bcrypt.compare(password, user.password_hash);
 
         if (!validPassword) {
-            return res.status(401).json({ error: 'Şifre hatalı' });
+            return res.status(401).json({ error: 'Incorrect password' });
         }
 
         const token = jwt.sign(
@@ -984,7 +984,7 @@ app.post('/auth/login', async (req, res) => {
         );
 
         res.json({
-            message: 'Giriş Başarılı',
+            message: 'Login Successful',
             token: token,
             user: {
                 id: user.id,
@@ -997,7 +997,7 @@ app.post('/auth/login', async (req, res) => {
 
     } catch (err) {
         console.error("Login Hatası:", err); // Hatayı terminale yazdırır
-        res.status(500).json({ error: 'Sunucu hatası: ' + err.message });
+        res.status(500).json({ error: 'Server Error: ' + err.message });
     }
 });
 
@@ -1010,7 +1010,7 @@ app.get('/api/recipes', (req, res) => {
 app.post('/api/profile/upload-photo', auth, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'Lütfen bir resim seçin.' });
+      return res.status(400).json({ error: 'Please select an image.' });
     }
 
     // Dosya başarıyla yüklendi, şimdi yolunu veritabanına kaydedelim
@@ -1025,13 +1025,13 @@ app.post('/api/profile/upload-photo', auth, upload.single('photo'), async (req, 
     );
 
     res.json({ 
-      message: 'Profil fotoğrafı güncellendi.', 
+      message: 'Profile photo updated.', 
       filePath: profilePicturePath 
     });
 
   } catch (error) {
-    console.error('Fotoğraf yükleme hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Photo upload error:', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
@@ -1118,7 +1118,7 @@ app.delete('/api/users/delete', auth, async (req, res) => {
     await client.query('COMMIT');
     
     res.json({ 
-      message: 'Hesap silme talebiniz alındı. Standart tarifleriniz silindi. Hesabınız ve onaylı tarifleriniz 30 gün sonra kalıcı olarak silinecektir.' 
+      message: 'Your account deletion request has been received. Your standard recipes have been deleted. Your verified recipes will not be deleted. Your account will be permanently deleted in 30 days.' 
     });
 
   } catch (error) {
@@ -1631,8 +1631,8 @@ app.get('/api/recipes/:id/ingredients', auth, async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error('Tarif detay hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Recipe detail error:', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
@@ -1835,8 +1835,8 @@ app.get('/api/recipes/recommendations', auth, async (req, res) => {
     res.json({ type: 'algorithm', data: recommendations.rows });
 
   } catch (error) {
-    console.error('Öneri sistemi hatası:', error);
-    res.status(500).json({ error: 'Sunucu hatası' });
+    console.error('Recommendation system error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -1869,7 +1869,7 @@ app.post('/api/reviews', auth, async (req, res) => {
         await sendNotification(
             recipeOwnerId, 
             "New Comment 💬", 
-            `"${recipeTitle}" tarifinize yeni bir inceleme yapıldı.`, 
+            `A new review has been posted for your "${recipeTitle}" recipe.`, 
             "info"
         );
     }
@@ -2002,7 +2002,7 @@ app.post('/api/recipes', auth, async (req, res) => {
   } = req.body;
 
   if (!title || !ingredients || ingredients.length === 0) {
-    return res.status(400).json({ error: 'Başlık ve en az bir malzeme gereklidir.' });
+    return res.status(400).json({ error: 'A title and at least one ingredient are required.' });
   }
 
   const client = await db.connect();
@@ -2034,20 +2034,20 @@ app.post('/api/recipes', auth, async (req, res) => {
 
     await client.query('COMMIT'); 
     res.status(201).json({ 
-      message: 'Tarif başarıyla gönderildi! Admin onayından sonra yayınlanacaktır.',
+      message: 'The recipe has been successfully submitted! It will be published after admin approval.',
       recipeId: newRecipeId 
     });
 
   } catch (error) {
     await client.query('ROLLBACK'); 
-    console.error('Tarif ekleme hatası:', error);
+    console.error('Recipe addition error:', error);
     
     // olmayan malzeme idsi gelirse
     if (error.code === '23503') { 
-       return res.status(400).json({ error: 'Geçersiz malzeme seçimi yapıldı.' });
+       return res.status(400).json({ error: 'invalid ingredient selection has been made.' });
     }
     
-    res.status(500).json({ error: 'Sunucu hatası, tarif eklenemedi.' });
+    res.status(500).json({ error: 'Server error, recipe could not be added.' });
   } finally {
     client.release();
   }
@@ -2093,8 +2093,8 @@ app.get('/my-recipes', auth, async (req, res) => {
 
     res.json(recipes);
   } catch (err) {
-    console.error('My recipes SQL Hatası:', err.message); 
-    res.status(500).json({ error: 'Tarifler getirilemedi.' });
+    console.error('My recipes SQL Error:', err.message); 
+    res.status(500).json({ error: 'Recipes could not be retrieved.' });
   }
 });
 
@@ -2110,14 +2110,14 @@ app.delete('/api/recipes/:id', auth, async (req, res) => {
     );
 
     if (checkQuery.rows.length === 0) {
-      return res.status(404).json({ error: 'Tarif bulunamadı veya bu işlem için yetkiniz yok.' });
+      return res.status(404).json({ error: 'No recipe found or you do not have permission for this.' });
     }
 
     const recipe = checkQuery.rows[0];
 
     // İSTEK: Onaylanmış (is_verified = true) tarifler silinemez
     if (recipe.is_verified) {
-      return res.status(403).json({ error: 'Onaylanmış tarifler silinemez. Lütfen admin ile iletişime geçin.' });
+      return res.status(403).json({ error: 'Verified recipes cannot be deleted. Please contact the admin.' });
     }
 
     // 2. Silme İşlemi (Transaction ile güvenli silme)
@@ -2133,7 +2133,7 @@ app.delete('/api/recipes/:id', auth, async (req, res) => {
       await client.query('DELETE FROM recipes WHERE id = $1', [id]);
       
       await client.query('COMMIT');
-      res.json({ message: 'Tarif başarıyla silindi.' });
+      res.json({ message: 'The recipe has been successfully deleted.' });
     } catch (e) {
       await client.query('ROLLBACK');
       throw e;
@@ -2142,8 +2142,8 @@ app.delete('/api/recipes/:id', auth, async (req, res) => {
     }
 
   } catch (err) {
-    console.error('Silme hatası:', err.message);
-    res.status(500).json({ error: 'Sunucu hatası.' });
+    console.error('Deletion error:', err.message);
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 
@@ -2160,7 +2160,7 @@ app.put('/api/recipes/:id', auth, async (req, res) => {
 
   // Temel validasyon
   if (!title || !ingredients || ingredients.length === 0) {
-    return res.status(400).json({ error: 'Başlık ve en az bir malzeme gereklidir.' });
+    return res.status(400).json({ error: 'A title and at least one material are required.' });
   }
 
   const client = await db.connect();
@@ -2186,7 +2186,7 @@ app.put('/api/recipes/:id', auth, async (req, res) => {
     // Eğer güncelleme sonucunda satır dönmediyse; ya tarif yok ya da sahibi bu kullanıcı değil.
     if (updateResult.rowCount === 0) {
       await client.query('ROLLBACK');
-      return res.status(403).json({ error: 'Bu tarifi düzenleme yetkiniz yok veya tarif bulunamadı.' });
+      return res.status(403).json({ error: 'You do not have permission to edit this recipe or the recipe could not be found.' });
     }
 
     // 2. ADIM: Eski malzemeleri temizle
@@ -2202,27 +2202,26 @@ app.put('/api/recipes/:id', auth, async (req, res) => {
         `INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit_type)
          VALUES ($1, $2, $3, $4)`,
         [recipeId, item.id, item.quantity, item.unit] 
-        // Not: Frontend'de birim 'unit' olarak geliyorsa buraya item.unit, 'unit_type' ise item.unit_type yaz.
-        // Senin POST kodunda item.unit kullanmışsın, burada da öyle bıraktım.
+        
       );
     }
 
     await client.query('COMMIT'); // İşlemi onayla
 
     res.json({ 
-      message: 'Tarif başarıyla güncellendi ve tekrar onaya gönderildi.',
+      message: 'The recipe has been successfully updated and resubmitted for approval.',
       recipeId: recipeId
     });
 
   } catch (error) {
     await client.query('ROLLBACK'); // Hata durumunda her şeyi geri al
-    console.error('Tarif güncelleme hatası:', error);
+    console.error('Recipe update error:', error);
 
     if (error.code === '23503') { 
-       return res.status(400).json({ error: 'Geçersiz malzeme seçimi yapıldı.' });
+       return res.status(400).json({ error: 'An invalid ingredient selection has been made.' });
     }
 
-    res.status(500).json({ error: 'Sunucu hatası, tarif güncellenemedi.' });
+    res.status(500).json({ error: 'Server error, recipe could not be updated.' });
   } finally {
     client.release(); // Bağlantıyı havuza iade et
   }
@@ -2234,7 +2233,7 @@ app.post('/api/ingredients/suggest', auth, async (req, res) => {
   const userId = req.user.id;
 
   if (!name || name.trim() === '') {
-    return res.status(400).json({ error: 'Lütfen bir malzeme ismi giriniz.' });
+    return res.status(400).json({ error: 'Please enter a ingredient name.' });
   }
 
   try {
@@ -2242,10 +2241,10 @@ app.post('/api/ingredients/suggest', auth, async (req, res) => {
       'INSERT INTO ingredient_suggestions (user_id, ingredient_name) VALUES ($1, $2)',
       [userId, name.trim()]
     );
-    res.json({ message: 'Öneriniz başarıyla alındı. Teşekkürler!' });
+    res.json({ message: 'Your suggestion has been successfully received. Thank you!' });
   } catch (err) {
-    console.error('Öneri hatası:', err.message);
-    res.status(500).json({ error: 'Sunucu hatası oluştu.' });
+    console.error('Suggestion error:', err.message);
+    res.status(500).json({ error: 'A server error occurred.' });
   }
 });
 

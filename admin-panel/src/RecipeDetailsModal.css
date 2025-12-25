@@ -10,11 +10,11 @@
 
 .modal-content.details-modal {
   background: white;
-  padding: 0; /* Header/Footer için */
+  padding: 0; 
   border-radius: 12px;
   width: 90%;
   max-width: 700px;
-  max-height: 90vh; /* Ekran dışına taşmasın */
+  max-height: 90vh; 
   display: flex;
   flex-direction: column;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -32,7 +32,7 @@
 
 .modal-body.scrollable {
   padding: 20px;
-  overflow-y: auto; /* İçerik uzunsa kaydır */
+  overflow-y: auto; 
 }
 
 .modal-footer {

@@ -19,7 +19,7 @@ const DeletedAccounts = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log("API'den Gelen Veri:", res.data); // Konsoldan kontrol edebilirsin
+      console.log("Data from the API:", res.data); // Konsoldan kontrol edebilirsin
 
       if (Array.isArray(res.data)) {
         setAccounts(res.data);
@@ -28,16 +28,13 @@ const DeletedAccounts = () => {
       }
 
     } catch (err) {
-      console.error("Hata:", err);
-      setError("Veriler yüklenirken hata oluştu.");
+      console.error("Error:", err);
+      setError("An error occurred while loading the data.");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- DÜZELTME BURADA YAPILDI ---
-  // Senin attığın API kodunda "deletion_requested_at" yazıyor.
-  // Frontend'in de tam olarak bu ismi kullanması lazım.
   const getDeletionDate = (acc) => {
     return acc.deletion_requested_at; 
   };
@@ -62,12 +59,12 @@ const DeletedAccounts = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "Tarih Yok";
+    if (!dateString) return "No Date";
     
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Hatalı Tarih";
+    if (isNaN(date.getTime())) return "Incorrect Date";
 
-    // Kesin Silinme = İstek + 30 Gün
+    // Kesin Silinme
     date.setDate(date.getDate() + 30);
     
     return date.toLocaleDateString('tr-TR', { 
@@ -76,17 +73,17 @@ const DeletedAccounts = () => {
     });
   };
 
-  // İstek tarihini göstermek için format fonksiyonu (Opsiyonel)
+  // İstek tarihini göstermek 
   const formatRequestDate = (dateString) => {
      if (!dateString) return "-";
      return new Date(dateString).toLocaleDateString('tr-TR');
   }
 
-  if (loading) return <div className="loading-message">Yükleniyor...</div>;
+  if (loading) return <div className="loading-message">Loading...</div>;
 
   return (
     <div className="deleted-accounts-page">
-      <h1 className="page-title">🗑️ Silinme Bekleyen Hesaplar</h1>
+      <h1 className="page-title">🗑️ Accounts Awaiting Deletion</h1>
       
       {error && <div className="error-message">{error}</div>}
 
@@ -94,24 +91,23 @@ const DeletedAccounts = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Kullanıcı Adı</th>
+              <th>Username</th>
               <th>Email</th>
-              <th>İstek Tarihi</th> 
-              <th>Kesin Silinme Tarihi</th>
-              <th>Kalan Süre</th>
-              <th>Durum</th>
+              <th>Request Date</th> 
+              <th>Final Deletion Date</th>
+              <th>Time Remaining</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
             {!Array.isArray(accounts) || accounts.length === 0 ? (
                 <tr>
                     <td colSpan="6" className="empty-message">
-                        Şu an silinme sürecinde olan hesap yok.
+                        There are currently no accounts in the process of being deleted.
                     </td>
                 </tr>
             ) : (
                 accounts.map((acc) => {
-                  // Doğru ismi alan fonksiyonu kullanıyoruz
                   const dateStr = getDeletionDate(acc);
 
                   return (
@@ -123,20 +119,20 @@ const DeletedAccounts = () => {
                         </td>
                         <td>{acc.email}</td>
                         
-                        {/* İstek Tarihi */}
+                        {/* İstek tarihi */}
                         <td style={{color: '#666', fontSize: '12px'}}>
                             {formatRequestDate(dateStr)}
                         </td>
 
-                        {/* Kesin Silinme Tarihi */}
+                        {/* Kesin silinme tarihi */}
                         <td>
                             <strong>{formatDate(dateStr)}</strong>
                         </td>
 
-                        {/* Kalan Gün */}
+                        {/* Kalan gün */}
                         <td>
                             <span className="badge-warning">
-                                {calculateRemainingDays(dateStr)} Gün
+                                {calculateRemainingDays(dateStr)} days
                             </span>
                         </td>
                         <td>

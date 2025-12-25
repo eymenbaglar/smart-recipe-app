@@ -30,7 +30,7 @@ function Ingredients() {
       const response = await api.get('/api/admin/ingredients/list');
       setIngredients(response.data);
     } catch (error) {
-      console.error('Malzemeler çekilemedi:', error);
+      console.error('Materials could not be retrieved:', error);
     } finally {
       setLoading(false);
     }

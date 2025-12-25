@@ -20,10 +20,10 @@ const adminAuth = async (req, res, next) => {
 
     req.token = token;
     req.user = user;
-    next(); // Geçiş izni ver
+    next(); 
 
   } catch (error) {
-    res.status(403).send({ error: 'Erişim reddedildi. Yönetici izni gerekiyor.' });
+    res.status(403).send({ error: 'Access denied. Administrator permission is required.' });
   }
 };
 

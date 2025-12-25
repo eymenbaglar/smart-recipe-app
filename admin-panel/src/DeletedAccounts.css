@@ -3,7 +3,7 @@
 /* Sayfa Genel Yapısı */
 .deleted-accounts-page {
   padding: 24px;
-  background-color: #f3f4f6; /* Açık gri arka plan */
+  background-color: #f3f4f6; 
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -36,8 +36,8 @@
   background-color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border-radius: 8px;
-  overflow: hidden; /* Köşelerin yuvarlak kalması için */
-  overflow-x: auto; /* Mobilde taşarsa kaydırma çubuğu çıksın */
+  overflow: hidden; 
+  overflow-x: auto; 
 }
 
 /* Tablo Stilleri */
@@ -88,9 +88,9 @@
   padding: 4px 12px;
   font-weight: 600;
   line-height: 1;
-  color: #7c2d12; /* Koyu turuncu */
-  background-color: #ffedd5; /* Açık turuncu */
-  border-radius: 9999px; /* Tam yuvarlak */
+  color: #7c2d12; 
+  background-color: #ffedd5; 
+  border-radius: 9999px; 
   font-size: 12px;
 }
 
@@ -99,7 +99,7 @@
   display: inline-block;
   font-size: 11px;
   font-weight: 700;
-  color: #ef4444; /* Kırmızı */
+  color: #ef4444; 
   border: 1px solid #ef4444;
   padding: 4px 8px;
   border-radius: 4px;

@@ -22,7 +22,7 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
   const [newIngQty, setNewIngQty] = useState('');
   const [newIngUnit, setNewIngUnit] = useState('');
 
-  //Modal açılınca verileri doldur
+  //Modal açılınca verileri doldurma
   useEffect(() => {
     const fetchRecipeDetails = async () => {
       if (recipe && recipe.id) {

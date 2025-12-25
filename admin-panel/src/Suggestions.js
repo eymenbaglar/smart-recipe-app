@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from './api';
-import './Suggestions.css'; // Birazdan oluşturacağız
+import './Suggestions.css'; 
 
 const Suggestions = () => {
   const [suggestions, setSuggestions] = useState([]);
@@ -12,8 +12,8 @@ const Suggestions = () => {
       const response = await api.get('/api/admin/suggestions');
       setSuggestions(response.data);
     } catch (error) {
-      console.error("Öneriler alınamadı:", error);
-      alert("Öneriler yüklenirken hata oluştu.");
+      console.error("No suggestions were received:", error);
+      alert("An error occurred while loading suggestions.");
     } finally {
       setLoading(false);
     }
@@ -25,26 +25,26 @@ const Suggestions = () => {
 
   // Öneriyi Sil (DONE butonu)
   const handleDone = async (id) => {
-    if (!window.confirm("Bu öneriyi listeden kaldırmak istediğinize emin misiniz?")) return;
+    if (!window.confirm("Are you sure you want to remove this suggestion from the list?")) return;
 
     try {
       await api.delete(`/api/admin/suggestions/${id}`);
       // Listeden çıkararak arayüzü güncelle
       setSuggestions(suggestions.filter(item => item.id !== id));
     } catch (error) {
-      console.error("Silme hatası:", error);
-      alert("İşlem başarısız.");
+      console.error("Deletion error:", error);
+      alert("The operation failed.");
     }
   };
 
-  if (loading) return <div className="loading">Yükleniyor...</div>;
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
     <div className="suggestions-container">
-      <h2>📢 Kullanıcı Malzeme Önerileri</h2>
+      <h2>📢 User Ingredients Suggestions</h2>
       
       {suggestions.length === 0 ? (
-        <p className="no-data">Henüz bekleyen bir öneri yok.</p>
+        <p className="no-data">There are no pending suggestions yet.</p>
       ) : (
         <div className="suggestions-list">
           {suggestions.map((item) => (
@@ -60,7 +60,7 @@ const Suggestions = () => {
                 <button 
                   className="btn-done" 
                   onClick={() => handleDone(item.id)}
-                  title="Listeden Kaldır"
+                  title="Remove from list"
                 >
                   ✅ DONE
                 </button>

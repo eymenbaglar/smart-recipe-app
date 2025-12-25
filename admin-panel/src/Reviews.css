@@ -83,10 +83,10 @@
 }
 
 .search-input {
-  padding: 10px 10px 10px 35px; /* İkon için soldan boşluk */
+  padding: 10px 10px 10px 35px; 
   width: 250px;
   border: 1px solid #ccc;
-  border-radius: 20px; /* Yuvarlak hatlar */
+  border-radius: 20px; 
   outline: none;
   font-size: 14px;
   transition: all 0.3s;
@@ -95,7 +95,7 @@
 .search-input:focus {
   border-color: #3498db;
   box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
-  width: 280px; /* Tıklayınca hafif uzasın */
+  width: 280px; 
 }
 
 .search-icon {
@@ -103,5 +103,5 @@
   left: 10px;
   font-size: 16px;
   color: #888;
-  pointer-events: none; /* Tıklamayı engelle */
+  pointer-events: none; 
 }

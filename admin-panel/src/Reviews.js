@@ -7,7 +7,7 @@ const Reviews = () => {
   const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState(null);
   
-  // YENİ: Arama çubuğu için state
+  //  Arama çubuğu için state
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchReviews = async () => {
@@ -15,7 +15,7 @@ const Reviews = () => {
       const response = await api.get('/api/admin/reviews');
       setReviews(response.data);
     } catch (error) {
-      console.error("Yorumlar alınamadı:", error);
+      console.error("Comments could not be retrieved:", error);
     } finally {
       setLoading(false);
     }
@@ -25,7 +25,7 @@ const Reviews = () => {
     fetchReviews();
   }, []);
 
-  // YENİ: Filtreleme Mantığı (Anlık Arama)
+  //  Filtreleme Mantığı 
   const filteredReviews = reviews.filter((review) => {
     const term = searchTerm.toLowerCase();
     const userMatch = review.username?.toLowerCase().includes(term);
@@ -36,19 +36,19 @@ const Reviews = () => {
   });
 
   const handleDelete = async (id) => {
-    const reason = window.prompt("Bu yorumu neden siliyorsunuz? (Kullanıcıya gönderilecek)");
+    const reason = window.prompt("Why are you deleting this comment? (To be sent to the user)");
     if (reason === null) return;
     if (reason.trim() === "") {
-        alert("Lütfen bir sebep yazın.");
+        alert("Please provide a reason.");
         return;
     }
     try {
       await api.delete(`/api/admin/reviews/${id}`, { data: { reason } });
       setReviews(reviews.filter(item => item.id !== id));
-      alert("Yorum silindi.");
+      alert("Comment deleted.");
     } catch (error) {
-      console.error("Silme hatası:", error);
-      alert("İşlem başarısız.");
+      console.error("Deletion error:", error);
+      alert("The operation failed.");
     }
   };
 
@@ -58,19 +58,19 @@ const Reviews = () => {
     return text.substr(0, maxLength) + "...";
   };
 
-  if (loading) return <div className="loading">Yükleniyor...</div>;
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
     <div className="reviews-container">
       
       {/* YENİ: Header Kısmı (Başlık ve Search Yan Yana) */}
       <div className="reviews-header">
-        <h2>💬 Yorum Yönetimi</h2>
+        <h2>💬 Comment Management</h2>
         <div className="search-box">
           <span className="search-icon">🔍</span>
           <input 
             type="text" 
-            placeholder="Kullanıcı veya Tarif Ara..." 
+            placeholder="Search for User or Recipe..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
@@ -110,7 +110,7 @@ const Reviews = () => {
           ) : (
              <tr>
                <td colSpan="6" style={{textAlign: 'center', padding: '20px', color: '#999'}}>
-                 Arama kriterine uygun yorum bulunamadı.
+                No comments matching the search criteria were found.
                </td>
              </tr>
           )}
@@ -122,12 +122,12 @@ const Reviews = () => {
         <div className="modal-overlay" onClick={() => setSelectedReview(null)}>
           <div className="modal-content review-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Yorum Detayı</h3>
+              <h3>Comment Details</h3>
               <button className="close-btn" onClick={() => setSelectedReview(null)}>×</button>
             </div>
             <div className="modal-body">
-               <p><strong>Yazan:</strong> {selectedReview.username}</p>
-               <p><strong>Tarif:</strong> {selectedReview.recipe_title}</p>
+               <p><strong>Written by:</strong> {selectedReview.username}</p>
+               <p><strong>Recipe:</strong> {selectedReview.recipe_title}</p>
                <hr/>
                <p className="full-comment">{selectedReview.comment}</p>
             </div>

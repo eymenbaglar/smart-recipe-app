@@ -5,7 +5,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   margin-bottom: 25px;
-  border-left: 5px solid #2ecc71; /* Yeşil çizgi */
+  border-left: 5px solid #2ecc71; 
 }
 
 .add-ingredient-box h4 {

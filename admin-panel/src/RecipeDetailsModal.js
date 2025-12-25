@@ -13,7 +13,7 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
       ingredientsList = recipe.ingredients;
     }
   } catch (e) {
-    console.error("Malzeme parse hatası:", e);
+    console.error("Material parse error:", e);
   }
 
   // Adımları (Yapılışı) güvenli parse etme
@@ -36,7 +36,7 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
     <div className="modal-overlay">
       <div className="modal-content details-modal">
         <div className="modal-header">
-          <h2>📄 Tarif Detayları: {recipe.title}</h2>
+          <h2>📄 Recipe Details: {recipe.title}</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
         
@@ -56,16 +56,16 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
                 <span>{new Date(recipe.created_at).toLocaleDateString('tr-TR')}</span>
             </div>
             <div className="detail-item">
-                <label>Hazırlama Süresi:</label>
-                <span>{recipe.prep_time || recipe.preparation_time} dk</span>
+                <label>Preparation Time:</label>
+                <span>{recipe.prep_time || recipe.preparation_time} min</span>
             </div>
             <div className="detail-item">
-                <label>Kalori:</label>
+                <label>Calorie:</label>
                 <span>{recipe.calories} kcal</span>
             </div>
             <div className="detail-item">
-                <label>Porsiyon:</label>
-                <span>{recipe.serving} Kişilik</span>
+                <label>Serving:</label>
+                <span>{recipe.serving} people</span>
             </div>
           </div>
 
@@ -73,11 +73,11 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
 
           {/* Statü Bilgileri */}
           <div className="status-section">
-             <p><strong>Durum:</strong> <span className={`status-badge ${recipe.status}`}>{recipe.status}</span></p>
-             <p><strong>Onaylı mı (Verified):</strong> {recipe.is_verified ? '✅ Evet' : '❌ Hayır'}</p>
+             <p><strong>Status:</strong> <span className={`status-badge ${recipe.status}`}>{recipe.status}</span></p>
+             <p><strong>Is it verified?:</strong> {recipe.is_verified ? '✅ YES' : '❌ NO'}</p>
              {recipe.rejection_reason && (
                  <div className="rejection-box">
-                     <strong>⚠️ Önceki Red Nedeni:</strong>
+                     <strong>⚠️ Previous Reason for Rejection:</strong>
                      <p>{recipe.rejection_reason}</p>
                  </div>
              )}
@@ -87,13 +87,13 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
 
           {/* Açıklama */}
           <div className="detail-section">
-            <h3>Açıklama</h3>
+            <h3>Explanation</h3>
             <p>{recipe.description}</p>
           </div>
 
           {/* Malzemeler */}
           <div className="detail-section">
-            <h3>Malzemeler</h3>
+            <h3>Ingredients</h3>
             <ul className="ingredient-list">
               {ingredientsList.map((ing, idx) => (
                 <li key={idx}>
@@ -105,7 +105,7 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
 
           {/* Yapılışı */}
           <div className="detail-section">
-            <h3>Yapılışı</h3>
+            <h3>Preparation</h3>
             <div className="instructions-text">
                 {stepsList.map((step, index) => (
                     <p key={index} className="step-item">
@@ -118,7 +118,7 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
         </div>
         
         <div className="modal-footer">
-          <button className="btn-secondary" onClick={onClose}>Kapat</button>
+          <button className="btn-secondary" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
