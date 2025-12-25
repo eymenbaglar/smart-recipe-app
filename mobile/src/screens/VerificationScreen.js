@@ -15,7 +15,7 @@ export default function VerificationScreen({ route, navigation }) {
 
   const handleVerify = async () => {
     if (code.length !== 6) {
-      Alert.alert("Hata", "Lütfen 6 haneli kodu eksiksiz girin.");
+      Alert.alert("Error", "Please enter the 6-digit code completely.");
       return;
     }
 
@@ -26,13 +26,13 @@ export default function VerificationScreen({ route, navigation }) {
         code: code
       });
 
-      Alert.alert("Başarılı", "Hesabınız doğrulandı! Giriş yapabilirsiniz.", [
-        { text: "Tamam", onPress: () => navigation.navigate('Login') }
+      Alert.alert("Successful", "Your account has been verified! You can log in.", [
+        { text: "Okey", onPress: () => navigation.navigate('Login') }
       ]);
 
     } catch (error) {
-      const msg = error.response?.data?.error || "Doğrulama başarısız.";
-      Alert.alert("Hata", msg);
+      const msg = error.response?.data?.error || "Verification failed.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -42,9 +42,9 @@ export default function VerificationScreen({ route, navigation }) {
     <View style={styles.container}>
       <Ionicons name="mail-open-outline" size={80} color="#FF6F61" style={styles.icon} />
       
-      <Text style={styles.title}>Hesabı Doğrula</Text>
+      <Text style={styles.title}>Verify Account</Text>
       <Text style={styles.subtitle}>
-        Lütfen <Text style={{fontWeight:'bold'}}>{email}</Text> adresine gönderilen 6 haneli kodu girin.
+        Please <Text style={{fontWeight:'bold'}}>{email}</Text> Enter the 6-digit code sent to your email address.
       </Text>
 
       <TextInput
@@ -61,12 +61,12 @@ export default function VerificationScreen({ route, navigation }) {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Doğrula</Text>
+          <Text style={styles.buttonText}>Verify</Text>
         )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.goBack()} style={{marginTop: 20}}>
-        <Text style={styles.linkText}>Geri Dön</Text>
+        <Text style={styles.linkText}>Go back</Text>
       </TouchableOpacity>
     </View>
   );

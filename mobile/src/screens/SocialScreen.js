@@ -159,7 +159,7 @@ const SocialHeader = ({
           {/* --- YENİ EKLENEN: SIRALAMA ÇUBUĞU (Filter Bar) --- */}
           <View style={styles.filterBar}>
              <Text style={styles.resultText}>
-                {selectedCategory === 'All' && searchTerm === '' ? 'Keşfet' : (selectedCategory === 'All' ? 'Arama Sonuçları' : selectedCategory)}
+                {selectedCategory === 'All' && searchTerm === '' ? 'Discover' : (selectedCategory === 'All' ? 'Search Results' : selectedCategory)}
              </Text>
 
              <TouchableOpacity 
@@ -208,7 +208,7 @@ const SocialHeader = ({
                     <Text style={styles.sectionTitle}>Haftanın Trendleri</Text>
                 </View>
                 <TouchableOpacity 
-                    onPress={() => navigation.navigate('RecipeList', { title: '🔥 Haftanın Trendleri', type: 'trends' })}
+                    onPress={() => navigation.navigate('RecipeList', { title: '🔥 Trends of the Week', type: 'trends' })}
                 >
                     <Text style={styles.seeAll}>All</Text>
                 </TouchableOpacity>
@@ -233,10 +233,10 @@ const SocialHeader = ({
             <View style={styles.sectionHeader}>
                 <View style={styles.titleRow}>
                     <Text style={styles.sectionEmoji}>💎</Text>
-                    <Text style={styles.sectionTitle}>Son Eklenenler</Text>
+                    <Text style={styles.sectionTitle}>Most Recent</Text>
                 </View>
                 <TouchableOpacity 
-                    onPress={() => navigation.navigate('RecipeList', { title: '💎 Son Eklenenler', type: 'newest' })}
+                    onPress={() => navigation.navigate('RecipeList', { title: '💎 Most Recent', type: 'newest' })}
                 >
                     <Text style={styles.seeAll}>All</Text>
                 </TouchableOpacity>
@@ -259,9 +259,9 @@ const SocialHeader = ({
       {/* --- GRID BAŞLIĞI --- */}
       <View style={styles.feedTitleContainer}>
          <Text style={styles.feedTitle}>
-             {isFilterActive ? '🔍 Sonuçlar' : '🎲 Sizin İçin Seçtiklerimiz'}
+             {isFilterActive ? '🔍 Sonuçlar' : '🎲 Our Selections for You'}
          </Text>
-         {!isFilterActive && <Text style={styles.feedSubtitle}>Sonsuz keşif dünyası</Text>}
+         {!isFilterActive && <Text style={styles.feedSubtitle}>An endless world of discovery</Text>}
       </View>
     </View>
   );
@@ -323,7 +323,7 @@ export default function SocialScreen() {
       setNewest(current => updateList(current));
 
     } catch (error) {
-      console.error("Favori hatası:", error);
+      console.error("Favorite error:", error);
     }
   };
 
@@ -405,7 +405,7 @@ export default function SocialScreen() {
         setPage(nextPage);
       }
     } catch (error) {
-      console.error("Daha fazla yüklenemedi:", error);
+      console.error("Could not be loaded further:", error);
       setError(true);
     } finally {
       setIsLoadingMore(false);
@@ -542,7 +542,7 @@ export default function SocialScreen() {
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
               <Text style={{textAlign:'center', marginTop: 20, color:'#999'}}>
-                  Sonuç bulunamadı.
+                  No results found.
               </Text>
           }
           refreshControl={
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   sortOptionActive: {
-    backgroundColor: '#f4f3f3', // Hafif kırmızı arka plan
+    backgroundColor: '#f4f3f3',
   },
   sortOptionText: {
     fontSize: 14,

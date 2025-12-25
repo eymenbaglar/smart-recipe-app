@@ -12,11 +12,11 @@ export default function NewPasswordScreen({ route, navigation }) {
 
   const handleReset = async () => {
     if (password.length < 6) {
-      Alert.alert("Hata", "Şifre en az 6 karakter olmalıdır.");
+      Alert.alert("Error", "Password must be at least 6 characters");
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert("Hata", "Şifreler eşleşmiyor.");
+      Alert.alert("Error", "Passwords do not match.");
       return;
     }
 
@@ -29,13 +29,13 @@ export default function NewPasswordScreen({ route, navigation }) {
         newPassword: password
       });
       
-      Alert.alert("Başarılı", "Şifreniz değiştirildi. Giriş yapabilirsiniz.", [
-        { text: "Giriş Yap", onPress: () => navigation.popToTop() } // En başa (Login) döner
+      Alert.alert("Successful", "Your password has been changed. You can log in.", [
+        { text: "Log In", onPress: () => navigation.popToTop() } // En başa (Login) döner
       ]);
 
     } catch (error) {
-      const msg = error.response?.data?.error || "Şifre değiştirilemedi.";
-      Alert.alert("Hata", msg);
+      const msg = error.response?.data?.error || "The password could not be changed.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -43,12 +43,12 @@ export default function NewPasswordScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Yeni Şifre Belirle</Text>
-      <Text style={styles.subtitle}>Lütfen hesabınız için yeni bir şifre girin.</Text>
+      <Text style={styles.title}>Set New Password</Text>
+      <Text style={styles.subtitle}>Please enter a new password for your account.</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Yeni Şifre"
+        placeholder="New Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -56,14 +56,14 @@ export default function NewPasswordScreen({ route, navigation }) {
       
       <TextInput
         style={styles.input}
-        placeholder="Yeni Şifre (Tekrar)"
+        placeholder="New Password (Again)"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
 
       <TouchableOpacity style={styles.button} onPress={handleReset} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Şifreyi Güncelle</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Update Password</Text>}
       </TouchableOpacity>
     </View>
   );

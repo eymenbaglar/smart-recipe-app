@@ -11,7 +11,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
   const handleSendCode = async () => {
     if (!email) {
-      Alert.alert("Hata", "Lütfen e-posta adresinizi girin.");
+      Alert.alert("Error", "Please enter your email address.");
       return;
     }
 
@@ -20,13 +20,13 @@ export default function ForgotPasswordScreen({ navigation }) {
       // Backend'e istek at
       await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
       
-      Alert.alert("Başarılı", "Doğrulama kodu gönderildi.", [
+      Alert.alert("Successful", "A verification code has been sent.", [
         { text: "Tamam", onPress: () => navigation.navigate('ResetVerification', { email: email }) }
       ]);
 
     } catch (error) {
-      const msg = error.response?.data?.error || "Bir hata oluştu.";
-      Alert.alert("Hata", msg);
+      const msg = error.response?.data?.error || "An error has occurred.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -38,12 +38,12 @@ export default function ForgotPasswordScreen({ navigation }) {
         <Ionicons name="arrow-back" size={24} color="#333" />
       </TouchableOpacity>
 
-      <Text style={styles.title}>Şifremi Unuttum</Text>
-      <Text style={styles.subtitle}>Hesabınıza bağlı e-posta adresini girin, size bir sıfırlama kodu gönderelim.</Text>
+      <Text style={styles.title}>I forgot my password</Text>
+      <Text style={styles.subtitle}>Enter the email address, and we'll send you a reset code.</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="E-posta Adresi"
+        placeholder="Email Address"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -51,7 +51,7 @@ export default function ForgotPasswordScreen({ navigation }) {
       />
 
       <TouchableOpacity style={styles.button} onPress={handleSendCode} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Kod Gönder</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Code</Text>}
       </TouchableOpacity>
     </View>
   );

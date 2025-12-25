@@ -45,7 +45,7 @@ const HeaderRightButton = () => {
       const checkUnread = async () => {
         try {
           const token = await AsyncStorage.getItem('token');
-          // Eğer token yoksa (giriş yapılmamışsa) işlem yapma
+          
           if (!token) return;
 
           const res = await axios.get(`${API_URL}/api/notifications/unread-count`, {
@@ -88,7 +88,7 @@ const HeaderRightButton = () => {
             justifyContent: 'center',
             alignItems: 'center',
             borderWidth: 1,
-            borderColor: '#fff' // İkonun üstünde daha net durması için beyaz kenarlık
+            borderColor: '#fff' 
           }}>
             <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -97,7 +97,7 @@ const HeaderRightButton = () => {
         )}
       </TouchableOpacity>
 
-      {/* --- PROFİL BUTONU (Senin Mevcut Kodun) --- */}
+      {/* --- PROFİL BUTONU  --- */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Profile')}
       >
@@ -268,7 +268,7 @@ export default function App() {
             <Stack.Screen 
             name="RecipeList" 
             component={RecipeListScreen} 
-            options={{ headerShown: false }} // Kendi header'ımızı yaptık
+            options={{ headerShown: false }} 
             />
           </>
         )}

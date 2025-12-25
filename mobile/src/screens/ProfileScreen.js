@@ -68,7 +68,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
       }
     } catch (error) {
       // Hata olursa konsola yazdır ama kullanıcıya hata gösterme (Sayı 0 kalır)
-      console.log('Tarif sayısı alınamadı:', error);
+      console.log('Number of recipes not found:', error);
     }
   };
 
@@ -196,7 +196,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
           </TouchableOpacity>
         </View>
         
-        <Text style={styles.username}>{user?.username || 'Kullanıcı'}</Text>
+        <Text style={styles.username}>{user?.username || 'User'}</Text>
         <Text style={styles.email}>{user?.email || 'email@example.com'}</Text>
         
         <View style={styles.statsContainer}>

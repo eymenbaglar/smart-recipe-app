@@ -42,7 +42,7 @@ export default function NotificationScreen() {
       // Listeyi güncelle (hepsini okundu yap)
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (error) {
-      Alert.alert("Hata", "İşlem başarısız.");
+      Alert.alert("Error", "The operation failed.");
     }
   };
 
@@ -79,9 +79,9 @@ export default function NotificationScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Bildirimler</Text>
+        <Text style={styles.headerTitle}>Notifications</Text>
         <TouchableOpacity onPress={handleMarkAllRead}>
-          <Text style={styles.markReadText}>Tümünü Okundu Say</Text>
+          <Text style={styles.markReadText}>Mark as Read All</Text>
         </TouchableOpacity>
       </View>
 
@@ -94,7 +94,7 @@ export default function NotificationScreen() {
           renderItem={renderItem}
           contentContainerStyle={{ padding: 15 }}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>Henüz bildiriminiz yok.</Text>
+            <Text style={styles.emptyText}>You have no notifications yet.</Text>
           }
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => {

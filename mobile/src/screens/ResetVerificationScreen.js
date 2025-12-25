@@ -12,7 +12,7 @@ export default function ResetVerificationScreen({ route, navigation }) {
 
   const handleVerify = async () => {
     if (code.length !== 6) {
-      Alert.alert("Hata", "Lütfen 6 haneli kodu girin.");
+      Alert.alert("Error", "Please enter the 6-digit code.");
       return;
     }
 
@@ -25,8 +25,8 @@ export default function ResetVerificationScreen({ route, navigation }) {
       navigation.navigate('NewPassword', { email: email, code: code });
 
     } catch (error) {
-      const msg = error.response?.data?.error || "Kod doğrulanamadı.";
-      Alert.alert("Hata", msg);
+      const msg = error.response?.data?.error || "The code could not be verified.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -35,8 +35,8 @@ export default function ResetVerificationScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <Ionicons name="lock-open-outline" size={60} color="#FF6F61" style={{alignSelf:'center', marginBottom:20}} />
-      <Text style={styles.title}>Kodu Girin</Text>
-      <Text style={styles.subtitle}>{email} adresine gönderilen 6 haneli kodu girin.</Text>
+      <Text style={styles.title}>Enter the code</Text>
+      <Text style={styles.subtitle}>Enter the 6-digit code sent to your {email} address.</Text>
 
       <TextInput
         style={styles.input}
@@ -49,7 +49,7 @@ export default function ResetVerificationScreen({ route, navigation }) {
       />
 
       <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Doğrula</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify</Text>}
       </TouchableOpacity>
     </View>
   );

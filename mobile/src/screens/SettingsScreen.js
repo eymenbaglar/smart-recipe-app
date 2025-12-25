@@ -52,11 +52,11 @@ export default function SettingsScreen({ navigation , onLogout}) {
   // --- HESAP SİLME (YENİ) ---
 const handleDeleteAccount = () => {
     Alert.alert(
-      "Hesap Silme Talebi", 
-      "Hesabın ve Onaylı tariflerin 30 gün boyunca 'Silinme Bekleyenler' listesinde tutulacaktır. Devam etmek istiyor musun?",
+      "Account Deletion Request", 
+      "Your account will be kept in the ‘Pending Deletion’ list for 30 days. Do you want to continue?",
       [
-        { text: "Vazgeç", style: "cancel" },
-        { text: "Evet, Sil", style: "destructive", onPress: performDelete }
+        { text: "Cancel", style: "cancel" },
+        { text: "Yes, Delete", style: "destructive", onPress: performDelete }
       ]
     );
   };
@@ -72,20 +72,18 @@ const handleDeleteAccount = () => {
       await AsyncStorage.removeItem('token');
       
       Alert.alert(
-        "İşlem Başarılı", 
-        "Hesap silme talebin alındı. Çıkış yapılıyor..."
+        "Operation Successful", 
+        "Your account deletion request has been received. Logging out...."
       );
       
-      // --- DÜZELTME BURASI ---
-      // Navigasyon reset yerine, App.js'ten gelen çıkış fonksiyonunu çalıştırıyoruz.
-      // Bu fonksiyon isLoggedIn state'ini false yapacak ve uygulama otomatik olarak Login ekranına dönecek.
+      
       if (onLogout) {
         onLogout();
       }
 
     } catch (error) {
       console.error(error);
-      Alert.alert("Hata", "İşlem sırasında bir hata oluştu.");
+      Alert.alert("Error", "An error occurred during the process.");
     }
   };
   //kaydet butonu
@@ -123,7 +121,7 @@ const handleDeleteAccount = () => {
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
 
       Alert.alert('Success', 'Your Profile Updated.', [
-        { text: 'Tamam', onPress: () => navigation.goBack() }
+        { text: 'Okey', onPress: () => navigation.goBack() }
       ]);
 
     } catch (error) {
@@ -252,7 +250,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#FF3B30', // Kırmızı renk
+    backgroundColor: '#FF3B30', 
     padding: 15, borderRadius: 12,
     marginTop: 20
   },
