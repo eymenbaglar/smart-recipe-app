@@ -65,7 +65,7 @@ const Reviews = () => {
       
       {/* YENİ: Header Kısmı (Başlık ve Search Yan Yana) */}
       <div className="reviews-header">
-        <h2>💬 Comment Management</h2>
+        <h2>Comment Management</h2>
         <div className="search-box">
           <span className="search-icon">🔍</span>
           <input 

@@ -77,8 +77,8 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
           }}>
           <MaterialCommunityIcons name="chef-hat" size={60} color="#333" />
         </View>
-          <Text style={styles.title}>Giriş Yap</Text>
-          <Text style={styles.subtitle}>Tekrar hoş geldin!</Text>
+          <Text style={styles.title}>Sign In</Text>
+          <Text style={styles.subtitle}>Welcome Again!</Text>
         </View>
 
         <View style={styles.formContainer}>

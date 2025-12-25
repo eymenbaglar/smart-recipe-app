@@ -28,17 +28,17 @@ export default function NewPasswordScreen({ route, navigation }) {
 
   const handleResetPassword = async () => {
     if (!newPassword || !confirmPassword) {
-      Alert.alert("Hata", "Lütfen tüm alanları doldurun.");
+      Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert("Hata", "Şifreler birbiriyle uyuşmuyor.");
+      Alert.alert("Error", "The passwords don't match.");
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert("Hata", "Şifre en az 6 karakter olmalıdır.");
+      Alert.alert("Error", "The password must be at least 6 characters long.");
       return;
     }
 
@@ -51,14 +51,14 @@ export default function NewPasswordScreen({ route, navigation }) {
         newPassword 
       });
       
-      Alert.alert("Başarılı", "Şifreniz başarıyla güncellendi! Giriş yapabilirsiniz.", [
-        { text: "Giriş Yap", onPress: () => navigation.navigate('Login') }
+      Alert.alert("Successful", "Your password has been successfully updated! You can log in now.", [
+        { text: "Sign In", onPress: () => navigation.navigate('Login') }
       ]);
 
     } catch (error) {
       console.log("Reset Password Error:", error.response ? error.response.data : error.message);
-      const msg = error.response?.data?.error || "Şifre sıfırlanamadı.";
-      Alert.alert("Hata", msg);
+      const msg = error.response?.data?.error || "The password could not be reset.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -85,33 +85,33 @@ export default function NewPasswordScreen({ route, navigation }) {
             <MaterialCommunityIcons name="lock-reset" size={80} color="#333" />
           </View>
 
-          <Text style={styles.title}>Yeni Şifre</Text>
+          <Text style={styles.title}>New Password</Text>
           <Text style={styles.subtitle}>
-            Hesabınız için yeni ve güçlü bir şifre belirleyin.
+            Set a new and strong password for your account.
           </Text>
 
           {/* Yeni Şifre Input */}
           <TextInput
             style={styles.input}
-            placeholder="Yeni Şifre"
+            placeholder="New Password"
             value={newPassword}
             onChangeText={setNewPassword}
-            secureTextEntry={true} // Şifreyi gizle
+            secureTextEntry={true}
             placeholderTextColor="#999"
           />
 
           {/* Şifre Tekrar Input */}
           <TextInput
             style={styles.input}
-            placeholder="Yeni Şifre (Tekrar)"
+            placeholder="New Password (Again)"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
-            secureTextEntry={true} // Şifreyi gizle
+            secureTextEntry={true} 
             placeholderTextColor="#999"
           />
 
           <TouchableOpacity style={styles.button} onPress={handleResetPassword} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Şifreyi Güncelle</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Update Password</Text>}
           </TouchableOpacity>
 
         </ScrollView>

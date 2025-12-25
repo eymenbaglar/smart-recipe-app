@@ -106,7 +106,7 @@ const SocialHeader = ({
             <View style={styles.searchBar}>
                 <Ionicons name="search" size={20} color="#999" />
                 <TextInput 
-                    placeholder="Bugün ne pişirelim?"
+                    placeholder="What should we cook today?"
                     placeholderTextColor="#999"
                     style={styles.input}
                     value={searchTerm}
@@ -133,7 +133,7 @@ const SocialHeader = ({
                   style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
                 />
                 <Text style={styles.switchLabel}>
-                  {mode === 'all' ? 'All' : 'Std'}
+                  {mode === 'all' ? 'All' : 'Non-Verified'}
                 </Text>
               </View>
             )}
@@ -205,7 +205,7 @@ const SocialHeader = ({
             <View style={styles.sectionHeader}>
                 <View style={styles.titleRow}>
                     <Text style={styles.sectionEmoji}>🔥</Text>
-                    <Text style={styles.sectionTitle}>Haftanın Trendleri</Text>
+                    <Text style={styles.sectionTitle}>Trends of the Week</Text>
                 </View>
                 <TouchableOpacity 
                     onPress={() => navigation.navigate('RecipeList', { title: '🔥 Trends of the Week', type: 'trends' })}
@@ -259,7 +259,7 @@ const SocialHeader = ({
       {/* --- GRID BAŞLIĞI --- */}
       <View style={styles.feedTitleContainer}>
          <Text style={styles.feedTitle}>
-             {isFilterActive ? '🔍 Sonuçlar' : '🎲 Our Selections for You'}
+             {isFilterActive ? '🔍 Results' : '🎲 Our Selections for You'}
          </Text>
          {!isFilterActive && <Text style={styles.feedSubtitle}>An endless world of discovery</Text>}
       </View>
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, marginLeft: 10, fontSize: 15, color: '#333', fontWeight: '500' },
   switchContainer: { flexDirection: 'column', alignItems: 'center', marginLeft: 12 },
-  switchLabel: { fontSize: 9, fontWeight: '700', color: '#666', marginTop: 2 },
+  switchLabel: { fontSize: 7, fontWeight: '900', color: '#666', marginTop: 2 },
   chipsContainer: { paddingLeft: 15, marginBottom: 10 },
   chip: { 
     paddingHorizontal: 18, paddingVertical: 10, backgroundColor: '#F0F2F5', 

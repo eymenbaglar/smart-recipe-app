@@ -7,14 +7,14 @@ import {
   StyleSheet, 
   Alert, 
   ActivityIndicator,
-  KeyboardAvoidingView,   // 1. Eklenen
-  Platform,               // 2. Eklenen
-  TouchableWithoutFeedback, // 3. Eklenen
-  Keyboard,               // 4. Eklenen
-  ScrollView              // 5. Eklenen
+  KeyboardAvoidingView, 
+  Platform,              
+  TouchableWithoutFeedback, 
+  Keyboard,               
+  ScrollView              
 } from 'react-native';
 import axios from 'axios';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'; // İkonlar
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'; 
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
@@ -38,7 +38,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
     } catch (error) {
       console.log("Forgot Password Error:", error.response ? error.response.data : error.message);
-      const msg = error.response?.data?.error || "Bir hata oluştu.";
+      const msg = error.response?.data?.error || "An error occured.";
       Alert.alert("Hata", msg);
     } finally {
       setLoading(false);
@@ -71,14 +71,14 @@ export default function ForgotPasswordScreen({ navigation }) {
             <MaterialCommunityIcons name="lock-question" size={80} color="#333" />
           </View>
 
-          <Text style={styles.title}>Şifremi Unuttum</Text>
+          <Text style={styles.title}>I Forgot My Password</Text>
           <Text style={styles.subtitle}>
-            Hesabınıza bağlı e-posta adresini girin, size bir sıfırlama kodu gönderelim.
+            Enter the email address associated with your account, and we'll send you a reset code.
           </Text>
 
           <TextInput
             style={styles.input}
-            placeholder="E-posta Adresi"
+            placeholder="E-mail Adress"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -87,7 +87,7 @@ export default function ForgotPasswordScreen({ navigation }) {
           />
 
           <TouchableOpacity style={styles.button} onPress={handleSendCode} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Kod Gönder</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Code</Text>}
           </TouchableOpacity>
 
         </ScrollView>

@@ -7,14 +7,14 @@ import {
   StyleSheet, 
   Alert, 
   ActivityIndicator,
-  KeyboardAvoidingView,   // 1. Eklenen
-  Platform,               // 2. Eklenen
-  TouchableWithoutFeedback, // 3. Eklenen
-  Keyboard,               // 4. Eklenen
-  ScrollView              // 5. Eklenen
+  KeyboardAvoidingView,  
+  Platform,        
+  TouchableWithoutFeedback, 
+  Keyboard,          
+  ScrollView            
 } from 'react-native';
 import axios from 'axios';
-import { Ionicons } from '@expo/vector-icons'; // İkon ekledik (İstersen kaldırabilirsin)
+import { Ionicons } from '@expo/vector-icons'; 
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
@@ -25,7 +25,7 @@ export default function VerificationScreen({ route, navigation }) {
 
   const handleVerify = async () => {
     if (code.length !== 6) {
-      Alert.alert("Hata", "Lütfen 6 haneli kodu girin.");
+      Alert.alert("Error", "Please enter the 6-digit code.");
       return;
     }
 
@@ -33,14 +33,14 @@ export default function VerificationScreen({ route, navigation }) {
     try {
       await axios.post(`${API_URL}/api/auth/verify`, { email, code });
       
-      Alert.alert("Başarılı", "Hesabınız doğrulandı! Giriş yapabilirsiniz.", [
-        { text: "Giriş Yap", onPress: () => navigation.navigate('Login') }
+      Alert.alert("Success", "Your account has been verified! You can log in.", [
+        { text: "Log In", onPress: () => navigation.navigate('Login') }
       ]);
 
     } catch (error) {
-      console.log("Doğrulama hatası:", error.response ? error.response.data : error.message);
-      const msg = error.response?.data?.error || "Kod doğrulanamadı.";
-      Alert.alert("Hata", msg);
+      console.log("Validation error:", error.response ? error.response.data : error.message);
+      const msg = error.response?.data?.error || "The code could not be verified.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -67,9 +67,9 @@ export default function VerificationScreen({ route, navigation }) {
             <Ionicons name="shield-checkmark-outline" size={80} color="#333" />
           </View>
 
-          <Text style={styles.title}>Doğrulama Kodu</Text>
+          <Text style={styles.title}>Verification Code</Text>
           <Text style={styles.subtitle}>
-            {email} adresine gönderilen 6 haneli kodu girin.
+            Enter the 6-digit code sent to {email}.
           </Text>
 
           <TextInput
@@ -84,7 +84,7 @@ export default function VerificationScreen({ route, navigation }) {
           />
 
           <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Doğrula</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify</Text>}
           </TouchableOpacity>
           {/* --- İÇERİK BİTİŞİ --- */}
 
@@ -100,8 +100,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff' 
   },
   scrollContainer: {
-    flexGrow: 1,            // İçerik az olsa bile ekranı kapla
-    justifyContent: 'center', // Ortala
+    flexGrow: 1,           
+    justifyContent: 'center',
     padding: 20,
   },
   iconContainer: {
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, 
     marginBottom: 20, 
     fontSize: 24, 
-    letterSpacing: 8, // Rakamlar arası boşluk
+    letterSpacing: 8, 
     backgroundColor:'#f9f9f9',
     color: '#333'
   },

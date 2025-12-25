@@ -83,7 +83,7 @@ const DeletedAccounts = () => {
 
   return (
     <div className="deleted-accounts-page">
-      <h1 className="page-title">🗑️ Accounts Awaiting Deletion</h1>
+      <h1 className="page-title">Accounts Awaiting Deletion</h1>
       
       {error && <div className="error-message">{error}</div>}
 

@@ -13,18 +13,24 @@ import Reviews from './Reviews';
 import DeletedAccounts from './DeletedAccounts';
 
 function App() {
+  // Başlangıçta localStorage'dan okuyoruz
   const [token, setToken] = useState(localStorage.getItem('adminToken'));
 
   useEffect(() => {
+    // Token state'i değiştiğinde localStorage'ı senkronize et
     if (token) {
       localStorage.setItem('adminToken', token);
     } else {
       localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminName'); // Çıkışta ismi de silelim
     }
   }, [token]);
 
-  const handleLogin = (newToken) => {
-    setToken(newToken);
+  // --- KRİTİK DÜZELTME BURADA ---
+  const handleLogin = (tokenFromLogin) => {
+    // Eğer Login.js parametre göndermeyi unutursa, localStorage'dan bakmayı dene
+    const finalToken = tokenFromLogin || localStorage.getItem('adminToken');
+    setToken(finalToken);
   };
 
   const handleLogout = () => {
@@ -32,6 +38,7 @@ function App() {
   };
 
   if (!token) {
+    // Login componentine handleLogin'i gönderiyoruz
     return <Login onLogin={handleLogin} />;
   }
 
@@ -46,13 +53,13 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/pending-recipes" element={<PendingRecipes />} />
-            <Route path="*" element={<Navigate to="/" />} />
             <Route path="/recipes" element={<Recipes />} />
             <Route path="/users" element={<Users />} />
             <Route path="/ingredients" element={<Ingredients />} />
             <Route path="/suggestions" element={<Suggestions />} />
             <Route path="/reviews" element={<Reviews/>} />
             <Route path="/deleted-accounts" element={<DeletedAccounts />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
       </div>

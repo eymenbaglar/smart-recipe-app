@@ -92,14 +92,14 @@ export default function MyRecipesScreen({ navigation }) {
 
     // Statüye göre renk ve metin belirleme
     let statusColor = '#4CAF50'; // Yeşil (Approved)
-    let statusText = 'Yayında';
+    let statusText = 'Approved';
     
     if (item.status === 'pending') {
       statusColor = '#FFC107'; // Sarı
-      statusText = 'İnceleniyor';
+      statusText = 'Waiting';
     } else if (item.status === 'rejected') {
       statusColor = '#FF5252'; // Kırmızı
-      statusText = 'Reddedildi';
+      statusText = 'Rejected';
     }
 
     return (
@@ -250,12 +250,12 @@ export default function MyRecipesScreen({ navigation }) {
       }}
     >
       <Tab.Screen 
-        name="Yayında" 
+        name="Approved" 
         component={PublishedTab} 
         options={{ title: `Approved (${publishedCount})` }} // Dinamik Başlık
       />
       <Tab.Screen 
-        name="Bekleyenler" 
+        name="Waiting" 
         component={PendingTab} 
         options={{ title: `Waiting (${pendingCount})` }} // Dinamik Başlık
       />

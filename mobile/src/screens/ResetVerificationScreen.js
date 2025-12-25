@@ -7,11 +7,11 @@ import {
   StyleSheet, 
   Alert, 
   ActivityIndicator,
-  KeyboardAvoidingView,   // 1. Eklenen
-  Platform,               // 2. Eklenen
-  TouchableWithoutFeedback, // 3. Eklenen
-  Keyboard,               // 4. Eklenen
-  ScrollView              // 5. Eklenen
+  KeyboardAvoidingView, 
+  Platform,            
+  TouchableWithoutFeedback, 
+  Keyboard,              
+  ScrollView              
 } from 'react-native';
 import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,8 +39,8 @@ export default function ResetVerificationScreen({ route, navigation }) {
 
     } catch (error) {
       console.log("Verify Reset Code Error:", error.response ? error.response.data : error.message);
-      const msg = error.response?.data?.error || "Kod doğrulanamadı.";
-      Alert.alert("Hata", msg);
+      const msg = error.response?.data?.error || "The code could not be verified.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
@@ -67,9 +67,9 @@ export default function ResetVerificationScreen({ route, navigation }) {
             <Ionicons name="lock-open-outline" size={80} color="#333" />
           </View>
 
-          <Text style={styles.title}>Kodu Girin</Text>
+          <Text style={styles.title}>Enter The Code</Text>
           <Text style={styles.subtitle}>
-            {email} adresine gönderilen 6 haneli sıfırlama kodunu girin.
+            Enter the 6-digit reset code sent to {email}.
           </Text>
 
           <TextInput
@@ -84,7 +84,7 @@ export default function ResetVerificationScreen({ route, navigation }) {
           />
 
           <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Doğrula</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify</Text>}
           </TouchableOpacity>
 
         </ScrollView>
@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff' 
   },
   scrollContainer: {
-    flexGrow: 1,              // İçerik az olsa bile ekranı doldur
-    justifyContent: 'center', // İçeriği dikeyde ortala
+    flexGrow: 1,              
+    justifyContent: 'center', 
     padding: 20,
   },
   iconContainer: {
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, 
     marginBottom: 20, 
     fontSize: 24, 
-    letterSpacing: 8, // Rakamlar arası boşluk (Kod olduğu belli olsun diye)
+    letterSpacing: 8, 
     backgroundColor:'#f9f9f9',
     color: '#333'
   },

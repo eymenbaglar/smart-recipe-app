@@ -11,30 +11,30 @@ function Sidebar({ onLogout }) {
       
       <nav className="sidebar-nav">
         <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          📊 Dashboard
+        Dashboard
         </NavLink>
         
         <NavLink to="/pending-recipes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          ⏳ Waiting For Approve
+        Waiting For Approve
         </NavLink>
 
         <NavLink to="/recipes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-        🍲 Recipes
+        Recipes
         </NavLink>
 
         <NavLink to="/users" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-        👥 Users
+        Users
         </NavLink>
 
         <NavLink to="/ingredients" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-        🥕 Ingredients
+        Ingredients
         </NavLink>
         
         <NavLink to="/suggestions" className={({isActive}) => (isActive ? 'nav-item active' : 'nav-item')}>
-        💡 Ingredient Suggestions
+        Ingredient Suggestions
         </NavLink>
         <NavLink to="/reviews" className={({isActive}) => (isActive ? 'nav-item active' : 'nav-item')}>
-        💬 Reviews
+        Reviews
         </NavLink>
         <NavLink to="/deleted-accounts" className={({isActive}) => (isActive ? 'nav-item active' : 'nav-item')}>
         Deleted Accounts

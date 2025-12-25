@@ -41,7 +41,7 @@ const Suggestions = () => {
 
   return (
     <div className="suggestions-container">
-      <h2>📢 User Ingredients Suggestions</h2>
+      <h2>User Ingredients Suggestions</h2>
       
       {suggestions.length === 0 ? (
         <p className="no-data">There are no pending suggestions yet.</p>
