@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons,FontAwesome6,MaterialCommunityIcons } from '@expo/vector-icons';
 
 // screens
 import HomeScreen from '../screens/HomeScreen';
@@ -67,7 +67,7 @@ export default function TabNavigator() {
         component={RecipeWizardScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <Ionicons name="sparkles" size={32} color={focused ? '#fff' : '#f0f0f0'} />
+            <Ionicons name="sparkles" size={28} color="white" />
           ),
           tabBarButton: (props) => (
             <CustomTabBarButton {...props} />
@@ -90,7 +90,7 @@ export default function TabNavigator() {
         component={MyStockScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="cube-outline" size={28} color={color} />
+            <MaterialCommunityIcons name="fridge-outline" size={28} color={color} />
           ),
         }} 
       />
@@ -114,12 +114,12 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#000', 
+    backgroundColor: '#111011ff', 
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
     borderColor: '#fff',
-    shadowColor: "#000",
+    shadowColor: "#111011ff",
     shadowOffset: {
       width: 0,
       height: 5,

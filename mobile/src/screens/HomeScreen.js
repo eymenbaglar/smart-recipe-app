@@ -4,9 +4,8 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-
+import { Ionicons,FontAwesome6} from '@expo/vector-icons';
 // Bileşenler
 import RecommendationRow from '../components/RecommendationRow';
 
@@ -98,7 +97,19 @@ export default function HomeScreen({ navigation }) {
       {/* 4. Son Görüntülenenler (YENİ) */}
       {recentRecipes.length > 0 && (
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Recently Viewed 🕒</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+            <Text style={styles.sectionTitle}>Recently Viewed</Text>
+            <View style={{
+                backgroundColor: '#e0e0e0', // Arka plan gri (alt tarafı gri)
+                borderRadius: 50,           // Yuvarlak 
+                marginLeft: 8,
+                top:-6,              // Yazıdan uzaklaştırma
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+              <FontAwesome6 name="clock" size={16} color="black" />
+            </View>
+          </View>
           <FlatList
             horizontal
             data={recentRecipes}
@@ -116,7 +127,23 @@ export default function HomeScreen({ navigation }) {
 
       {/* 5. Topluluk (Social) Yönlendirmesi */}
       <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Discover Community 🌍</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+    
+    <Text style={styles.sectionTitle}>Discover Community</Text>
+
+    {/* İkonun Kutusu */}
+    <View style={{
+        backgroundColor: 'green',
+        borderRadius: 50,
+        marginLeft: 8,
+        marginBottom: 11,
+        justifyContent: 'center',
+        alignItems: 'center'
+    }}>
+      <FontAwesome6 name="earth-americas" size={16} color="#0b1fccff" />
+    </View>
+
+  </View>
         
         <TouchableOpacity 
           style={styles.communityBanner}

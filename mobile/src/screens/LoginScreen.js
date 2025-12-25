@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
 
@@ -64,7 +65,18 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerContainer}>
-          <Text style={styles.logo}>👨‍🍳</Text>
+          <View style={{ 
+              backgroundColor: '#fff', 
+              padding: 20, 
+              borderRadius: 50, 
+              elevation: 5,
+              shadowColor: '#000',
+              shadowOpacity: 0.1, 
+              shadowRadius: 10,
+              marginBottom: 20 
+          }}>
+          <MaterialCommunityIcons name="chef-hat" size={60} color="#333" />
+        </View>
           <Text style={styles.title}>Giriş Yap</Text>
           <Text style={styles.subtitle}>Tekrar hoş geldin!</Text>
         </View>
@@ -168,7 +180,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: '#FF6F61', // Ana renklerinle uyumlu olması için
+    color: '#333',
     fontWeight: '600',
     fontSize: 14,
   },

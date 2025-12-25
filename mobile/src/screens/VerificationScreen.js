@@ -1,37 +1,45 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Alert, 
+  ActivityIndicator,
+  KeyboardAvoidingView,   // 1. Eklenen
+  Platform,               // 2. Eklenen
+  TouchableWithoutFeedback, // 3. Eklenen
+  Keyboard,               // 4. Eklenen
+  ScrollView              // 5. Eklenen
+} from 'react-native';
 import axios from 'axios';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons'; // İkon ekledik (İstersen kaldırabilirsin)
 
-// Config dosyanızdan API_URL'i çekin veya buraya yazın
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function VerificationScreen({ route, navigation }) {
-  // Register ekranından gönderilen email'i alıyoruz
-  const { email } = route.params; 
-  
+  const { email } = route.params;
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleVerify = async () => {
     if (code.length !== 6) {
-      Alert.alert("Hata", "Lütfen 6 haneli kodu eksiksiz girin.");
+      Alert.alert("Hata", "Lütfen 6 haneli kodu girin.");
       return;
     }
 
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/api/auth/verify`, {
-        email: email,
-        code: code
-      });
-
+      await axios.post(`${API_URL}/api/auth/verify`, { email, code });
+      
       Alert.alert("Başarılı", "Hesabınız doğrulandı! Giriş yapabilirsiniz.", [
-        { text: "Tamam", onPress: () => navigation.navigate('Login') }
+        { text: "Giriş Yap", onPress: () => navigation.navigate('Login') }
       ]);
 
     } catch (error) {
-      const msg = error.response?.data?.error || "Doğrulama başarısız.";
+      console.log("Doğrulama hatası:", error.response ? error.response.data : error.message);
+      const msg = error.response?.data?.error || "Kod doğrulanamadı.";
       Alert.alert("Hata", msg);
     } finally {
       setLoading(false);
@@ -39,52 +47,100 @@ export default function VerificationScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Ionicons name="mail-open-outline" size={80} color="#FF6F61" style={styles.icon} />
-      
-      <Text style={styles.title}>Hesabı Doğrula</Text>
-      <Text style={styles.subtitle}>
-        Lütfen <Text style={{fontWeight:'bold'}}>{email}</Text> adresine gönderilen 6 haneli kodu girin.
-      </Text>
+    // 1. ADIM: Klavye açılınca ekranı ittiren kapsayıcı
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      {/* 2. ADIM: Boşluğa tıklayınca klavyeyi kapatan kapsayıcı */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        
+        {/* 3. ADIM: Küçük ekranlarda kaydırma özelliği sağlayan kapsayıcı */}
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer} 
+          keyboardShouldPersistTaps="handled" // Butonların çalışmasını engellemesin diye
+          showsVerticalScrollIndicator={false}
+        >
 
-      <TextInput
-        style={styles.input}
-        placeholder="123456"
-        keyboardType="number-pad"
-        maxLength={6}
-        value={code}
-        onChangeText={setCode}
-        textAlign="center"
-      />
+          {/* --- İÇERİK BAŞLANGICI --- */}
+          <View style={styles.iconContainer}>
+            <Ionicons name="shield-checkmark-outline" size={80} color="#333" />
+          </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Doğrula</Text>
-        )}
-      </TouchableOpacity>
+          <Text style={styles.title}>Doğrulama Kodu</Text>
+          <Text style={styles.subtitle}>
+            {email} adresine gönderilen 6 haneli kodu girin.
+          </Text>
 
-      <TouchableOpacity onPress={() => navigation.goBack()} style={{marginTop: 20}}>
-        <Text style={styles.linkText}>Geri Dön</Text>
-      </TouchableOpacity>
-    </View>
+          <TextInput
+            style={styles.input}
+            placeholder="123456"
+            keyboardType="number-pad"
+            maxLength={6}
+            value={code}
+            onChangeText={setCode}
+            textAlign="center"
+            placeholderTextColor="#ccc"
+          />
+
+          <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Doğrula</Text>}
+          </TouchableOpacity>
+          {/* --- İÇERİK BİTİŞİ --- */}
+
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#fff' },
-  icon: { marginBottom: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 10 },
-  subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 30 },
-  input: {
-    width: '80%', height: 50, borderWidth: 1, borderColor: '#ddd', borderRadius: 10,
-    fontSize: 24, letterSpacing: 5, backgroundColor: '#f9f9f9', marginBottom: 20
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff' 
   },
-  button: {
-    backgroundColor: '#FF6F61', width: '80%', height: 50, borderRadius: 10,
-    justifyContent: 'center', alignItems: 'center',
+  scrollContainer: {
+    flexGrow: 1,            // İçerik az olsa bile ekranı kapla
+    justifyContent: 'center', // Ortala
+    padding: 20,
   },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  linkText: { color: '#FF6F61', fontSize: 14 }
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  title: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    color: '#333', 
+    textAlign:'center', 
+    marginBottom: 10 
+  },
+  subtitle: { 
+    fontSize: 14, 
+    color: '#666', 
+    textAlign: 'center', 
+    marginBottom: 30 
+  },
+  input: { 
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    padding: 15, 
+    borderRadius: 10, 
+    marginBottom: 20, 
+    fontSize: 24, 
+    letterSpacing: 8, // Rakamlar arası boşluk
+    backgroundColor:'#f9f9f9',
+    color: '#333'
+  },
+  button: { 
+    backgroundColor: '#333', 
+    padding: 15, 
+    borderRadius: 10, 
+    alignItems: 'center' 
+  },
+  buttonText: { 
+    color: '#fff', 
+    fontSize: 18, 
+    fontWeight: 'bold' 
+  }
 });

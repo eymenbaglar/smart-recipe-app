@@ -13,7 +13,8 @@ import {
   Pressable
 } from 'react-native';
 import axios from 'axios';
-import Checkbox from 'expo-checkbox'; // TERMİNALDE: npx expo install expo-checkbox
+import Checkbox from 'expo-checkbox';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
 
@@ -99,7 +100,18 @@ export default function RegisterScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerContainer}>
-          <Text style={styles.logo}>👨‍🍳</Text>
+          <View style={{ 
+              backgroundColor: '#fff', 
+              padding: 20, 
+              borderRadius: 50, 
+              elevation: 5,
+              shadowColor: '#000',
+              shadowOpacity: 0.1, 
+              shadowRadius: 10,
+              marginBottom: 20 
+            }}>
+            <MaterialCommunityIcons name="chef-hat" size={60} color="#333" />
+          </View>
           <Text style={styles.title}>Sign Up</Text>
           <Text style={styles.subtitle}>Welcome to Smart Recipe!</Text>
         </View>

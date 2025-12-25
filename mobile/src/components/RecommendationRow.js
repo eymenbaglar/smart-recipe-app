@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
@@ -42,7 +43,17 @@ export default function RecommendationRow() {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>
-          {type === 'algorithm' ? "Based on your taste 👨‍🍳" : "Discover New Tastes 🎲"}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'black', marginRight: 8 }}>
+              {type === 'algorithm' ? "Based on your taste" : "Discover New Tastes"}
+            </Text>
+            {type === 'algorithm' ? (
+              <MaterialCommunityIcons name="chef-hat" size={20} color="#333" />
+            ) : (
+              <Ionicons name="dice-sharp" size={20} color="#333" />
+            )}
+
+          </View>
         </Text>
         {type === 'algorithm' && (
           <Ionicons name="sparkles" size={16} color="#FFD700" />

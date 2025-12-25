@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     padding: 15, backgroundColor: '#fff', elevation: 2
   },
   headerTitle: { fontSize: 20, fontWeight: 'bold' },
-  markReadText: { color: '#FF6F61', fontWeight: '600' },
+  markReadText: { color: '#333', fontWeight: '600' },
   card: {
     flexDirection: 'row', backgroundColor: '#fff', padding: 15, marginBottom: 10,
     borderRadius: 10, alignItems: 'center', elevation: 1

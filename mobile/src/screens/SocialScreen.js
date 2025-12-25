@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
   feedSubtitle: { fontSize: 13, color: '#888', marginTop: 2 },
   ratingBadge: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(255,255,255,0.9)', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 8, zIndex: 1 },
   ratingText: { color: '#333', fontSize: 10, marginLeft: 3, fontWeight: '800' },
-  likeBtnHorizontal: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.9)', padding: 6, borderRadius: 20, zIndex: 1 },
+  likeBtnHorizontal: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.3)', padding: 6, borderRadius: 20, zIndex: 1 },
   gridCard: { 
     width: (width / 2) - 20, 
     marginBottom: 20, backgroundColor: '#fff', 
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
     marginLeft: 2
   },
   gUser: { fontSize: 11, color: '#888', marginLeft: 4 },
-  likeBtn: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(255,255,255,0.95)', padding: 7, borderRadius: 20, shadowColor: "#000", shadowOpacity: 0.1, elevation: 2 },
+  likeBtn: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.3)', padding: 7, borderRadius: 20, shadowColor: "#000", shadowOpacity: 0.1, elevation: 2 },
   
   // --- YENİ EKLENEN STİLLER (Filtre Barı ve Dropdown) ---
   filterBar: {

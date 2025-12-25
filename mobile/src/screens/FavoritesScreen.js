@@ -162,7 +162,7 @@ export default function FavoritesScreen({ navigation }) {
       
       {/* header: başlık kısmı ve sıralama butonu */}
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>My Favorites ❤️</Text>
+        <Text style={styles.header}>My Favorites <Ionicons name="heart" size={27} color="red" /></Text>
         <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.sortButton}>
           <Ionicons name="swap-vertical" size={24} color="#333" />
         </TouchableOpacity>

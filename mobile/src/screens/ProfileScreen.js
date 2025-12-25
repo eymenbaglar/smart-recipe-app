@@ -182,7 +182,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
         <View style={styles.profileImageContainer}>
           {uploading ? (
             <View style={[styles.profileImage, styles.center]}>
-              <ActivityIndicator color="#4CAF50" />
+              <ActivityIndicator color="#333" />
             </View>
           ) : (
             <Image 
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#333',
     width: 32,
     height: 32,
     borderRadius: 16,
