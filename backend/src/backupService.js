@@ -38,10 +38,13 @@ const performBackup = async () => {
 
     console.log(`[Backup] Process started: ${timestamp}`);
 
-    
-    const pgCommand = `set PGPASSWORD=${process.env.DB_PASSWORD}&& pg_dump -U ${process.env.DB_USER} -h ${process.env.DB_HOST} -p ${process.env.DB_PORT} ${process.env.DB_NAME} > "${dumpPath}"`;
+    // İYİLEŞTİRME: Şifreyi komut satırına yazmak yerine environment variable olarak exec'e veriyoruz.
+    // Bu yöntem hem Windows hem Linux'ta daha stabil çalışır ve boş dosya sorununu engeller.
+    const pgCommand = `pg_dump -U ${process.env.DB_USER} -h ${process.env.DB_HOST} -p ${process.env.DB_PORT} ${process.env.DB_NAME} > "${dumpPath}"`;
 
-    exec(pgCommand, async (error, stdout, stderr) => {
+    exec(pgCommand, {
+        env: { ...process.env, PGPASSWORD: process.env.DB_PASSWORD } // Şifreyi buradan veriyoruz
+    }, async (error, stdout, stderr) => {
         if (error) {
             console.error(`[Backup Error] DB dump failed: ${error.message}`);
             return;
@@ -49,18 +52,16 @@ const performBackup = async () => {
 
         console.log('[Backup] DB Dump created. Files are being zipped....');
 
-        // 2. SQL Dosyası ve Uploads Klasörünü Ziple
         const output = fs.createWriteStream(zipPath);
         const archive = archiver('zip', { zlib: { level: 9 } });
 
         output.on('close', async () => {
             console.log(`[Backup] Zip completed (${archive.pointer()} bytes). Email is being sent...`);
             
-            // 3. Mail Gönder
             try {
                 await transporter.sendMail({
                     from: process.env.EMAIL_USER,
-                    to: process.env.EMAIL_USER, // Kendine gönder
+                    to: process.env.EMAIL_USER,
                     subject: `📦 Daily System Backup - ${timestamp}`,
                     text: 'The attached file contains a database backup (.sql) and uploaded images (uploads).',
                     attachments: [
@@ -74,10 +75,21 @@ const performBackup = async () => {
             } catch (mailErr) {
                 console.error('[Backup Error] Mail could not be sent:', mailErr);
             } finally {
-                // 4. Temizlik: Dosyaları sil 
-                fs.unlinkSync(dumpPath); // SQL'i sil
-                fs.unlinkSync(zipPath);  // Zip'i sil
-                console.log('[Backup] Temporary files have been cleared.');
+                // DÜZELTME BURADA:
+                // Sadece ham SQL dosyasını siliyoruz, Zip dosyasını SİLMİYORUZ.
+                
+                try {
+                    if (fs.existsSync(dumpPath)) {
+                        fs.unlinkSync(dumpPath); // SQL dosyasını temizle (yer kaplamasın)
+                    }
+                    
+                    // AŞAĞIDAKİ SATIRI YORUMA ALDIK/SİLDİK:
+                    // fs.unlinkSync(zipPath); 
+                    
+                    console.log('[Backup] Temporary SQL file cleared. Zip backup saved locally.');
+                } catch (cleanupErr) {
+                    console.error('[Backup Warning] Cleanup failed:', cleanupErr);
+                }
             }
         });
 
@@ -90,7 +102,7 @@ const performBackup = async () => {
         // SQL dosyasını ekle
         archive.file(dumpPath, { name: dumpFileName });
 
-        // Uploads klasörünü ekle (Eğer klasör varsa)
+        // Uploads klasörünü ekle
         if (fs.existsSync(UPLOADS_DIR)) {
             archive.directory(UPLOADS_DIR, 'uploads');
         } else {

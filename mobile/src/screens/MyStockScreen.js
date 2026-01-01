@@ -21,7 +21,7 @@ const UNIT_TYPES = {
     { label: 'Litre (lt)', value: 'lt', factor: 1000 }     
   ],
   count: [
-    { label: 'Adet', value: 'qty', factor: 1 }             
+    { label: 'Whole', value: 'qty', factor: 1 }             
   ]
 };
 
@@ -233,7 +233,7 @@ export default function MyStockScreen() {
       if (num >= 1000) return `${(num / 1000).toFixed(1)} lt`;
       return `${num} ml`;
     }
-    return `${num} Adet`;
+    return `${num} Whole`;
   };
 
   return (

@@ -254,7 +254,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
 
   const renderIngredientItem = (item, index) => {
     const requiredQty = calculateRequiredAmount(parseFloat(item.quantity), item.unit_type);
-    const displayUnit = item.unit_type === 'qty' ? 'adet' : item.unit_type;
+    const displayUnit = item.unit_type === 'qty' ? 'whole' : item.unit_type;
     const userStock = parseFloat(item.user_stock_quantity);
 
     let statusColor = "#4CAF50"; 
