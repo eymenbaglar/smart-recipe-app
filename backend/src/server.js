@@ -2,7 +2,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 // KONTROL: Değişkenler gelmiş mi bakalım (Terminalde göreceksin)
-console.log("--- Server Başlatılıyor ---");
+console.log("--- Server is Starting ---");
 console.log("DB_USER:", process.env.DB_USER); // Eğer undefined yazıyorsa dosya bulunamadı demektir.
 console.log("DB_PORT:", process.env.DB_PORT);
 const express = require('express');
@@ -1712,7 +1712,7 @@ app.post('/api/recipes/cook', auth, async (req, res) => {
 
   } catch (error) {
     await client.query('ROLLBACK'); 
-    console.error('Pişirme hatası:', error);
+    console.error('Cooking error:', error);
     res.status(500).json({ error: 'Server error during cooking process.' });
   } finally {
     client.release();

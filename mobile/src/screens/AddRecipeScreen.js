@@ -183,25 +183,56 @@ export default function AddRecipeScreen({ navigation , route}) {
   // --- MALZEME EKLEME ---
   const addIngredientToList = () => {
     if (!selectedIngredient || !qty || !selectedUnit) {
-      Alert.alert("Incomplete Information“, ”Please enter the quantity and unit.");
+      Alert.alert("Missing Information", "Lütfen miktar ve birim giriniz.");
       return;
     }
+
+    let finalQty = parseFloat(qty);
+    let finalUnit = selectedUnit;
+
+    // --- DÖNÜŞÜM MANTIĞI ---
+    
+    // AĞIRLIK: kg seçildiyse grama çevir
+    if (selectedUnit === 'kg') {
+        finalQty = finalQty * 1000;
+        finalUnit = 'gram'; // Senin sabit sistemin 'gram' ise
+    } 
+    // Zaten gram, g veya gr seçildiyse standart isme ('gram') çevir
+    else if (['g', 'gr', 'gram', 'Gr'].includes(selectedUnit)) {
+        finalUnit = 'gram';
+    }
+
+    // HACİM: Litre seçildiyse ml'ye çevir
+    if (selectedUnit === 'L' || selectedUnit === 'lt' || selectedUnit === 'Litre') {
+        finalQty = finalQty * 1000;
+        finalUnit = 'ml';
+    }
+    // Zaten ml ise standart isme ('ml') sabitle
+    else if (selectedUnit === 'ml') {
+        finalUnit = 'ml';
+    }
+
+    // ADET: qty, count, adet vb. hepsini 'qty' yap
+    if (['qty', 'adet', 'count', 'piece'].includes(selectedUnit)) {
+        finalUnit = 'qty';
+    }
+
+    // ------------------------
 
     const newIng = {
       id: selectedIngredient.id,
       name: selectedIngredient.name,
-      quantity: parseFloat(qty),
-      unit: selectedUnit
+      quantity: finalQty, // Artık dönüştürülmüş miktar (örn: 1000)
+      unit: finalUnit     // Artık standart birim (örn: gram)
     };
 
     setAddedIngredients([...addedIngredients, newIng]);
     
-    // Hata varsa temizle (kullanıcı malzeme ekledi çünkü)
     if (errors.ingredients) {
       setErrors(prev => ({ ...prev, ingredients: false }));
     }
 
-    // Resetle
+    // Formu sıfırla
     setSelectedIngredient(null);
     setQty('');
     setSelectedUnit('');

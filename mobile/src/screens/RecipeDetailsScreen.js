@@ -225,7 +225,6 @@ export default function RecipeDetailsScreen({ route, navigation }) {
   };
 
   //hesaplama ve render yardımcıları
-
   const calculateRequiredAmount = (baseQty, unitType) => {
     const multiplier = currentServings / originalServings;
     const rawAmount = baseQty * multiplier;

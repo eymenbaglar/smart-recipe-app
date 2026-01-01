@@ -162,7 +162,8 @@ export default function MyStockScreen() {
 
     try {
       const token = await AsyncStorage.getItem('token');
-      const baseQuantity = parseFloat(quantity) * selectedUnit.factor;
+      const parsedQty = parseFloat(quantity.replace(',', '.'));
+      const baseQuantity = parsedQty * selectedUnit.factor;
 
       if (editingItem) {
         //güncelleme
@@ -249,10 +250,10 @@ export default function MyStockScreen() {
 
       {/* ARAMA KUTUSU */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+        <Ionicons name="add" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search for ingredient..."
+          placeholder="Add new ingredient..."
           value={query}
           onChangeText={searchIngredients}
           editable={!editingItem}
