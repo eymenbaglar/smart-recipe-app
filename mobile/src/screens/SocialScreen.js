@@ -298,7 +298,7 @@ export default function SocialScreen() {
   const [error, setError] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
   
-  const [seed] = useState(Math.random().toString()); 
+  const [seed, setSeed] = useState(Math.random().toString());
 
   const categories = [
     'All', 'Breakfast', 'Soup', 'Main Course', 
@@ -335,6 +335,8 @@ export default function SocialScreen() {
     try {
       const token = await AsyncStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
+      const newSeed = Math.random().toString(); 
+      setSeed(newSeed)
 
       // SENARYO 1: Vitrin Modu (Search Yok, Kategori All, Sıralama Random)
       if (searchTerm === '' && selectedCategory === 'All' && sortBy === 'random') {
@@ -415,6 +417,7 @@ export default function SocialScreen() {
   // --- EFFECT HOOKS ---
   useFocusEffect(
     useCallback(() => {
+      refreshAllData(true);
     }, [searchTerm, selectedCategory, mode, sortBy])
   );
 

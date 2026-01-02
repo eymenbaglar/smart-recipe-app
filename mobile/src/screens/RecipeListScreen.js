@@ -63,7 +63,7 @@ export default function RecipeListScreen({ route, navigation }) {
       
       const res = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { limit: 50 } 
+        params: { limit: 20 } 
       });
       setRecipes(res.data);
     } catch (error) {

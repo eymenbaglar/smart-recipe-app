@@ -162,9 +162,9 @@ export default function AddRecipeScreen({ navigation , route}) {
 
     if (['ml', 'l', 'lt'].includes(unit)) return liquidUnits;
     if (['gr', 'g', 'kg' , 'gram'].includes(unit)) return solidUnits;
-    if (['qty', 'adet', 'count'].includes(unit)) return countUnits;
+    if (['qty', 'count'].includes(unit)) return countUnits;
     
-    return [defaultUnit || 'birim'];
+    return [defaultUnit || 'unit'];
   };
 
   // --- MALZEME SEÇME ---
@@ -183,7 +183,7 @@ export default function AddRecipeScreen({ navigation , route}) {
   // --- MALZEME EKLEME ---
   const addIngredientToList = () => {
     if (!selectedIngredient || !qty || !selectedUnit) {
-      Alert.alert("Missing Information", "Lütfen miktar ve birim giriniz.");
+      Alert.alert("Missing Information", "Please enter the quantity and unit.");
       return;
     }
 

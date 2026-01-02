@@ -1288,31 +1288,35 @@ app.patch('/api/refrigerator/update/:itemId', auth, async (req, res) => {
   }
 });
 
-//mystocktan matching
+//matching from MyStock
 app.get('/api/recipes/match', auth, async (req, res) => {
   const userId = req.user.id;
 
   try {
     const query = `
+      -- Fetch all ingredients currently available in the user's virtual refrigerator
       WITH UserInventory AS (
         SELECT ingredient_id, quantity
         FROM refrigerator_items ri
         JOIN virtual_refrigerator vr ON ri.virtual_refrigerator_id = vr.id
         WHERE vr.user_id = $1
       ),
+      -- Join recipes with their required ingredients and map them against the user's inventory 
+      -- If the user doesn't have an ingredient, 'amount_have' defaults to 0
       RecipeDetails AS (
         SELECT 
           r.id AS recipe_id,
           i.name AS ingredient_name,
           i.unit AS unit,
           ri.quantity AS amount_needed,
-          COALESCE(ui.quantity, 0) AS amount_have,
-          i.is_staple
+          COALESCE(ui.quantity, 0) AS amount_have, -- Handle missing ingredient
+          i.is_staple -- Staple ingredients are ignored in scoring
         FROM recipes r
         JOIN recipe_ingredients ri ON r.id = ri.recipe_id
         JOIN ingredients i ON ri.ingredient_id = i.id
         LEFT JOIN UserInventory ui ON ri.ingredient_id = ui.ingredient_id
       ),
+      -- Apply the mathematical scoring logic for each ingredient within a recipe
       CalculatedScores AS (
         SELECT 
           recipe_id,
@@ -1321,17 +1325,23 @@ app.get('/api/recipes/match', auth, async (req, res) => {
           amount_needed,
           amount_have,
           is_staple,
-          -- Puanlama (malzeme staple değilse hesapla)
+          
+          -- Scoring logic:
+          -- 1) Staple items don't effect the score
+          -- 2) If user has 0 amount score is 0
+          -- 3) If user has enough or more than needed score is 1.0
+          -- 4) Otherwise calculate the ratio (if has 100g, needs 200g then score is 0.5)
           CASE 
             WHEN is_staple = TRUE THEN 0
             WHEN amount_have = 0 THEN 0
             WHEN (amount_have / amount_needed) >= 1 THEN 1.0
             ELSE (amount_have / amount_needed)
           END AS score,
-          -- Eksik miktar hesabı
+          -- Calculate missing quantity
           GREATEST(amount_needed - amount_have, 0) AS missing_amount
         FROM RecipeDetails
       )
+      -- Group by recipe and calculate total match percantage
       SELECT 
         r.id,
         r.title,
@@ -1346,12 +1356,14 @@ app.get('/api/recipes/match', auth, async (req, res) => {
         COALESCE(u.username, 'Admin') as username,
         (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE recipe_id = r.id) as average_rating,
 
-        -- Eşleşme oranı hesabı
+        -- Calculate match percantage:
+        -- (Sum of scores) / (Number of non-staple ingredients) * 100
         ROUND(
           (SUM(cs.score) FILTER (WHERE cs.is_staple = FALSE) / 
            NULLIF(COUNT(*) FILTER (WHERE cs.is_staple = FALSE), 0)) * 100
         ) AS match_percentage,
 
+        -- Generate a JSON list of missing ingredient for the frontend
         (
           SELECT json_agg(json_build_object(
             'name', cs_sub.ingredient_name,
@@ -1367,14 +1379,21 @@ app.get('/api/recipes/match', auth, async (req, res) => {
       LEFT JOIN users u ON r.created_by = u.id
       WHERE r.is_verified = TRUE
       GROUP BY r.id , u.username
+
+      -- Filterin: Show only recipes with at least %30 match rate
       HAVING ROUND(
           (SUM(cs.score) FILTER (WHERE cs.is_staple = FALSE) / 
            NULLIF(COUNT(*) FILTER (WHERE cs.is_staple = FALSE), 0)) * 100
         ) >= 30
+
+      -- Sorting best matches first
       ORDER BY match_percentage DESC;
     `;
 
+    //Executing query with the user's ID
     const result = await db.query(query, [userId]);
+
+    //Return the sorted list of recipes
     res.json(result.rows);
 
   } catch (error) {

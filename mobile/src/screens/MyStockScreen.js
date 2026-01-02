@@ -17,8 +17,8 @@ const UNIT_TYPES = {
     { label: 'Kilogram (kg)', value: 'kg', factor: 1000 }  
   ],
   volume: [
-    { label: 'Mililitre (ml)', value: 'ml', factor: 1 },   
-    { label: 'Litre (lt)', value: 'lt', factor: 1000 }     
+    { label: 'Milliliter (ml)', value: 'ml', factor: 1 },   
+    { label: 'Liter (lt)', value: 'lt', factor: 1000 }     
   ],
   count: [
     { label: 'Whole', value: 'qty', factor: 1 }             
