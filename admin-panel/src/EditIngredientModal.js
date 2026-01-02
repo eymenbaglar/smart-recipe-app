@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './EditIngredientModal.css';
 
 function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
+  //form state to handle input values
   const [formData, setFormData] = useState({
     name: '',
     unit: '',
@@ -11,6 +12,7 @@ function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
     isStaple: false
   });
 
+  //update form fields when the selected ingredient changes
   useEffect(() => {
     if (ingredient) {
       setFormData({
@@ -24,6 +26,7 @@ function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
     }
   }, [ingredient]);
 
+  //handle changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -32,6 +35,7 @@ function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
     }));
   };
 
+  //submit the updated data
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(ingredient.id, formData);
@@ -44,13 +48,15 @@ function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
       <div className="modal-content-sm">
         <h3>Edit Ingredient</h3>
         <form onSubmit={handleSubmit} className="edit-ing-form">
-          
+
+          {/* basic details */}          
           <label>Ingredient Name</label>
           <input name="name" value={formData.name} onChange={handleChange} required />
 
           <label>Category (Meat, Vegetable etc.)</label>
           <input name="category" value={formData.category} onChange={handleChange} />
 
+          {/* unit configuration */}
           <div className="row-group">
             <div className="col">
               <label>Unit (gr,ml etc.)</label>
@@ -66,9 +72,10 @@ function EditIngredientModal({ isOpen, onClose, ingredient, onSave }) {
             </div>
           </div>
 
-          <label>Calory (Per unit)</label>
+          <label>Calorie (Per unit)</label>
           <input name="calories" type="number" value={formData.calories} onChange={handleChange} />
 
+          {/* Staple Checkbox */}
           <div className="checkbox-row">
             <input 
               type="checkbox" 

@@ -10,14 +10,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function ManualInputScreen({ navigation }) {
+  //State for search query and results
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  // Seçilen malzemelerin listesi
+  // State for the list of ingredients selected by the user
   const [selectedIngredients, setSelectedIngredients] = useState([]);
 
-  // Arama fonksiyonu
+  // Search function
   const searchIngredients = async (text) => {
     setQuery(text);
     if (text.length < 2) {
@@ -39,7 +40,7 @@ export default function ManualInputScreen({ navigation }) {
     }
   };
 
-  // Malzeme ekleme
+  // select ingredients
   const handleSelect = (item) => {
     if (!selectedIngredients.find(i => i.id === item.id)) {
       setSelectedIngredients([...selectedIngredients, item]);
@@ -49,18 +50,18 @@ export default function ManualInputScreen({ navigation }) {
     Keyboard.dismiss();
   };
 
-  // Malzeme silme
+  // remove ingredient from selected list
   const handleRemove = (id) => {
     setSelectedIngredients(selectedIngredients.filter(item => item.id !== id));
   };
 
-  // Sonuçlara Git
+  // Navigates to the results screen
   const handleFindRecipes = () => {
     if (selectedIngredients.length === 0) {
       alert("Please choose at least one ingredient.");
       return;
     }
-    // sadece ingredient idleri yolla
+    
     const ids = selectedIngredients.map(i => i.id);
     
     navigation.navigate('SmartRecipeResults', { 
@@ -74,7 +75,7 @@ export default function ManualInputScreen({ navigation }) {
       <Text style={styles.title}>Choose Ingredient</Text>
       <Text style={styles.subtitle}>Add the ingredients you have on hand, and we'll find the recipes that suit you best.</Text>
 
-      {/* ARAMA KUTUSU */}
+      {/* SEARCH BOX SECTION */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#666" style={{marginRight: 10}} />
         <TextInput
@@ -86,7 +87,7 @@ export default function ManualInputScreen({ navigation }) {
         {isSearching && <ActivityIndicator size="small" color="#000" />}
       </View>
 
-      {/* arama sonuçları */}
+      {/* SEARCH RESULTS */}
       {searchResults.length > 0 && (
         <View style={styles.resultsList}>
           <FlatList
@@ -103,7 +104,7 @@ export default function ManualInputScreen({ navigation }) {
         </View>
       )}
 
-      {/* Seçilen malzemeler */}
+      {/* SELECTED INGREDIENTS */}
       <View style={styles.chipsContainer}>
         {selectedIngredients.map((item) => (
           <View key={item.id} style={styles.chip}>
@@ -115,7 +116,7 @@ export default function ManualInputScreen({ navigation }) {
         ))}
       </View>
 
-      {/* buton */}
+      {/*  BUTTON */}
       <View style={{flex: 1, justifyContent: 'flex-end', marginBottom: 20}}>
         <TouchableOpacity 
           style={[styles.button, selectedIngredients.length === 0 && styles.buttonDisabled]} 

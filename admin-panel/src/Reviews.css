@@ -51,7 +51,7 @@
 .btn-view:hover { background-color: #2980b9; }
 .btn-delete:hover { background-color: #c0392b; }
 
-/* Modal Stilleri */
+
 .review-modal {
     max-width: 500px;
     width: 90%;
@@ -67,7 +67,7 @@
     overflow-y: auto;
 }
 
-/* Header Düzeni: Başlık solda, Arama sağda */
+
 .reviews-header {
   display: flex;
   justify-content: space-between;
@@ -75,7 +75,7 @@
   margin-bottom: 20px;
 }
 
-/* Arama Kutusu Stilleri */
+
 .search-box {
   position: relative;
   display: flex;

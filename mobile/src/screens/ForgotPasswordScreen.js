@@ -22,6 +22,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
+  //Validates email input and sends a request to the backend to for reset code
   const handleSendCode = async () => {
     if (!email) {
       Alert.alert("Error", "Please enter your email address.");
@@ -46,27 +47,27 @@ export default function ForgotPasswordScreen({ navigation }) {
   };
 
   return (
-    // 1. ADIM: Klavye Yönetimi
+    // Keyboard Management
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      {/* 2. ADIM: Klavyeyi Kapatma */}
+      
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         
-        {/* 3. ADIM: Kaydırma Özelliği */}
+        
         <ScrollView 
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           
-          {/* Geri Dön Butonu */}
+          {/* Back Button */}
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
 
-          {/* İkon */}
+          {/* Icon Section */}
           <View style={styles.iconContainer}>
             <MaterialCommunityIcons name="lock-question" size={80} color="#333" />
           </View>
@@ -105,9 +106,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
-    paddingTop: 40 // Üstten biraz boşluk (Back button için)
+    paddingTop: 40 
   },
-  // Geri butonunu artık absolute yerine akış içinde kullanıyoruz ki kaydırmada sorun çıkarmasın
+  
   backButton: { 
     alignSelf: 'flex-start',
     marginBottom: 20,

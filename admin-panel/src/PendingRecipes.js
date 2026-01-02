@@ -1,19 +1,22 @@
-// admin-panel/src/PendingRecipes.js
+
 import React, { useState, useEffect } from 'react';
 import api from './api';
 import RecipeDetailsModal from './RecipeDetailsModal';
 
 function PendingRecipes() {
+  //state to store the recipes awaiting approval
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  //modal statei
+  //state to manage the selected recipe for the details modal
   const [selectedRecipe, setSelectedRecipe] = useState(null);
 
+  //fetch data when the component open
   useEffect(() => {
     fetchPendingRecipes();
   }, []);
 
+  //function to get pending recipes from the backend
   const fetchPendingRecipes = async () => {
     try {
       const response = await api.get('/api/admin/recipes/pending');
@@ -25,17 +28,20 @@ function PendingRecipes() {
     }
   };
 
+  //handle administrative actions (Approve, Reject, Verify)
   const handleAction = async (id, action) => {
     let reason = null;
+    //if rejecting, give reason
     if (action === 'reject') {
       reason = window.prompt("Please state the reason for rejection:");
       if (!reason) return;
     }
 
     try {
-      await api.patch(`/api/admin/recipes/${id}/action`, { action, reason });
+      //send the action to the API
+      await api.patch(`/api/admin/recipes/${id}/action`, { action, reason }); //endpoint about admin actions
       alert('Transaction successful!');
-      fetchPendingRecipes(); // Listeyi yenile
+      fetchPendingRecipes(); //refresh list to show updated data
     } catch (error) {
       alert('An error occurred during the process.');
     }
@@ -44,6 +50,8 @@ function PendingRecipes() {
   return (
     <div className="page-content">
       <h2>Recipes Pending Approval</h2>
+
+      {/* show the data table */}
       {loading ? <p>Loading...</p> : (
         <table className="recipe-table">
           <thead>
@@ -57,6 +65,7 @@ function PendingRecipes() {
             </tr>
           </thead>
           <tbody>
+            {/* check if there are recipes to display */}
             {recipes.length === 0 ? (
               <tr><td colSpan="5" style={{textAlign:'center'}}>No pending recepies </td></tr>
             ) : (
@@ -80,6 +89,7 @@ function PendingRecipes() {
                   Details
                 </button>
               </td>
+                  {/* action buttons for the admin */}
                   <td className="actions-cell">
                     <button className="btn-approve" onClick={() => handleAction(recipe.id, 'approve')}>✅ Approve</button>
                     <button className="btn-verify" onClick={() => handleAction(recipe.id, 'verify')}>🏅 Verify</button>
@@ -91,6 +101,7 @@ function PendingRecipes() {
           </tbody>
         </table>
       )}
+      {/* show the details modal if a recipe is selected */}
       {selectedRecipe && (
         <RecipeDetailsModal 
           recipe={selectedRecipe} 

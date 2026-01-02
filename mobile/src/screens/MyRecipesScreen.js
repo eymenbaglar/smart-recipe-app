@@ -16,7 +16,7 @@ export default function MyRecipesScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // --- VERİ ÇEKME ---
+  // Retrieves the list of recipes created user
   const fetchMyRecipes = async () => {
     try {
       if (!refreshing) setLoading(true);
@@ -35,6 +35,7 @@ export default function MyRecipesScreen({ navigation }) {
     }
   };
 
+  //Reload recipes when the screen comes
   useFocusEffect(
     useCallback(() => {
       fetchMyRecipes();
@@ -46,7 +47,7 @@ export default function MyRecipesScreen({ navigation }) {
     fetchMyRecipes();
   };
 
-  // --- İŞLEMLER ---
+  // deletion of a recipe
   const handleDelete = (recipeId) => {
     Alert.alert(
       "Delete Recipe",
@@ -75,7 +76,7 @@ export default function MyRecipesScreen({ navigation }) {
     );
   };
 
-  // --- GÜVENLİ RESİM URL ---
+  // Ensures the image URL is valid and properly formatted
   const getSafeImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith('http')) return path;
@@ -84,21 +85,21 @@ export default function MyRecipesScreen({ navigation }) {
     return encodeURI(`${API_URL}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`);
   };
 
-  // --- KART TASARIMI ---
+  // card design
   const renderRecipeCard = ({ item }) => {
     const isRejected = item.status === 'rejected';
     const isApproved = item.status === 'approved';
     const imageUrl = getSafeImageUrl(item.image_url);
 
-    // Statüye göre renk ve metin belirleme
-    let statusColor = '#4CAF50'; // Yeşil (Approved)
+    // Determining color and text according to status.
+    let statusColor = '#4CAF50'; // Green
     let statusText = 'Approved';
     
     if (item.status === 'pending') {
-      statusColor = '#FFC107'; // Sarı
+      statusColor = '#FFC107'; // Yellow
       statusText = 'Waiting';
     } else if (item.status === 'rejected') {
-      statusColor = '#FF5252'; // Kırmızı
+      statusColor = '#FF5252'; // Red
       statusText = 'Rejected';
     }
 
@@ -107,9 +108,9 @@ export default function MyRecipesScreen({ navigation }) {
         <TouchableOpacity 
           style={{ flexDirection: 'row', flex: 1 }}
           onPress={() => navigation.navigate('RecipeDetails', { recipe: item })}
-          disabled={!isApproved} // Sadece onaylılar detaya gidebilir
+          disabled={!isApproved} // Only approved recipes can view details
         >
-          {/* Sol: Resim */}
+          {/* Image */}
           {imageUrl ? (
             <Image 
               source={{ uri: item.image_url }} 
@@ -125,20 +126,20 @@ export default function MyRecipesScreen({ navigation }) {
             </View>
           )}
 
-          {/* Sağ: Bilgiler */}
+          {/* Recipe Information */}
           <View style={styles.recipeInfo}>
             <View style={styles.headerRow}>
               <Text style={styles.recipeTitle} numberOfLines={1}>{item.title}</Text>
-              {/* Statü Rozeti */}
+              {/* Status Badge */}
               <Text style={[styles.statusBadge, { color: statusColor }]}>
                 {statusText}
               </Text>
             </View>
 
-            {/* Açıklama */}
+            {/* Description */}
             <Text style={styles.categoryText}>{item.description}</Text>
 
-            {/* Alt Bilgiler: Süre ve Kalori */}
+            {/* Time, Calories, Rating */}
             <View style={styles.cardFooter}>
               <View style={styles.metaContainer}>
                 <View style={styles.metaItem}>
@@ -164,7 +165,7 @@ export default function MyRecipesScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
-        {/* Red Nedeni (Sadece Reddedilenler İçin) */}
+        {/* Rejection Reason */}
         {isRejected && item.rejection_reason && (
           <View style={styles.reasonContainer}>
             <Text style={styles.reasonTitle}>Reason for Rejection:</Text>
@@ -172,9 +173,9 @@ export default function MyRecipesScreen({ navigation }) {
           </View>
         )}
 
-        {/* Butonlar */}
+        {/* Buttons */}
         <View style={styles.actionContainer}>
-          {/* Düzenle Butonu */}
+          {/* Edit Button */}
           <TouchableOpacity 
               style={[styles.actionBtn, styles.editBtn]}
               onPress={() => navigation.navigate('AddRecipe', { recipeToEdit: item })}
@@ -183,7 +184,7 @@ export default function MyRecipesScreen({ navigation }) {
               <Text style={styles.actionBtnText}>Edit</Text>
           </TouchableOpacity>
 
-          {/* Sil Butonu */}
+          {/*Delete Button */}
           {!item.is_verified && (
               <TouchableOpacity 
               style={[styles.actionBtn, styles.deleteBtn]}
@@ -198,7 +199,7 @@ export default function MyRecipesScreen({ navigation }) {
     );
   };
 
-  // Sekmeler
+  // tabs
   const PublishedTab = () => (
     <View style={styles.tabContainer}>
       <FlatList
@@ -235,7 +236,7 @@ export default function MyRecipesScreen({ navigation }) {
 
   if (loading) return <View style={styles.loadingCenter}><ActivityIndicator size="large" color="#333" /></View>;
 
-  // --- YENİ EKLENEN KISIM: Sayıları Hesapla ---
+  // Calculate Numbers
   const publishedCount = recipes.filter(r => r.status === 'approved').length;
   const pendingCount = recipes.filter(r => r.status === 'pending' || r.status === 'rejected').length;
 
@@ -252,23 +253,23 @@ export default function MyRecipesScreen({ navigation }) {
       <Tab.Screen 
         name="Approved" 
         component={PublishedTab} 
-        options={{ title: `Approved (${publishedCount})` }} // Dinamik Başlık
+        options={{ title: `Approved (${publishedCount})` }} 
       />
       <Tab.Screen 
         name="Waiting" 
         component={PendingTab} 
-        options={{ title: `Waiting (${pendingCount})` }} // Dinamik Başlık
+        options={{ title: `Waiting (${pendingCount})` }} 
       />
     </Tab.Navigator>
   );
 }
 
-// --- STİLLER ---
+
 const styles = StyleSheet.create({
   loadingCenter: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   tabContainer: { flex: 1, backgroundColor: '#f5f5f5', padding: 15 },
   
-  // Kart Stili
+  
   recipeCard: {
     backgroundColor: 'white',
     borderRadius: 15, 
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff5f5'
   },
 
-  // Resim Stili
+  
   recipeImage: {
     width: 80,
     height: 80,
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Sağ Taraf Bilgileri
+ 
   recipeInfo: {
     flex: 1,
     marginLeft: 12,
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
 
-  // Alt Bilgi (Footer)
+  
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -350,7 +351,7 @@ const styles = StyleSheet.create({
     fontWeight: '500'
   },
 
-  // Red Nedeni Alanı
+  
   reasonContainer: {
     marginTop: 10,
     padding: 8,
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
 
-  // Butonlar Alanı
+  
   actionContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end', 

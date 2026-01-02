@@ -1,4 +1,4 @@
-/* Users.css */
+
 .user-table {
   width: 100%;
   border-collapse: collapse;
@@ -27,7 +27,7 @@
   object-fit: cover;
 }
 
-/* Rozetler */
+
 .badge {
   padding: 4px 8px;
   border-radius: 12px;
@@ -39,13 +39,13 @@
 .badge-user { background-color: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
 .badge-banned { background-color: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
 
-/* Yasaklı Satır */
+
 .banned-row {
   background-color: #fff1f0;
   opacity: 0.8;
 }
 
-/* Butonlar */
+
 .btn-action {
   padding: 6px 10px;
   border: none;

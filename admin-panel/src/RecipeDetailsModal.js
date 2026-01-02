@@ -2,9 +2,10 @@ import React from 'react';
 import './RecipeDetailsModal.css';
 
 const RecipeDetailsModal = ({ recipe, onClose }) => {
+  //if no recipe is selected, do not render the modal
   if (!recipe) return null;
 
-  // Malzemeleri güvenli bir şekilde listeye çevirme
+  // safely parse ingredients list
   let ingredientsList = [];
   try {
     if (typeof recipe.ingredients === 'string') {
@@ -16,7 +17,7 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
     console.error("Material parse error:", e);
   }
 
-  // Adımları (Yapılışı) güvenli parse etme
+  // safely parse instructions (preperation steps)
   let stepsList = [];
   try {
      if (typeof recipe.instructions === 'string') {
@@ -42,14 +43,14 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
         
         <div className="modal-body scrollable">
           
-          {/* Görsel */}
+          {/* recipe image */}
           {recipe.image_url && (
             <div className="detail-image-container">
                 <img src={recipe.image_url} alt={recipe.title} className="detail-image" />
             </div>
           )}
 
-          {/* Temel Bilgiler Grid */}
+          {/* basic information grid */}
           <div className="detail-grid">
             <div className="detail-item">
                 <label>Created Date:</label>
@@ -71,10 +72,12 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
 
           <hr />
 
-          {/* Statü Bilgileri */}
+          {/* status information */}
           <div className="status-section">
              <p><strong>Status:</strong> <span className={`status-badge ${recipe.status}`}>{recipe.status}</span></p>
              <p><strong>Is it verified?:</strong> {recipe.is_verified ? '✅ YES' : '❌ NO'}</p>
+
+             {/* show rejection reason if recipe rejected */}
              {recipe.rejection_reason && (
                  <div className="rejection-box">
                      <strong>⚠️ Previous Reason for Rejection:</strong>
@@ -85,13 +88,13 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
 
           <hr />
 
-          {/* Açıklama */}
+          {/* description section */}
           <div className="detail-section">
             <h3>Explanation</h3>
             <p>{recipe.description}</p>
           </div>
 
-          {/* Malzemeler */}
+          {/* ingredients list */}
           <div className="detail-section">
             <h3>Ingredients</h3>
             <ul className="ingredient-list">
@@ -103,7 +106,7 @@ const RecipeDetailsModal = ({ recipe, onClose }) => {
             </ul>
           </div>
 
-          {/* Yapılışı */}
+          {/* preparation steps */}
           <div className="detail-section">
             <h3>Preparation</h3>
             <div className="instructions-text">

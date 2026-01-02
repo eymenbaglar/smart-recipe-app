@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from './api';
 import './Dashboard.css';
 
+//state to hold dashboard statistics
 function Dashboard() {
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -9,10 +10,11 @@ function Dashboard() {
     pendingRecipes: 0,
     cookedToday: 0
   });
-
+//fetch statistics
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        //get data from endpoint
         const response = await api.get('/api/admin/stats');
         setStats(response.data);
       } catch (error) {
@@ -22,6 +24,7 @@ function Dashboard() {
     fetchStats();
   }, []);
 
+  //dashboard layout
   return (
     <div className="page-content">
       <h2>Dashboard</h2>

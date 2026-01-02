@@ -1,31 +1,34 @@
-// admin-panel/src/Recipes.js
+
 import React, { useState, useEffect } from 'react';
 import api from './api';
 import EditRecipeModal from './EditRecipeModal';
 import './Recipes.css';
 
 function Recipes() {
-  const [activeTab, setActiveTab] = useState('standard'); // 'standard' veya 'verified'
+  //state to manage active tab (standard vs verified recipes)
+  const [activeTab, setActiveTab] = useState('standard'); 
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  //Arama Terimi State'i
+  //state for search term input
   const [searchTerm, setSearchTerm] = useState('');
 
-  //Modal State'leri
+  //states to manage edit modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
 
+  //fetch recipes whenever active tab changes
   useEffect(() => {
     fetchRecipes();
   }, [activeTab]);
 
+  //retrieve approved recipes from the backend
   const fetchRecipes = async () => {
     setLoading(true);
     try {
       const response = await api.get(`/api/admin/recipes/approved?type=${activeTab}`);
       setRecipes(response.data);
-      setSearchTerm(''); 
+      setSearchTerm(''); // clear search when switching tabs
     } catch (error) {
       console.error('Recipes could not be retrieved:', error);
     } finally {
@@ -33,6 +36,7 @@ function Recipes() {
     }
   };
 
+  //handle permanent deletion of a recipe
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this recipe?")) return;
 
@@ -45,6 +49,7 @@ function Recipes() {
     }
   };
 
+  //toggle the 'Verified' status of a recipe (promote to verified or demote to standart)
   const handleToggleVerify = async (recipe) => {
     const newStatus = !recipe.is_verified;
     const actionText = newStatus ? "Get verified" : "Obtain verified status";
@@ -59,12 +64,13 @@ function Recipes() {
     }
   };
 
-  // Düzenleme İşlemleri
+  // open modal with the selected recipe data for editing
   const handleEdit = (recipe) => {
     setSelectedRecipe(recipe);
     setIsModalOpen(true);
   };
 
+  //save changes made in the modal to the backend
   const saveRecipe = async (id, updatedData) => {
     try {
       await api.put(`/api/admin/recipes/${id}`, updatedData);
@@ -77,12 +83,13 @@ function Recipes() {
     }
   };
 
-  //Filtreleme
+  //filter recipes based on the search (checks both Title and Author)
   const filteredRecipes = recipes.filter(recipe => 
     recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (recipe.author && recipe.author.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  //quick filter by clicking on an author's name
   const handleSearchAuthor = (authorName) => {
     setSearchTerm(authorName);
   };
@@ -100,7 +107,7 @@ function Recipes() {
         />
       </div>
 
-      {/* SEKMELER */}
+      {/* tabs for switching between standart and verified */}
       <div className="tabs">
         <button 
           className={`tab-btn ${activeTab === 'standard' ? 'active' : ''}`} 
@@ -114,7 +121,7 @@ function Recipes() {
         </button>
       </div>
 
-      {/* LİSTE */}
+      {/* recipe list table */}
       {loading ? <p>Loading...</p> : (
         <table className="recipe-table">
           <thead>
@@ -196,6 +203,7 @@ function Recipes() {
         </table>
       )}
 
+      {/* edit modal component */}
       <EditRecipeModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

@@ -14,17 +14,21 @@ import axios from 'axios';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function ChangePasswordScreen({ navigation }) {
+  //Input states
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  //state for the saving 
   const [saving, setSaving] = useState(false);
 
   const handleSavePassword = async () => {
+    //Validate password match
     if (newPassword !== confirmPassword) {
       Alert.alert('Error', 'The new passwords do not match.');
       return;
     }
 
+    /// Check for empty fields
     if (!currentPassword || !newPassword) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
@@ -32,14 +36,14 @@ export default function ChangePasswordScreen({ navigation }) {
 
     setSaving(true);
     try {
-      //Tokenı getir
+      //Bring the token
       const token = await AsyncStorage.getItem('token');
       if (!token) {
         Alert.alert('Error', 'Session not found. Please log in again.');
         return;
       }
 
-      //backend'e isteği gönder
+      //send the request to the backend
       const response = await axios.patch(
         `${API_URL}/api/profile/change-password`, 
         {

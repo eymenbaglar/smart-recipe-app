@@ -7,11 +7,11 @@ import {
   StyleSheet, 
   Alert, 
   ActivityIndicator,
-  KeyboardAvoidingView,   // 1. Eklenen
-  Platform,               // 2. Eklenen
-  TouchableWithoutFeedback, // 3. Eklenen
-  Keyboard,               // 4. Eklenen
-  ScrollView              // 5. Eklenen
+  KeyboardAvoidingView,   
+  Platform,               
+  TouchableWithoutFeedback, 
+  Keyboard,               
+  ScrollView             
 } from 'react-native';
 import axios from 'axios';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -19,13 +19,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function NewPasswordScreen({ route, navigation }) {
-  // ResetVerification sayfasından gelen veriler
+  // Data from the ResetVerification page
   const { email, code } = route.params; 
   
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  //Validates inputs
   const handleResetPassword = async () => {
     if (!newPassword || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields.");
@@ -44,7 +45,7 @@ export default function NewPasswordScreen({ route, navigation }) {
 
     setLoading(true);
     try {
-      // Backend'e yeni şifreyi gönder
+      // Send new password to backend
       await axios.post(`${API_URL}/api/auth/reset-password`, { 
         email, 
         code, 
@@ -65,22 +66,22 @@ export default function NewPasswordScreen({ route, navigation }) {
   };
 
   return (
-    // 1. ADIM: Klavye Yönetimi
+    //  Keyboard Management
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      {/* 2. ADIM: Klavyeyi Kapatma */}
+      {/* Dismiss Keyboard */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         
-        {/* 3. ADIM: Kaydırma */}
+        {/* Scroll Feature */}
         <ScrollView 
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
 
-          {/* İkon: Şifre Yenileme */}
+          {/* Icon: Password Reset */}
           <View style={styles.iconContainer}>
             <MaterialCommunityIcons name="lock-reset" size={80} color="#333" />
           </View>
@@ -90,7 +91,7 @@ export default function NewPasswordScreen({ route, navigation }) {
             Set a new and strong password for your account.
           </Text>
 
-          {/* Yeni Şifre Input */}
+          {/* New Password Input */}
           <TextInput
             style={styles.input}
             placeholder="New Password"
@@ -100,7 +101,7 @@ export default function NewPasswordScreen({ route, navigation }) {
             placeholderTextColor="#999"
           />
 
-          {/* Şifre Tekrar Input */}
+          {/* Confirm Password Input */}
           <TextInput
             style={styles.input}
             placeholder="New Password (Again)"
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd', 
     padding: 15, 
     borderRadius: 10, 
-    marginBottom: 15, // Inputlar arası biraz daha az boşluk
+    marginBottom: 15, 
     fontSize: 16,
     backgroundColor: '#f9f9f9'
   },
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     padding: 15, 
     borderRadius: 10, 
     alignItems: 'center',
-    marginTop: 10 // Butonu biraz aşağı it
+    marginTop: 10 
   },
   buttonText: { 
     color: '#fff', 

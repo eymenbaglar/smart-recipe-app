@@ -15,21 +15,23 @@ const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
 import RateRecipeModal from '../components/RateRecipeModal';
 
 export default function MealHistoryScreen({ navigation }) {
+  //State for history list and loading status
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  //modal stateleri
+  //Modal states
   const [showRateModal, setShowRateModal] = useState(false);
   const [selectedRecipeForRate, setSelectedRecipeForRate] = useState(null); 
   const [initialReviewData, setInitialReviewData] = useState(null);
 
-  //sayfaya her gelindiğinde listeyi yeniler
+  //Reloads the history list every time the screen comes
   useFocusEffect(
     useCallback(() => {
       fetchHistory();
     }, [])
   );
 
+  //Retrieves the cooking history from the backend
   const fetchHistory = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -44,11 +46,11 @@ export default function MealHistoryScreen({ navigation }) {
     }
   };
 
-  //puanlama butonuna basınca
+  //open rate modal
   const handleOpenRateModal = (item) => {
     setSelectedRecipeForRate(item.id);
     
-    //eğer önceden puanlandıysa
+    //Check if previously rated to populate the form
     if (item.my_rating) {
       setInitialReviewData({
         rating: item.my_rating,
@@ -61,7 +63,7 @@ export default function MealHistoryScreen({ navigation }) {
     setShowRateModal(true);
   };
 
-  //puan gönderme
+  //submit rating
   const handleRateSubmit = async (rating, comment) => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -78,6 +80,7 @@ export default function MealHistoryScreen({ navigation }) {
     }
   };
 
+  //Renders a single history card with details
   const renderHistoryItem = ({ item }) => {
     const date = new Date(item.cooked_at);
     const dateString = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -130,7 +133,7 @@ export default function MealHistoryScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
-        {/* Rate Butonu*/}
+        {/* Rate Button*/}
         <View style={styles.actionRow}>
            <TouchableOpacity 
              style={[styles.rateButton, hasRated && styles.editButton]} 
@@ -162,6 +165,7 @@ export default function MealHistoryScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* History List */}
       <FlatList
         data={history}
         keyExtractor={(item) => item.history_id.toString()}
@@ -180,7 +184,7 @@ export default function MealHistoryScreen({ navigation }) {
         removeClippedSubviews={true}
       />
 
-      {/* Puanlama Modalı */}
+      {/* Rating Modal Component */}
       <RateRecipeModal 
         visible={showRateModal}
         onClose={() => setShowRateModal(false)}

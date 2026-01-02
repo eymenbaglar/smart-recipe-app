@@ -13,11 +13,11 @@ import Reviews from './Reviews';
 import DeletedAccounts from './DeletedAccounts';
 
 function App() {
-  // Başlangıçta localStorage'dan okuyoruz
+  // Initialize token state 
   const [token, setToken] = useState(localStorage.getItem('adminToken'));
 
   useEffect(() => {
-    // Token state'i değiştiğinde localStorage'ı senkronize et
+    // Synchronize when the token state changes.
     if (token) {
       localStorage.setItem('adminToken', token);
     } else {
@@ -26,9 +26,9 @@ function App() {
     }
   }, [token]);
 
-  // --- KRİTİK DÜZELTME BURADA ---
+  //handle login and update state
   const handleLogin = (tokenFromLogin) => {
-    // Eğer Login.js parametre göndermeyi unutursa, localStorage'dan bakmayı dene
+    
     const finalToken = tokenFromLogin || localStorage.getItem('adminToken');
     setToken(finalToken);
   };
@@ -37,18 +37,19 @@ function App() {
     setToken(null);
   };
 
+  //If not authenticated, force the Login screen
   if (!token) {
-    // Login componentine handleLogin'i gönderiyoruz
+    
     return <Login onLogin={handleLogin} />;
   }
 
   return (
     <Router>
       <div className="app-container" style={{ display: 'flex' }}>
-        {/* Sol Menü */}
+        {/* sidebar navigation */}
         <Sidebar onLogout={handleLogout} />
 
-        {/* Sağ İçerik Alanı */}
+        {/* main content */}
         <div className="main-content" style={{ flex: 1, marginLeft: '250px', padding: '20px', backgroundColor: '#f4f6f8', minHeight: '100vh' }}>
           <Routes>
             <Route path="/" element={<Dashboard />} />

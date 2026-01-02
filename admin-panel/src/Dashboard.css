@@ -11,7 +11,7 @@
 .btn-verify { background-color: #2980b9; }
 .btn-reject { background-color: #c0392b; }
 
-/* İstatistik Kartları */
+
 .stats-grid {
   display: flex;
   gap: 20px;

@@ -3,13 +3,15 @@ import api from './api';
 import './Reviews.css';
 
 const Reviews = () => {
+  //state variables for managing reviews data, loading status, and selected item
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState(null);
   
-  //  Arama çubuğu için state
+  // state for the search bar input
   const [searchTerm, setSearchTerm] = useState("");
 
+  //fetch all reviews from the backend 
   const fetchReviews = async () => {
     try {
       const response = await api.get('/api/admin/reviews');
@@ -25,16 +27,17 @@ const Reviews = () => {
     fetchReviews();
   }, []);
 
-  //  Filtreleme Mantığı 
+  //  filter reviews based on search input
   const filteredReviews = reviews.filter((review) => {
     const term = searchTerm.toLowerCase();
     const userMatch = review.username?.toLowerCase().includes(term);
     const recipeMatch = review.recipe_title?.toLowerCase().includes(term);
     
-    // İster kullanıcı adında, ister tarif adında geçsin
+    // either username or recipe title
     return userMatch || recipeMatch;
   });
 
+  //handle deleting a review with a reason
   const handleDelete = async (id) => {
     const reason = window.prompt("Why are you deleting this comment? (To be sent to the user)");
     if (reason === null) return;
@@ -52,6 +55,7 @@ const Reviews = () => {
     }
   };
 
+  // function to shorten long comments for the table view
   const truncateText = (text, maxLength = 50) => {
     if (!text) return "";
     if (text.length <= maxLength) return text;
@@ -63,7 +67,7 @@ const Reviews = () => {
   return (
     <div className="reviews-container">
       
-      {/* YENİ: Header Kısmı (Başlık ve Search Yan Yana) */}
+      {/* header section */}
       <div className="reviews-header">
         <h2>Comment Management</h2>
         <div className="search-box">
@@ -90,7 +94,7 @@ const Reviews = () => {
           </tr>
         </thead>
         <tbody>
-          {/* YENİ: filteredReviews kullanıyoruz */}
+          {/* render the filtered list of reviews */}
           {filteredReviews.length > 0 ? (
             filteredReviews.map((review) => (
               <tr key={review.id}>
@@ -117,7 +121,7 @@ const Reviews = () => {
         </tbody>
       </table>
 
-      {/* MODAL KISMI (Değişmedi) */}
+      {/* modal component to display full review details */}
       {selectedReview && (
         <div className="modal-overlay" onClick={() => setSelectedReview(null)}>
           <div className="modal-content review-modal" onClick={e => e.stopPropagation()}>
@@ -132,7 +136,7 @@ const Reviews = () => {
                <p className="full-comment">{selectedReview.comment}</p>
             </div>
             <div className="modal-footer">
-               <button className="btn-secondary" onClick={() => setSelectedReview(null)}>Kapat</button>
+               <button className="btn-secondary" onClick={() => setSelectedReview(null)}>Close</button>
             </div>
           </div>
         </div>

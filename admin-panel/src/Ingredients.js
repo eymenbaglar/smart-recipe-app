@@ -4,26 +4,29 @@ import './Ingredients.css';
 import EditIngredientModal from './EditIngredientModal';
 
 function Ingredients() {
+  //state for storing ingredients and loading status
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Form State'leri
+  // form states for adding a new ingredient
   const [newName, setNewName] = useState('');
   const [newUnit, setNewUnit] = useState('');
-  const [unitCategory, setUnitCategory] = useState('count'); // count, weight, volume
-  const [category, setCategory] = useState(''); // 'Vegetable', 'Dairy' vb.
+  const [unitCategory, setUnitCategory] = useState('count'); 
+  const [category, setCategory] = useState(''); 
   const [newCalories, setNewCalories] = useState('');
   const [isStaple, setIsStaple] = useState(false);
 
-  //Modal Stateleri
+  //states to manage the edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState(null);
 
+  //fetch all ingredients when the page loads
   useEffect(() => {
     fetchIngredients();
   }, []);
 
+  //get ingredient list from backend
   const fetchIngredients = async () => {
     setLoading(true);
     try {
@@ -36,11 +39,13 @@ function Ingredients() {
     }
   };
 
+  //open modal with selected ingredient's data
   const openEditModal = (ing) => {
     setSelectedIngredient(ing);
     setIsEditModalOpen(true);
   };
 
+  //handle form submission to add a new ingredient
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!newName || !newUnit) {
@@ -49,6 +54,7 @@ function Ingredients() {
     }
 
     try {
+      //send new ingredient data to the API
       await api.post('/api/admin/ingredients', {
         name: newName,
         unit: newUnit,
@@ -59,13 +65,15 @@ function Ingredients() {
       });
       
       alert("Ingredient added!");
+      //reset the form fields after addition
       setNewName('');
       setNewUnit('');
-      setUnitCategory('count');
+      setUnitCategory('count');//default
       setCategory('');
       setNewCalories('');
       setIsStaple(false);
       
+      //refresh list to show the new item
       fetchIngredients(); 
     } catch (error) {
       console.error(error);
@@ -73,6 +81,7 @@ function Ingredients() {
     }
   };
 
+  //update an existing ingredient
   const handleUpdate = async (id, updatedData) => {
     try {
       await api.put(`/api/admin/ingredients/${id}`, updatedData);
@@ -84,6 +93,7 @@ function Ingredients() {
     }
   };
 
+  //filter ingredients based on the search
   const filteredIngredients = ingredients.filter(ing => 
     ing.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -91,7 +101,7 @@ function Ingredients() {
   return (
     <div className="page-content">
       <h2>Ingredient Management</h2>
-      
+      {/* section to add a new ingredient */}
       <div className="add-ingredient-box">
           <h4>Add New Ingredient</h4>
             <form onSubmit={handleAdd} className="add-form">
@@ -117,7 +127,7 @@ function Ingredients() {
             </form>
       </div>
 
-      {/* Arama Çubuğu */}
+      {/* search bar */}
       <div className="search-row">
         <input 
           type="text" placeholder="🔍 Search Ingredient" 
@@ -127,7 +137,7 @@ function Ingredients() {
         <span className="count-badge">{filteredIngredients.length} Ingredient</span>
       </div>
 
-      {/* Tablo */}
+      {/* ingredients table */}
       {loading ? <p>Loading...</p> : (
         <div className="table-container">
           <table className="ingredient-table">
@@ -165,7 +175,7 @@ function Ingredients() {
         </div>
       )}
 
-      {/* MODAL */}
+      {/* edit modal component */}
       <EditIngredientModal 
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 

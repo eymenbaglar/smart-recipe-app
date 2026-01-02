@@ -26,31 +26,35 @@ const UNIT_TYPES = {
 };
 
 export default function MyStockScreen() {
-  // Arama & Liste State'leri
+  // Search and list states
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [myStock, setMyStock] = useState([]);
   const [loadingStock, setLoadingStock] = useState(false);
 
-  // Form State'leri
+  // Form States
   const [selectedIngredient, setSelectedIngredient] = useState(null);
   const [quantity, setQuantity] = useState('');
   const [selectedUnit, setSelectedUnit] = useState(null); 
   
-  // düzenleme modu
+  // editing mode
   const [editingItem, setEditingItem] = useState(null);
 
-  // Öneri Modalı için yeni state'ler
+  // suggestion modal
   const [suggestionModalVisible, setSuggestionModalVisible] = useState(false);
   const [suggestionText, setSuggestionText] = useState('');
 
+
+  //Reload stock data
   useFocusEffect(
   useCallback(() => {
     fetchMyStock();
   }, [])
   );
 
+
+  //Retrieves the user's refrigerator stock from the backend
   const fetchMyStock = async () => {
     setLoadingStock(true);
     try {
@@ -66,6 +70,8 @@ export default function MyStockScreen() {
     }
   };
 
+
+  //Searches for ingredients
   const searchIngredients = async (text) => {
     setQuery(text);
     if (text.length < 2) {
@@ -87,6 +93,7 @@ export default function MyStockScreen() {
     }
   };
 
+  //select ingredients
   const handleSelectIngredient = (item) => {
     setSelectedIngredient(item);
     setQuery(item.name);
@@ -97,7 +104,7 @@ export default function MyStockScreen() {
     setSelectedUnit(defaultUnitList[0]);
   };
   
-  //malzeme önerisi
+  //ingredient suggestion
   const handleSendSuggestion = async () => {
     if (!suggestionText.trim()) {
       Alert.alert("Warning", "Please enter a ingredient name.");
@@ -120,10 +127,10 @@ export default function MyStockScreen() {
     }
   };
 
-  // düzenleme modu
+  // edit mode
   const handleEditItem = (item) => {
     const ingredientData = {
-      id: item.id, // refrigerator_item id'si
+      id: item.id, 
       name: item.name,
       unit_category: item.unit_category
     };
@@ -138,6 +145,7 @@ export default function MyStockScreen() {
 
     const unitList = UNIT_TYPES[item.unit_category] || UNIT_TYPES.count;
 
+    //converting
     if (item.unit_category === 'weight' && qty >= 1000) {
       defaultUnit = unitList.find(u => u.value === 'kg');
       displayQty = (qty / 1000).toString();
@@ -153,7 +161,7 @@ export default function MyStockScreen() {
     setQuantity(displayQty);
   };
 
-  // kaydet fonksiyonu
+  // save funtion
   const handleSaveStock = async () => {
     if (!selectedIngredient || !quantity || !selectedUnit) {
       Alert.alert('Error', 'Please enter amount.');
@@ -166,7 +174,7 @@ export default function MyStockScreen() {
       const baseQuantity = parsedQty * selectedUnit.factor;
 
       if (editingItem) {
-        //güncelleme
+        //Update existing item
         await axios.patch(
           `${API_URL}/api/refrigerator/update/${editingItem.id}`,
           { quantity: baseQuantity },
@@ -174,7 +182,7 @@ export default function MyStockScreen() {
         );
         Alert.alert('Updated', 'Ingredient amount updated.');
       } else {
-        //yeni ekleme
+        //add new items
         await axios.post(
           `${API_URL}/api/refrigerator/add`,
           {
@@ -194,6 +202,8 @@ export default function MyStockScreen() {
       Alert.alert('Error', 'The operation failed.');
     }
   };
+  
+  //delete ingredients
 
   const handleDeleteItem = (itemId) => {
     Alert.alert(
@@ -223,6 +233,7 @@ export default function MyStockScreen() {
     setEditingItem(null);
   };
 
+  //Formats quantity for display
   const formatQuantity = (qty, unitCategory) => {
     const num = parseFloat(qty);
     if (unitCategory === 'weight') {
@@ -248,7 +259,7 @@ export default function MyStockScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ARAMA KUTUSU */}
+      {/* SEARCH INPUT */}
       <View style={styles.searchContainer}>
         <Ionicons name="add" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
@@ -261,7 +272,7 @@ export default function MyStockScreen() {
         {isSearching && <ActivityIndicator size="small" color="#000" />}
       </View>
 
-      {/* arama sonuçları */}
+      {/* SEARCH RESULTS */}
       {searchResults.length > 0 && !selectedIngredient && (
         <View style={styles.resultsList}>
           <FlatList
@@ -281,7 +292,7 @@ export default function MyStockScreen() {
         </View>
       )}
 
-      {/* detay kartı */}
+      {/* DETAIL CARD */}
       {selectedIngredient && (
         <View style={styles.detailCard}>
           <Text style={styles.selectedTitle}>
@@ -340,13 +351,13 @@ export default function MyStockScreen() {
         </View>
       )}
 
-      {/* liste başlığı */}
+      {/* LIST HEADER */}
       <View style={styles.listHeader}>
         <Text style={styles.listTitle}>Your Stock</Text>
         <Text style={styles.listCount}>{myStock.length} Ingredient</Text>
       </View>
 
-      {/* STOK LİSTESİ */}
+      {/* STOCK LIST */}
       {loadingStock ? (
         <ActivityIndicator style={{marginTop: 20}} size="large" color="#4CAF50" />
       ) : (
@@ -370,7 +381,7 @@ export default function MyStockScreen() {
               </View>
 
               <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                {/* düzenle */}
+                {/* Edit Button */}
                 <TouchableOpacity 
                   onPress={() => handleEditItem(item)}
                   style={{marginRight: 10, padding: 5}}
@@ -378,7 +389,7 @@ export default function MyStockScreen() {
                   <Ionicons name="pencil-outline" size={22} color="#4CAF50" />
                 </TouchableOpacity>
 
-                {/* sil */}
+                {/* Delete Button */}
                 <TouchableOpacity 
                   onPress={() => handleDeleteItem(item.id)}
                   style={{padding: 5}}
@@ -403,20 +414,20 @@ export default function MyStockScreen() {
         visible={suggestionModalVisible}
         onRequestClose={() => setSuggestionModalVisible(false)}
       >
-        {/* EN DIŞ KATMAN: KeyboardAvoidingView (Ekranın tamamını kaplar) */}
+        {/* keyboard functions */}
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
         >
           
-          {/* Klavye kapatma alanı */}
+          
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             
-            {/* GRİ ARKA PLAN (Overlay) */}
+            
             <View style={styles.modalOverlay}>
               
-              {/* MODAL İÇERİĞİ */}
-              {/* Tıklamaların arka plana (klavye kapamaya) gitmemesi için */}
+              {/* MODAL CONTENT */}
+              
               <TouchableWithoutFeedback> 
                 <View style={styles.modalContent}>
                   <Text style={styles.modalTitle}>Ingredient Suggestion</Text>
@@ -495,7 +506,7 @@ const styles = StyleSheet.create({
   stockAmountText: { fontWeight: 'bold', color: '#333', fontSize: 14 },
   emptyContainer: { alignItems: 'center', marginTop: 50 },
   emptyText: { marginTop: 10, color: '#aaa', fontSize: 16 },
-  // Header Alanı
+  
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -504,14 +515,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   headerRow: {
-    flexDirection: 'row',        // Yan yana diz
-    justifyContent: 'space-between', // Biri sağa biri sola yaslansın
-    alignItems: 'center',        // Dikey olarak ortala
-    marginBottom: 20,            // Altındaki arama çubuğu ile arasına boşluk koy
+    flexDirection: 'row',        
+    justifyContent: 'space-between', 
+    alignItems: 'center',        
+    marginBottom: 20,            
     width: '100%',
   },
   suggestButton: {
-    backgroundColor: '#333', // Tema rengin
+    backgroundColor: '#333', 
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 20,
@@ -523,7 +534,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // Modal Stilleri
+  
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -578,7 +589,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#999',
   },
   sendBtn: {
-    backgroundColor: '#4CAF50', // Yeşil onay rengi
+    backgroundColor: '#4CAF50', 
   },
   btnText: {
     color: '#fff',
