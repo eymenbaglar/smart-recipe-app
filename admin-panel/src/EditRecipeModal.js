@@ -3,6 +3,7 @@ import api from './api';
 import './EditRecipeModal.css';
 
 function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
+  //form state holding all recipe details
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -14,15 +15,15 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
     ingredients: []
   });
 
-  //veritabanındaki tüm malzemeler
+  //full list of ingredients from the database
   const [allIngredientsList, setAllIngredientsList] = useState([]);
   
-  //yeni malzeme stateleri
+  //new ingredient states
   const [newIngId, setNewIngId] = useState('');
   const [newIngQty, setNewIngQty] = useState('');
   const [newIngUnit, setNewIngUnit] = useState('');
 
-  //Modal açılınca verileri doldurma
+  //fetch recipe details when the modal opens
   useEffect(() => {
     const fetchRecipeDetails = async () => {
       if (recipe && recipe.id) {
@@ -52,7 +53,7 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
     }
   }, [isOpen, recipe]);
 
-  //sayfa açılınca ingredient tablosunu çek
+  //fetch all ingredients when the modal opens
   useEffect(() => {
     const fetchAllIngredients = async () => {
       try {
@@ -72,9 +73,9 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // MALZEME YÖNETİMİ
+  // INGREDIENT MANAGEMENT
 
-  //yeni malzeme ekle
+  //add a new ingredient
   const handleAddIngredient = () => {
     if (!newIngId || !newIngQty || !newIngUnit) {
       alert("Please select the ingredient, quantity, and unit.");
@@ -96,25 +97,27 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
       ingredients: [...prev.ingredients, newIngredient]
     }));
 
+    //reset input fields
     setNewIngId('');
     setNewIngQty('');
     setNewIngUnit('');
   };
 
-  //malzeme sil
+  //remove an ingredient 
   const handleRemoveIngredient = (index) => {
     const newList = [...formData.ingredients];
     newList.splice(index, 1);
     setFormData(prev => ({ ...prev, ingredients: newList }));
   };
 
-  //bir malzemenin miktarını güncelle
+  //update quantity of ingredient
   const handleIngredientChange = (index, field, value) => {
     const newList = [...formData.ingredients];
     newList[index][field] = value;
     setFormData(prev => ({ ...prev, ingredients: newList }));
   };
 
+  //submit
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(recipe.id, formData);
@@ -131,7 +134,7 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
         </div>
         
         <form onSubmit={handleSubmit} className="edit-form">
-          {/* Sol Kolon: Temel Bilgiler */}
+          {/* basic information */}
           <div className="form-section">
             <h4>📝 Basic Information</h4>
             <div className="form-group">
@@ -141,7 +144,7 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Calory</label>
+                <label>Calorie</label>
                 <input type="number" name="calories" value={formData.calories} onChange={handleChange} />
               </div>
               <div className="form-group">
@@ -165,11 +168,10 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
             </div>
           </div>
 
-          {/* Orta Bölüm: Malzemeler */}
+          {/* ingredients management */}
           <div className="form-section">
             <h4>🥕 Ingredients</h4>
             
-            {/* Malzeme Ekleme Alanı */}
             <div className="add-ing-row">
               <select 
                 value={newIngId} 
@@ -198,7 +200,7 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
               <button type="button" onClick={handleAddIngredient} className="btn-add-ing">Add</button>
             </div>
 
-            {/* Malzeme Listesi */}
+            {/* list of ingredients */}
             <ul className="ing-list">
               {formData.ingredients.length === 0 && <li className="empty-ing">No ingredients yet.</li>}
               {formData.ingredients.map((ing, index) => (
@@ -222,7 +224,7 @@ function EditRecipeModal({ isOpen, onClose, recipe, onSave }) {
             </ul>
           </div>
 
-          {/* Alt Bölüm: Yapılış */}
+          {/* preparation steps */}
           <div className="form-section">
             <h4>👩‍🍳 Preparation</h4>
             <textarea name="instructions" rows="5" value={formData.instructions} onChange={handleChange}></textarea>

@@ -15,15 +15,18 @@ export default function FavoritesScreen({ navigation }) {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  //sıralama stateleri
+  //Sorting states
   const [modalVisible, setModalVisible] = useState(false);
   const [sortBy, setSortBy] = useState('date_new'); 
+
+  //Fetch favorites every time the screen comes
   useFocusEffect(
     useCallback(() => {
       fetchFavorites();
     }, [])
   );
 
+  //Retrieve favorite recipes from the backend
   const fetchFavorites = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -72,12 +75,14 @@ export default function FavoritesScreen({ navigation }) {
         break;
       case 'date_new': 
       default:
+        //Default: Newest first
         sorted.sort((a, b) => new Date(b.added_at) - new Date(a.added_at));
         break;
     }
     return sorted;
   }, [favorites, sortBy]);
 
+  //Render individual recipe card
   const renderRecipeItem = ({ item }) => {
     const missingList = item.missing_ingredients || [];
     const displayMissing = missingList.slice(0, 2);
@@ -98,6 +103,7 @@ export default function FavoritesScreen({ navigation }) {
           <View style={styles.cardContent}>
             <View style={styles.rowBetween}>
               <Text style={styles.recipeTitle} numberOfLines={1}>{item.title}</Text>
+              {/* Match Percentage */}
               <View style={[
                 styles.badge, 
                 { backgroundColor: item.match_percentage >= 80 ? '#E8F5E9' : '#FFF3E0' }
@@ -108,6 +114,8 @@ export default function FavoritesScreen({ navigation }) {
                 ]}>%{item.match_percentage}</Text>
               </View>
             </View>
+
+            {/* Missing Ingredients Section */}
 
             <View style={styles.missingContainer}>
               {missingList.length === 0 ? (
@@ -124,6 +132,8 @@ export default function FavoritesScreen({ navigation }) {
                 </>
               )}
             </View>
+
+            {/* Recipe Info (Time, Calories, Rating) */}
 
             <View style={styles.cardFooter}>
               <View style={styles.metaContainer}>
@@ -160,7 +170,7 @@ export default function FavoritesScreen({ navigation }) {
   return (
     <View style={styles.container}>
       
-      {/* header: başlık kısmı ve sıralama butonu */}
+      {/* Header Section with Title and Sort Button */}
       <View style={styles.headerContainer}>
         <Text style={styles.header}>My Favorites <Ionicons name="heart" size={27} color="red" /></Text>
         <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.sortButton}>
@@ -185,7 +195,7 @@ export default function FavoritesScreen({ navigation }) {
         removeClippedSubviews={true}
       />
 
-      {/* sıralama için modal ekran */}
+      {/* Sorting Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -199,7 +209,7 @@ export default function FavoritesScreen({ navigation }) {
               
               <ScrollView showsVerticalScrollIndicator={false}>
                 
-                {/* 1. TARİH */}
+                {/* Date Sorting */}
                 <Text style={styles.sectionHeader}>Date</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('date_new'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'date_new' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
@@ -212,7 +222,7 @@ export default function FavoritesScreen({ navigation }) {
 
                 <View style={styles.divider} />
 
-                {/* rating */}
+                {/* Rating Sorting */}
                 <Text style={styles.sectionHeader}>Rating</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('rating_high'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'rating_high' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
@@ -225,7 +235,7 @@ export default function FavoritesScreen({ navigation }) {
 
                 <View style={styles.divider} />
 
-                {/* eşleşme */}
+                {/* Match Percentage Sorting */}
                 <Text style={styles.sectionHeader}>Matching Percantage</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('match_high'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'match_high' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
@@ -238,7 +248,7 @@ export default function FavoritesScreen({ navigation }) {
 
                 <View style={styles.divider} />
 
-                {/* 3. KALORİ */}
+                {/*  Calories Sorting */}
                 <Text style={styles.sectionHeader}>Calories</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('calories_low'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'calories_low' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
@@ -251,7 +261,7 @@ export default function FavoritesScreen({ navigation }) {
 
                 <View style={styles.divider} />
 
-                {/* süre */}
+                {/* Preparation Time Sorting */}
                 <Text style={styles.sectionHeader}>Preperation Time</Text>
                 <TouchableOpacity style={styles.modalOption} onPress={() => { setSortBy('time_short'); setModalVisible(false); }}>
                   <Ionicons name={sortBy === 'time_short' ? "radio-button-on" : "radio-button-off"} size={20} color="#000" />
@@ -304,7 +314,7 @@ const styles = StyleSheet.create({
   dateText: { fontSize: 10, color: '#aaa' },
   emptyText: { marginTop: 10, color: '#aaa', fontSize: 16 },
 
-  //modal stilleri
+  
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { width: '85%', backgroundColor: 'white', borderRadius: 15, padding: 20, elevation: 5, maxHeight: '70%' },
   modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },

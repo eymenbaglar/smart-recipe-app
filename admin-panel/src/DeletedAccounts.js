@@ -3,6 +3,7 @@ import api from './api';
 import './DeletedAccounts.css'; 
 
 const DeletedAccounts = () => {
+  //// State management for account data, loading status, and errors
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,15 +12,16 @@ const DeletedAccounts = () => {
     fetchPendingDeletions();
   }, []);
 
+  //// Fetch accounts in deletion period
   const fetchPendingDeletions = async () => {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-      
+      //get data from related endpoint
       const res = await api.get('/api/admin/pending-deletions', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log("Data from the API:", res.data); // Konsoldan kontrol edebilirsin
+      console.log("Data from the API:", res.data);
 
       if (Array.isArray(res.data)) {
         setAccounts(res.data);
@@ -39,12 +41,14 @@ const DeletedAccounts = () => {
     return acc.deletion_requested_at; 
   };
 
+  //Calculate days remaining until permanent deletion (30-day policy)
   const calculateRemainingDays = (dateString) => {
     if (!dateString) return 0;
     
     const requestDate = new Date(dateString);
     if (isNaN(requestDate.getTime())) return 0;
 
+    // Target date is 30 days after the request
     const targetDate = new Date(requestDate);
     targetDate.setDate(targetDate.getDate() + 30);
     
@@ -58,22 +62,24 @@ const DeletedAccounts = () => {
     return diffDays;
   };
 
+  //format the final deletion date (Request Date + 30 Days)
   const formatDate = (dateString) => {
     if (!dateString) return "No Date";
     
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Incorrect Date";
 
-    // Kesin Silinme
+    // permanent deletion date
     date.setDate(date.getDate() + 30);
-    
+
+    //Return formatted string with day, month name, and time
     return date.toLocaleDateString('tr-TR', { 
         year: 'numeric', month: 'long', day: 'numeric',
         hour: '2-digit', minute: '2-digit'
     });
   };
 
-  // İstek tarihini göstermek 
+  // format the initial request date
   const formatRequestDate = (dateString) => {
      if (!dateString) return "-";
      return new Date(dateString).toLocaleDateString('tr-TR');
@@ -100,6 +106,7 @@ const DeletedAccounts = () => {
             </tr>
           </thead>
           <tbody>
+            {/* Check if there are accounts to display */}
             {!Array.isArray(accounts) || accounts.length === 0 ? (
                 <tr>
                     <td colSpan="6" className="empty-message">
@@ -119,17 +126,17 @@ const DeletedAccounts = () => {
                         </td>
                         <td>{acc.email}</td>
                         
-                        {/* İstek tarihi */}
+                        {/* Request date */}
                         <td style={{color: '#666', fontSize: '12px'}}>
                             {formatRequestDate(dateStr)}
                         </td>
 
-                        {/* Kesin silinme tarihi */}
+                        {/* Exact deletion date */}
                         <td>
                             <strong>{formatDate(dateStr)}</strong>
                         </td>
 
-                        {/* Kalan gün */}
+                        {/* remaining days */}
                         <td>
                             <span className="badge-warning">
                                 {calculateRemainingDays(dateStr)} days

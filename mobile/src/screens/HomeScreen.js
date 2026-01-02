@@ -13,6 +13,7 @@ export default function HomeScreen({ navigation }) {
   const [recentRecipes, setRecentRecipes] = useState([]);
   const [username, setUsername] = useState('User'); // Varsayılan isim
 
+  //Load user details
   useEffect(() => {
     const loadUserInfo = async () => {
       try {
@@ -20,7 +21,7 @@ export default function HomeScreen({ navigation }) {
         if (userJson) {
           const user = JSON.parse(userJson);
           if (user.username) {
-            // İsmin baş harfini büyük yapmak için (Opsiyonel estetik)
+            
             const formattedName = user.username.charAt(0).toUpperCase() + user.username.slice(1);
             setUsername(formattedName);
           }
@@ -32,7 +33,7 @@ export default function HomeScreen({ navigation }) {
     loadUserInfo();
   }, []);
 
-    // Sayfaya her geri dönüldüğünde geçmişi yeniden yükle
+    // Reload history each time you return to the page.
   useFocusEffect(
     useCallback(() => {
       loadHistory();
@@ -50,7 +51,7 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Son Görüntülenen Kart Tasarımı
+  // Card design for recently viewed recipes
   const renderRecentItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.recentCard}
@@ -69,17 +70,17 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* 1. Başlık Mesajı */}
+      {/* Header Message */}
       <View style={styles.headerSection}>
         <Text style={styles.title}>Hello, {username}!</Text>
         <Text style={styles.subtitle}>What are we cooking today?</Text>
       </View>
 
-      {/* 2. Recipe Wizard (Tek Buton) */}
+      {/* Recipe Wizard button  */}
       <TouchableOpacity 
         style={styles.wizardButton}
-        // App.js'e göre 'ManualInput' veya 'SmartRecipeResults' wizard başlangıcıdır.
-        // Genelde malzeme seçimi (ManualInput) ile başlar.
+        
+        
         onPress={() => navigation.navigate('Wizard')} 
       >
         <View style={styles.wizardContent}>
@@ -89,21 +90,21 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.wizardSubText}>Find recipes with your ingredients</Text>
       </TouchableOpacity>
 
-      {/* 3. Kişisel Öneriler (Mevcut Bileşen) */}
+      {/* Personal Recommendations (Existing Component) */}
       <View style={styles.sectionContainer}>
         <RecommendationRow />
       </View>
 
-      {/* 4. Son Görüntülenenler (YENİ) */}
+      {/* Recently Viewed Recipes */}
       {recentRecipes.length > 0 && (
         <View style={styles.sectionContainer}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
             <Text style={styles.sectionTitle}>Recently Viewed</Text>
             <View style={{
-                backgroundColor: '#e0e0e0', // Arka plan gri (alt tarafı gri)
-                borderRadius: 50,           // Yuvarlak 
+                backgroundColor: '#e0e0e0', 
+                borderRadius: 50,           
                 marginLeft: 8,
-                top:-6,              // Yazıdan uzaklaştırma
+                top:-6,              
                 justifyContent: 'center',
                 alignItems: 'center'
             }}>
@@ -125,13 +126,13 @@ export default function HomeScreen({ navigation }) {
         </View>
       )}
 
-      {/* 5. Topluluk (Social) Yönlendirmesi */}
+      {/* 5. Social Redirection */}
       <View style={styles.sectionContainer}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
     
     <Text style={styles.sectionTitle}>Discover Community</Text>
 
-    {/* İkonun Kutusu */}
+    {/*Icon Box */}
     <View style={{
         backgroundColor: 'green',
         borderRadius: 50,
@@ -147,10 +148,10 @@ export default function HomeScreen({ navigation }) {
         
         <TouchableOpacity 
           style={styles.communityBanner}
-          // App.js yapına göre TabNavigator içindeki 'Social' ekranına gitmek için:
-          // Genelde TabNavigator'ın route name'i 'Main' ise ve içinde 'SocialTab' varsa:
+          
+          
           onPress={() => navigation.navigate('Social')} 
-          // Eğer direkt çalışmazsa: navigation.navigate('Main', { screen: 'SocialTab' });
+          
         >
           <View>
             <Text style={styles.communityTitle}>Explore What Others Cook!</Text>
@@ -187,9 +188,9 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   
-  // Wizard Button Stilleri
+  
   wizardButton: {
-    backgroundColor: '#FFFAE5', // Hafif sarımsı öne çıkan renk
+    backgroundColor: '#FFFAE5', 
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 16,
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // Son Görüntülenen Kartları
+  
   recentCard: {
     width: 120,
     height: 120,
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Community Banner
+  
   communityBanner: {
     flexDirection: 'row',
     alignItems: 'center',

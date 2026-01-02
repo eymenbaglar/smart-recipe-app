@@ -3,14 +3,17 @@ import api from './api';
 import './Users.css';
 
 function Users() {
+  //state for storing users, loading status, and search input
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  //fetch users when the component loads
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  //retrieve user data from the backend
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -23,6 +26,7 @@ function Users() {
     }
   };
 
+  //toggle user ban status 
   const handleBanToggle = async (user) => {
     const isBanned = user.role === 'banned';
     const action = isBanned ? "Unban" : "Ban User";
@@ -38,6 +42,7 @@ function Users() {
     }
   };
 
+  //change user role (promote to admin / demote to user)
   const handleRoleChange = async (user) => {
     const newRole = user.role === 'admin' ? 'user' : 'admin';
     if (!window.confirm(`Do you want ${user.username} to make ${newRole.toUpperCase()} ?`)) return;
@@ -51,6 +56,7 @@ function Users() {
     }
   };
 
+  //filter users by username or email on search
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -58,6 +64,7 @@ function Users() {
 
   return (
     <div className="page-content">
+      {/* header section with search bar */}
       <div className="header-row">
         <h2>User Management</h2>
         <input 
@@ -69,6 +76,7 @@ function Users() {
         />
       </div>
 
+      {/* user list */}
       {loading ? <p>Loading...</p> : (
         <table className="user-table">
           <thead>

@@ -17,11 +17,13 @@ export default function MyReviewsScreen({ navigation }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal State'leri
+  // Modal States
   const [showRateModal, setShowRateModal] = useState(false);
   const [selectedRecipeId, setSelectedRecipeId] = useState(null);
   const [initialReviewData, setInitialReviewData] = useState(null);
 
+
+  //Reload reviews
   useFocusEffect(
     useCallback(() => {
       fetchMyReviews();
@@ -33,14 +35,14 @@ export default function MyReviewsScreen({ navigation }) {
     try {
       const token = await AsyncStorage.getItem('token');
       
-      //tarifin detayını çek
+      //Extract the details of the recipe
       const response = await axios.get(`${API_URL}/api/recipes/details/${recipeId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       const fullRecipeData = response.data;
 
-      //detay sayfasına veriyi göndererek git
+      
       navigation.navigate('RecipeDetails', { recipe: fullRecipeData });
 
     } catch (error) {
@@ -49,6 +51,7 @@ export default function MyReviewsScreen({ navigation }) {
     }
   };
 
+  //Retrieves the user's past reviews from the backend
   const fetchMyReviews = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -63,7 +66,7 @@ export default function MyReviewsScreen({ navigation }) {
     }
   };
 
-  // Düzenle butonuna basınca
+  // When you press the Edit button
   const handleEditPress = (item) => {
     setSelectedRecipeId(item.recipe_id);
     setInitialReviewData({
@@ -73,7 +76,7 @@ export default function MyReviewsScreen({ navigation }) {
     setShowRateModal(true);
   };
 
-  //modal submit işlemi
+  //modal submit 
   const handleRateSubmit = async (rating, comment) => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -120,7 +123,7 @@ export default function MyReviewsScreen({ navigation }) {
             <Text style={styles.dateText}>Last updated: {date}</Text>
           </View>
           
-          {/* Düzenle Butonu */}
+          {/* Edit Button */}
           <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item)}>
             <Ionicons name="create-outline" size={20} color="#2196F3" />
           </TouchableOpacity>
@@ -136,10 +139,10 @@ export default function MyReviewsScreen({ navigation }) {
            )}
         </View>
 
-        {/* detaya git butonu */}
+        {/* View Recipe Button */}
         <TouchableOpacity 
           style={styles.viewRecipeButton}
-          onPress={() => handleViewRecipe(item.recipe_id)} // <-- BURAYI DEĞİŞTİRDİK
+          onPress={() => handleViewRecipe(item.recipe_id)} 
         >
 
            <Text style={styles.viewRecipeText}>View Recipe</Text>

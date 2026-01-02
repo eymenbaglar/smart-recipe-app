@@ -1,6 +1,4 @@
-/* DeletedAccounts.css */
 
-/* Sayfa Genel Yapısı */
 .deleted-accounts-page {
   padding: 24px;
   background-color: #f3f4f6; 
@@ -15,7 +13,7 @@
   margin-bottom: 24px;
 }
 
-/* Yükleniyor ve Hata Mesajları */
+
 .loading-message {
   padding: 20px;
   text-align: center;
@@ -31,7 +29,7 @@
   margin-bottom: 16px;
 }
 
-/* Tablo Konteyneri */
+
 .table-container {
   background-color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -40,7 +38,7 @@
   overflow-x: auto; 
 }
 
-/* Tablo Stilleri */
+
 .data-table {
   min-width: 100%;
   border-collapse: collapse;
@@ -70,7 +68,7 @@
   border-bottom: none;
 }
 
-/* Kullanıcı Adı Alanı */
+
 .user-info {
   display: flex;
   align-items: center;
@@ -81,7 +79,7 @@
   color: #111827;
 }
 
-/* Badge (Kalan Gün) */
+
 .badge-warning {
   position: relative;
   display: inline-block;
@@ -94,7 +92,7 @@
   font-size: 12px;
 }
 
-/* Durum Badge (Waiting) */
+
 .status-badge {
   display: inline-block;
   font-size: 11px;
@@ -106,7 +104,7 @@
   text-transform: uppercase;
 }
 
-/* Boş Veri Mesajı */
+
 .empty-message {
   text-align: center;
   color: #6b7280;

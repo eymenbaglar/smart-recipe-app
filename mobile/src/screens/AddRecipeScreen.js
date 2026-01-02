@@ -11,7 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function AddRecipeScreen({ navigation , route}) {
-  // --- FORM STATE'LERİ ---
+  // form states
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -19,37 +19,38 @@ export default function AddRecipeScreen({ navigation , route}) {
   const [calories, setCalories] = useState('');
   const [serving, setServing] = useState('');
   
-  // YENİ: Hata durumunu tutacak state
+  // state to track errors
   const [errors, setErrors] = useState({});
 
-  // FOTOĞRAF STATE'İ
+  // image state
   const [imageUri, setImageUri] = useState(null);
   const [imageBase64, setImageBase64] = useState('');
 
-  // MALZEME STATE'LERİ
+  // ingredient state
   const [query, setQuery] = useState(''); 
   const [searchResults, setSearchResults] = useState([]); 
   const [selectedIngredient, setSelectedIngredient] = useState(null); 
   const [qty, setQty] = useState(''); 
   
-  // BİRİM SEÇİMİ
+  // unit selection
   const [selectedUnit, setSelectedUnit] = useState(''); 
   const [availableUnits, setAvailableUnits] = useState([]); 
 
   const [addedIngredients, setAddedIngredients] = useState([]); 
   const [loading, setLoading] = useState(false);
 
-  //dolu from gelmesi
+  //states to handle edit mode (receive the completed form)
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  //check if editing an existing recipe or creating a new one
   useEffect(() => {
     if (route.params?.recipeToEdit) {
       const recipe = route.params.recipeToEdit;
       setIsEditing(true);
       setEditingId(recipe.id);
 
-      // Mevcut verileri doldur
+      // fill in the existing data
       setTitle(recipe.title || '');
       setDescription(recipe.description || '');
       setInstructions(recipe.instructions || recipe.steps || ''); 
@@ -57,12 +58,12 @@ export default function AddRecipeScreen({ navigation , route}) {
       setCalories(recipe.calories ? String(recipe.calories) : '');
       setServing(recipe.serving ? String(recipe.serving) : '');
       
-      // Resim varsa göster
+      // display image if there is one
       if (recipe.image_url) {
         setImageUri(recipe.image_url);
       }
 
-      // Malzemeleri yükle
+      // load ingredients
       if (recipe.ingredients) {
         let parsedIngredients = [];
         if (typeof recipe.ingredients === 'string') {
@@ -79,30 +80,30 @@ export default function AddRecipeScreen({ navigation , route}) {
     }
   }, [route.params]);
 
-  // --- DOĞRULAMA (VALIDATION) FONKSİYONU ---
+  // FORM VALIDATION FUNCTION 
   const validateForm = () => {
     let newErrors = {};
     let isValid = true;
 
-    // 1. Başlık Kontrolü
+    //  title Check
     if (!title.trim()) {
       newErrors.title = true;
       isValid = false;
     }
 
-    // 2. Kişi Sayısı Kontrolü
+    //  serving size check
     if (!serving.toString().trim()) {
       newErrors.serving = true;
       isValid = false;
     }
 
-    // 3. Yapılış (Instructions) Kontrolü
+    //  instructions check
     if (!instructions.trim()) {
       newErrors.instructions = true;
       isValid = false;
     }
 
-    // 4. Malzeme Kontrolü (Listenin boş olup olmadığı)
+    //  ingredients check (list must not be empty)
     if (addedIngredients.length === 0) {
       newErrors.ingredients = true;
       isValid = false;
@@ -112,14 +113,16 @@ export default function AddRecipeScreen({ navigation , route}) {
     return isValid;
   };
 
-  // --- FOTOĞRAF SEÇME ---
+  // IMAGE PICKER FUNCTION
   const pickImage = async () => {
+    //request permission to access the gallery
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission Required', 'You must grant gallery permission to select photos.');
       return;
     }
 
+    //open image gallery
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -134,7 +137,7 @@ export default function AddRecipeScreen({ navigation , route}) {
     }
   };
 
-  // --- MALZEME ARAMA ---
+  // INGREDIENT SEARCH
   const searchIngredients = async (text) => {
     setQuery(text);
     if (text.length < 2) {
@@ -152,7 +155,8 @@ export default function AddRecipeScreen({ navigation , route}) {
     }
   };
 
-  // --- BİRİM SEÇENEKLERİ ---
+  // UNIT OPTIONS
+  //returns unit options based on the ingredient's default unit type
   const getUnitOptions = (defaultUnit) => {
     const liquidUnits = ['ml', 'L'];
     const solidUnits = ['gr', 'kg'];
@@ -167,20 +171,21 @@ export default function AddRecipeScreen({ navigation , route}) {
     return [defaultUnit || 'unit'];
   };
 
-  // --- MALZEME SEÇME ---
+  // SELECT INGREDIENT FROM SEARCH RESULTS
   const handleSelectIngredient = (item) => {
     setSelectedIngredient(item);
     
-    // Birimleri ayarla ve varsayılanı seç
+    // set the units and select the default
     const options = getUnitOptions(item.unit);
     setAvailableUnits(options);
     setSelectedUnit(options[0]); 
 
+    //clear search query and results
     setQuery(''); 
     setSearchResults([]); 
   };
 
-  // --- MALZEME EKLEME ---
+  // ADD INGREDIENT TO LIST
   const addIngredientToList = () => {
     if (!selectedIngredient || !qty || !selectedUnit) {
       Alert.alert("Missing Information", "Please enter the quantity and unit.");
@@ -190,40 +195,39 @@ export default function AddRecipeScreen({ navigation , route}) {
     let finalQty = parseFloat(qty);
     let finalUnit = selectedUnit;
 
-    // --- DÖNÜŞÜM MANTIĞI ---
+    // UNIT CONVERSION LOGIC
     
-    // AĞIRLIK: kg seçildiyse grama çevir
+    // WEIGHT: Convert kg to grams
     if (selectedUnit === 'kg') {
         finalQty = finalQty * 1000;
-        finalUnit = 'gram'; // Senin sabit sistemin 'gram' ise
+        finalUnit = 'gram'; 
     } 
-    // Zaten gram, g veya gr seçildiyse standart isme ('gram') çevir
+    // Standardize 'g', 'gr' to 'gram'
     else if (['g', 'gr', 'gram', 'Gr'].includes(selectedUnit)) {
         finalUnit = 'gram';
     }
 
-    // HACİM: Litre seçildiyse ml'ye çevir
+    // VOLUME: Convert Liters to ml
     if (selectedUnit === 'L' || selectedUnit === 'lt' || selectedUnit === 'Litre') {
         finalQty = finalQty * 1000;
         finalUnit = 'ml';
     }
-    // Zaten ml ise standart isme ('ml') sabitle
+    // Standardize 'ml'
     else if (selectedUnit === 'ml') {
         finalUnit = 'ml';
     }
 
-    // ADET: qty, count, adet vb. hepsini 'qty' yap
+    // COUNT: Standardize various count units to 'qty'
     if (['qty', 'adet', 'count', 'piece'].includes(selectedUnit)) {
         finalUnit = 'qty';
     }
 
-    // ------------------------
 
     const newIng = {
       id: selectedIngredient.id,
       name: selectedIngredient.name,
-      quantity: finalQty, // Artık dönüştürülmüş miktar (örn: 1000)
-      unit: finalUnit     // Artık standart birim (örn: gram)
+      quantity: finalQty, 
+      unit: finalUnit     
     };
 
     setAddedIngredients([...addedIngredients, newIng]);
@@ -232,19 +236,21 @@ export default function AddRecipeScreen({ navigation , route}) {
       setErrors(prev => ({ ...prev, ingredients: false }));
     }
 
-    // Formu sıfırla
+    // reset the ingredient input section
     setSelectedIngredient(null);
     setQty('');
     setSelectedUnit('');
     setAvailableUnits([]);
   };
 
+  //removes an ingredient from the local list
   const removeIngredient = (index) => {
     const newList = [...addedIngredients];
     newList.splice(index, 1);
     setAddedIngredients(newList);
   };
 
+  //handle submit 
 const handleSubmit = async () => {
     if (!validateForm()) {
       Alert.alert("Incomplete Information“, ”Please fill in the required fields.");
@@ -254,7 +260,8 @@ const handleSubmit = async () => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      
+
+      //format the data for the API request
       const payload = {
         title,
         description,
@@ -262,7 +269,6 @@ const handleSubmit = async () => {
         prepTime: parseInt(prepTime) || 0,
         calories: parseInt(calories) || 0,
         serving: parseInt(serving) || 1,
-        // Yeni resim seçilmediyse ve düzenleme modundaysak null gönder (backend eskiyi korur)
         imageUrl: imageBase64 ? imageBase64 : (isEditing ? null : ''), 
         ingredients: addedIngredients
       };
@@ -271,6 +277,7 @@ const handleSubmit = async () => {
       let method = 'POST';
       let successMessage = "Your recipe has been submitted! It will be published after admin approval.";
 
+      //adjust for update operation if in edit mode
       if (isEditing) {
         url = `${API_URL}/api/recipes/${editingId}`; 
         method = 'PUT'; 
@@ -306,7 +313,7 @@ const handleSubmit = async () => {
         <Text style={styles.headerTitle}>{isEditing ? "Edit Recipe" : "Share New Recipe"}</Text>
         <Text style={styles.subTitle}>Your recipe will be subject to admin approval.</Text>
 
-        {/* --- TEMEL BİLGİLER --- */}
+        {/* BASIC INFORMATION */}
         <View style={styles.section}>
           <Text style={styles.label}>
             Recipe Name <Text style={styles.requiredStar}>*</Text>
@@ -329,7 +336,7 @@ const handleSubmit = async () => {
             placeholder="Brief summary..." 
           />
 
-          {/* FOTOĞRAF */}
+          {/* IMAGE */}
           <Text style={styles.label}>Recipe Photo</Text>
           <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
             {imageUri ? (
@@ -368,7 +375,7 @@ const handleSubmit = async () => {
           </View>
         </View>
 
-        {/* --- MALZEMELER --- */}
+        {/* INGREDIENTS SECTION */}
         <View style={[styles.section, { zIndex: 1000 }]}> 
           <Text style={styles.sectionHeader}>
             Ingredients <Text style={styles.requiredStar}>*</Text>
@@ -383,7 +390,7 @@ const handleSubmit = async () => {
                 placeholder="Search ingredients... (e.g.: Milk)" 
               />
               
-              {/* DROPDOWN */}
+              {/* SEARCH RESULTS DROPDOWN */}
               {searchResults.length > 0 && (
                 <View style={styles.searchResultsContainer}>
                   <ScrollView nestedScrollEnabled={true} style={{maxHeight: 150}}>
@@ -402,7 +409,7 @@ const handleSubmit = async () => {
               )}
             </View>
           ) : (
-            // --- SEÇİM EKRANI (BİRİMLİ) ---
+            // INGREDIENT SELECTION WITH UNITS
             <View style={styles.selectedIngBox}>
               <View style={styles.rowBetween}>
                 <Text style={{fontWeight:'bold', fontSize:18, color: '#333'}}>{selectedIngredient.name}</Text>
@@ -422,7 +429,7 @@ const handleSubmit = async () => {
                 />
               </View>
 
-              {/* BİRİM SEÇİMİ */}
+              {/* UNIT SELECTION */}
               <Text style={styles.label}>Unit</Text>
               <View style={styles.unitContainer}>
                 {availableUnits.map((u, index) => (
@@ -450,7 +457,7 @@ const handleSubmit = async () => {
             </View>
           )}
 
-          {/* EKLENENLER LİSTESİ */}
+          {/* ADDED INGREDIENTS LIST */}
           {addedIngredients.length > 0 ? (
             <View style={styles.addedList}>
               {addedIngredients.map((ing, index) => (
@@ -463,14 +470,14 @@ const handleSubmit = async () => {
               ))}
             </View>
           ) : (
-            // Malzeme listesi boşsa ve hata varsa uyarı göster
+            // show error if ingredient list is empty
             errors.ingredients && (
               <Text style={styles.errorText}>Please add at least one ingredient.</Text>
             )
           )}
         </View>
 
-        {/* --- YAPILIŞ --- */}
+        {/* PREPARATION STEPS */}
         <View style={styles.section}>
           <Text style={styles.label}>
             Preparation <Text style={styles.requiredStar}>*</Text>
@@ -514,7 +521,7 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionHeader: { fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
 
-  // YENİ STİLLER (VALIDATION)
+  
   requiredStar: {
     color: '#e74c3c',
     fontWeight: 'bold',
@@ -532,7 +539,7 @@ const styles = StyleSheet.create({
     fontWeight: '600'
   },
 
-  // IMAGE PICKER
+  
   imagePickerBtn: { 
     height: 150, backgroundColor: '#f9f9f9', borderRadius: 8, 
     borderWidth: 1, borderColor: '#ddd', borderStyle: 'dashed',
@@ -541,7 +548,7 @@ const styles = StyleSheet.create({
   imagePreview: { width: '100%', height: '100%' },
   imagePlaceholder: { alignItems: 'center' },
 
-  // SEARCH DROPDOWN (ABSOLUTE)
+  
   searchResultsContainer: { 
     position: 'absolute', top: 50, left: 0, right: 0,
     backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, 
@@ -549,7 +556,7 @@ const styles = StyleSheet.create({
   },
   searchResultItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
 
-  // UNIT CHIPS
+ 
   selectedIngBox: { backgroundColor: '#E3F2FD', padding: 15, borderRadius: 8 },
   unitContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 15 },
   unitChip: { 

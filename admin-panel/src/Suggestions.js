@@ -3,10 +3,11 @@ import api from './api';
 import './Suggestions.css'; 
 
 const Suggestions = () => {
+  //state to store user suggestions and loading status
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Önerileri Yükle
+  // fetch suggestions from the backend
   const fetchSuggestions = async () => {
     try {
       const response = await api.get('/api/admin/suggestions');
@@ -19,17 +20,17 @@ const Suggestions = () => {
     }
   };
 
+  //fetch suggestions when the component loads
   useEffect(() => {
     fetchSuggestions();
   }, []);
 
-  // Öneriyi Sil (DONE butonu)
+  // removing a suggestion from the list (mark as done)
   const handleDone = async (id) => {
     if (!window.confirm("Are you sure you want to remove this suggestion from the list?")) return;
 
     try {
       await api.delete(`/api/admin/suggestions/${id}`);
-      // Listeden çıkararak arayüzü güncelle
       setSuggestions(suggestions.filter(item => item.id !== id));
     } catch (error) {
       console.error("Deletion error:", error);
@@ -42,11 +43,13 @@ const Suggestions = () => {
   return (
     <div className="suggestions-container">
       <h2>User Ingredients Suggestions</h2>
-      
+
+      {/* check if the suggestions list is empty */}      
       {suggestions.length === 0 ? (
         <p className="no-data">There are no pending suggestions yet.</p>
       ) : (
         <div className="suggestions-list">
+          {/* display each suggestion */}
           {suggestions.map((item) => (
             <div key={item.id} className="suggestion-card">
               <div className="suggestion-info">

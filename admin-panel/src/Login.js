@@ -3,48 +3,52 @@ import api from './api';
 import './Login.css'; 
 
 function Login({ onLogin }) {
+  //state for form inputs and error handling
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("1. Butona basıldı. İşlem başlıyor..."); // LOG 1
+    console.log("1. Button clicked. Starting process..."); // debug log 1
 
     try {
-      console.log("2. API isteği gönderiliyor:", { email, password }); // LOG 2
+      console.log("2. Sending API request:", { email, password }); // debug log 2
       
+      // attempt to authenticate with the backend
       const response = await api.post('/auth/login', { email, password });
       
-      console.log("3. Sunucudan cevap geldi:", response); // LOG 3
+      console.log("3. Response received from server:", response); // debug log 3
       
       const { token, user } = response.data;
 
+      //security check
       if (user.role !== 'admin') {
-        console.warn("4. Yetkisiz giriş denemesi!"); // LOG 4
+        console.warn("4. Unauthorized access attempt!"); // debug log 4
         setError('Unauthorized access! Only administrators may enter.');
         return;
       }
 
-      console.log("5. Token LocalStorage'a yazılıyor..."); // LOG 5
+      console.log("5. Writing Token to LocalStorage..."); // debug log 5
       localStorage.setItem('adminToken', token);
       localStorage.setItem('adminName', user.username);
       
-      // onLogin fonksiyonu var mı diye kontrol edelim, yoksa patlamasın
+      // check if the onLogin function exists.
       if (onLogin && typeof onLogin === 'function') {
-         console.log("6. onLogin() çalıştırılıyor"); 
+         console.log("6. Executing onLogin()..."); //debug log 6
          onLogin(token);
       }
 
-      console.log("7. Sayfa yenileniyor..."); // LOG 7
-      // Reload yerine href kullanalım, daha garanti yönlendirir:
+      console.log("7. Refreshing page..."); // debug log 7
+      // force a redirect/refresh to Dashboard
       window.location.href = "/"; 
 
     } catch (err) {
-      console.error("HATA OLUŞTU:", err); // HATA LOGU
-      // Hatayı detaylı görelim
+      console.error("ERROR OCCURRED:", err); 
+
+      // display specific error messages
       if (err.response) {
-        console.log("Sunucu Hatası Detayı:", err.response.data);
+        console.log("Server Error Details:", err.response.data);
         setError(err.response.data.message || 'Login failed.');
       } else {
         setError('Login failed. Connection error?');

@@ -22,6 +22,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  //Authenticates the user and saves the session token
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields.');
@@ -36,12 +37,12 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
         password
       });
 
-      // Token'ı kaydet
+      // Save token and user data
       const { token, user } = response.data;
       await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
-      // App.js'deki durumu güncelle
+      
       if (onLoginSuccess) {
         onLoginSuccess();
       }
@@ -64,6 +65,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
+        
         <View style={styles.headerContainer}>
           <View style={{ 
               backgroundColor: '#fff', 
@@ -101,14 +103,14 @@ export default function LoginScreen({ navigation, onLoginSuccess }) {
             placeholderTextColor="#999"
           />
 
-          {/* --- YENİ EKLENEN KISIM: ŞİFREMİ UNUTTUM --- */}
+          {/* FORGOT PASSWORD */}
           <TouchableOpacity 
             style={styles.forgotPasswordContainer} 
             onPress={() => navigation.navigate('ForgotPassword')}
           >
             <Text style={styles.forgotPasswordText}>Forgot my password?</Text>
           </TouchableOpacity>
-          {/* ------------------------------------------- */}
+          
 
           <TouchableOpacity 
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-  // Şifremi unuttum için stil
+  
   forgotPasswordContainer: {
     alignSelf: 'flex-end',
     marginBottom: 20,
