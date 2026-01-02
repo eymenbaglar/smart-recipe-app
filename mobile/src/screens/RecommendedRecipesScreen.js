@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function RecommendedRecipesScreen({ navigation }) {
+  //Default constants
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState('random');
@@ -18,6 +19,7 @@ export default function RecommendedRecipesScreen({ navigation }) {
     fetchRecommendations();
   }, []);
 
+  //fetch recommended recipes
   const fetchRecommendations = async () => {
     try {
       const token = await AsyncStorage.getItem('token');

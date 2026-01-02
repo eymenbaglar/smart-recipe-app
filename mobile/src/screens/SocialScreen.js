@@ -10,16 +10,12 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-// Config dosyanızdan API_URL'i çekebilirsiniz veya buraya yazabilirsiniz.
-// import { API_URL } from '../config'; 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.44;
 
-// ==================================================
-// 1. PARÇA: HEADER BİLEŞENİ (Sabit Kısım)
-// ==================================================
+//Header
 const SocialHeader = ({ 
   searchTerm, setSearchTerm, handleSearchFocus, 
   mode, setMode, 
@@ -27,13 +23,14 @@ const SocialHeader = ({
   trends, newest, 
   navigation,
   toggleFavorite,
-  // --- YENİ EKLENEN PROPLAR (Sıralama İçin) ---
   sortBy, setSortBy, showSortOptions, setShowSortOptions 
 }) => {
   
+  //constant defaults
   const isFilterActive = searchTerm.length > 0 || selectedCategory !== 'All' || sortBy !== 'random'; // Sort kontrolü eklendi
   const showChips = searchTerm.length === 0;
 
+  //printing horizontal cards
   const renderHorizontalCard = ({ item }) => {
     const authorName = item.username || 'Admin'; 
 
@@ -59,7 +56,7 @@ const SocialHeader = ({
             </Text>
         </View>
   
-        {/* Favori */}
+        {/* Favorites */}
         <TouchableOpacity 
           style={styles.likeBtnHorizontal} 
           onPress={() => toggleFavorite(item)}
@@ -72,7 +69,7 @@ const SocialHeader = ({
         </TouchableOpacity>
   
         <View style={styles.hInfo}>
-          {/* --- BAŞLIK VE TİK YAN YANA --- */}
+          {/* Header and Tick*/}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
               <Text style={[styles.hTitle, { marginBottom: 0, flex: 1 }]} numberOfLines={1}>
                   {item.title}
@@ -82,7 +79,7 @@ const SocialHeader = ({
               )}
           </View>
 
-          {/* Kullanıcı Bilgisi */}
+          {/* User Info */}
           <View style={styles.row}>
               <Image 
                   source={{ uri: 'https://ui-avatars.com/api/?name=' + authorName + '&background=random' }} 
@@ -99,10 +96,10 @@ const SocialHeader = ({
   
   return (
     <View style={{ marginBottom: 10 }}>
-      {/* --- ÜST KISIM (BEYAZ BLOK) --- */}
+      {/* Top Section */}
       <View style={styles.headerBlock}>
           <View style={styles.topContainer}>
-            {/* ARAMA BARI */}
+            {/* Search bar */}
             <View style={styles.searchBar}>
                 <Ionicons name="search" size={20} color="#999" />
                 <TextInput 
@@ -139,7 +136,7 @@ const SocialHeader = ({
             )}
           </View>
 
-          {/* KATEGORİLER (Chips) */}
+          {/* Chips*/}
           {showChips && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsContainer}>
               {categories.map((cat, index) => (
@@ -156,7 +153,7 @@ const SocialHeader = ({
             </ScrollView>
           )}
 
-          {/* --- YENİ EKLENEN: SIRALAMA ÇUBUĞU (Filter Bar) --- */}
+          {/* Sorting */}
           <View style={styles.filterBar}>
              <Text style={styles.resultText}>
                 {selectedCategory === 'All' && searchTerm === '' ? 'Discover' : (selectedCategory === 'All' ? 'Search Results' : selectedCategory)}
@@ -174,7 +171,7 @@ const SocialHeader = ({
              </TouchableOpacity>
           </View>
 
-          {/* --- YENİ EKLENEN: SIRALAMA SEÇENEKLERİ (Açılır Menü) --- */}
+          {/* Sorting (Modal Screen) */}
           {showSortOptions && (
             <View style={styles.sortOptionsContainer}>
                <TouchableOpacity 
@@ -197,11 +194,11 @@ const SocialHeader = ({
 
       </View>
 
-      {/* --- RAFLAR BÖLÜMÜ --- */}
-      {/* Sadece Vitrin Modunda (Her şey varsayılan) Göster */}
+      {/* Shelves */}
+      {/* Show Only in Showcase Mode (Everything Default) */}
       {!isFilterActive && searchTerm === '' && selectedCategory === 'All' && sortBy === 'random' && (
         <View style={styles.shelfContainer}>
-            {/* RAF 1: TRENDLER */}
+            {/* Shelve 1: Trends */}
             <View style={styles.sectionHeader}>
                 <View style={styles.titleRow}>
                     <Text style={styles.sectionEmoji}>🔥</Text>
@@ -226,10 +223,10 @@ const SocialHeader = ({
                 removeClippedSubviews={true}
             />
 
-            {/* AYIRICI ÇİZGİ */}
+            {/* Line */}
             <View style={styles.divider} />
 
-            {/* RAF 2: YENİLER */}
+            {/* Shelve 2: Recent */}
             <View style={styles.sectionHeader}>
                 <View style={styles.titleRow}>
                     <Text style={styles.sectionEmoji}>💎</Text>
@@ -256,7 +253,7 @@ const SocialHeader = ({
         </View>
       )}
 
-      {/* --- GRID BAŞLIĞI --- */}
+      {/* Grid Header */}
       <View style={styles.feedTitleContainer}>
          <Text style={styles.feedTitle}>
              {isFilterActive ? '🔍 Results' : '🎲 Our Selections for You'}
@@ -268,31 +265,29 @@ const SocialHeader = ({
 };
 
 
-// ==================================================
-// 2. PARÇA: ANA EKRAN (SocialScreen)
-// ==================================================
+// Main Social Screen
 export default function SocialScreen() {
   const navigation = useNavigation();
   
-  // --- STATE TANIMLARI ---
+  //States
   const [mode, setMode] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   
-  // YENİ STATE'LER (Sıralama İçin)
+  //Sorting states
   const [sortBy, setSortBy] = useState('random'); // 'random' | 'rating'
   const [showSortOptions, setShowSortOptions] = useState(false);
 
-  // Veri State'leri
+  //data states
   const [trends, setTrends] = useState([]);
   const [newest, setNewest] = useState([]);
   const [feed, setFeed] = useState([]);
   
-  // Yükleme State'leri
+  //loading states
   const [initialLoading, setInitialLoading] = useState(true); 
   const [refreshing, setRefreshing] = useState(false);
   
-  // --- SONSUZ KAYDIRMA (PAGINATION) ---
+  //Infinte scroll
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(false);
@@ -305,7 +300,7 @@ export default function SocialScreen() {
     'Salad & Appetizer', 'Dessert', 'Bakery', 'Beverage'
   ];
 
-  // --- FAVORİ İŞLEMİ ---
+  //Favorite toggle
   const toggleFavorite = async (recipe) => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -327,7 +322,7 @@ export default function SocialScreen() {
     }
   };
 
-  // --- ANA VERİ ÇEKME (REFRESH / FIRST LOAD) ---
+  //Refrehs / first load
   const refreshAllData = async (isSilent = false) => {
     if (!isSilent && !refreshing) setInitialLoading(true);
     setError(false);
@@ -338,7 +333,7 @@ export default function SocialScreen() {
       const newSeed = Math.random().toString(); 
       setSeed(newSeed)
 
-      // SENARYO 1: Vitrin Modu (Search Yok, Kategori All, Sıralama Random)
+      //Showcase Mode (No search, all categores,random sorting)
       if (searchTerm === '' && selectedCategory === 'All' && sortBy === 'random') {
           const [trendsRes, newestRes] = await Promise.all([
             axios.get(`${API_URL}/api/recipes/social/trends`, { headers, params: { limit: 10 } }),
@@ -347,7 +342,7 @@ export default function SocialScreen() {
           setTrends(trendsRes.data);
           setNewest(newestRes.data);
 
-          // Feed Kısmı (Random)
+          // Random feed
           const randomRes = await axios.get(`${API_URL}/api/recipes/social/random`, { 
             headers,
             params: { page: 1, limit: 20, seed: seed } 
@@ -355,14 +350,13 @@ export default function SocialScreen() {
           setFeed(randomRes.data);
       } 
       else {
-          // SENARYO 2: Filtreleme Modu (Search VAR veya Kategori SEÇİLİ veya Sıralama RATING)
-          // Artık her türlü filtrelemede /search endpointini kullanıyoruz
+          //Filtering
           const searchRes = await axios.get(`${API_URL}/api/recipes/social/search`, {
             params: { 
                 q: searchTerm, 
                 category: selectedCategory, 
                 mode: mode,
-                sort: sortBy // <-- Sıralama bilgisini gönderiyoruz
+                sort: sortBy // sort info
             },
             headers
           });
@@ -380,10 +374,9 @@ export default function SocialScreen() {
     }
   };
 
-  // --- SONSUZ KAYDIRMA FONKSİYONU ---
+  //Infinte scroll
   const loadMoreFeed = async () => {
-    // Sadece "Vitrin Modu"ndaysak (Random) sayfalama yapıyoruz. 
-    // Filtreleme sonuçlarında backend sayfalama desteklemiyorsa burayı bu şekilde bırakıyoruz.
+    //If we in the showcase mode random all
     if (isLoadingMore || !hasMoreData || searchTerm.length > 0 || selectedCategory !== 'All' || sortBy !== 'random' || error) return;
 
     setIsLoadingMore(true);
@@ -414,17 +407,17 @@ export default function SocialScreen() {
     }
   };
 
-  // --- EFFECT HOOKS ---
+  //effect hooks
   useFocusEffect(
     useCallback(() => {
       refreshAllData(true);
     }, [searchTerm, selectedCategory, mode, sortBy])
   );
 
-  // Filtreler değişince veriyi yenile
+  //refresh data when filter change
   useEffect(() => {
       refreshAllData(true); 
-  }, [searchTerm, selectedCategory, mode, sortBy]); // sortBy eklendi
+  }, [searchTerm, selectedCategory, mode, sortBy]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -439,7 +432,7 @@ export default function SocialScreen() {
     if (cat === 'All') setSearchTerm('');
   };
 
-  // Grid Kart Render
+  // Grid Card Render
   const renderGridCard = ({ item }) => {
       const authorName = item.username || 'Admin';
 
@@ -468,7 +461,7 @@ export default function SocialScreen() {
           </TouchableOpacity>
     
           <View style={styles.gInfo}>
-            {/* 1. BAŞLIK VE TİK */}
+            {/* Title and thick*/}
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <Text style={[styles.gTitle, { marginBottom: 0, flex: 1 }]} numberOfLines={2}>
                     {item.title}
@@ -478,7 +471,7 @@ export default function SocialScreen() {
                 )}
             </View>
 
-            {/* 2. RATING SATIRI */}
+            {/* rating */}
             <View style={styles.gridRatingRow}>
               <Ionicons name="star" size={12} color="#FFD700" />
               <Text style={styles.gridRatingText}>
@@ -487,7 +480,7 @@ export default function SocialScreen() {
               <Text style={styles.gridRatingCount}></Text> 
             </View>
 
-            {/* 3. KULLANICI İSMİ */}
+            {/* Username*/}
             <View style={styles.row}>
                 <Ionicons name="person-circle-outline" size={14} color="#999" />
                 <Text style={styles.gUser} numberOfLines={1}>{authorName}</Text>
@@ -511,7 +504,6 @@ export default function SocialScreen() {
         newest={newest}
         navigation={navigation}
         toggleFavorite={toggleFavorite}
-        // Sıralama state'lerini prop olarak gönderiyoruz
         sortBy={sortBy}
         setSortBy={setSortBy}
         showSortOptions={showSortOptions}
@@ -566,7 +558,7 @@ const styles = StyleSheet.create({
   headerBlock: {
     backgroundColor: '#fff',
     paddingTop: 10,
-    paddingBottom: 0, // Alt padding'i sıfırladık çünkü filtre barı en alta geldi
+    paddingBottom: 0,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     shadowColor: "#000",
@@ -662,8 +654,6 @@ const styles = StyleSheet.create({
   },
   gUser: { fontSize: 11, color: '#888', marginLeft: 4 },
   likeBtn: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.3)', padding: 7, borderRadius: 20, shadowColor: "#000", shadowOpacity: 0.1, elevation: 2 },
-  
-  // --- YENİ EKLENEN STİLLER (Filtre Barı ve Dropdown) ---
   filterBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -671,7 +661,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     backgroundColor: '#fff',
-    borderTopWidth: 1,     // Çiplerden ayırmak için üst çizgi
+    borderTopWidth: 1, 
     borderTopColor: '#f0f0f0',
   },
   resultText: {
@@ -695,7 +685,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginHorizontal: 6,
   },
-  // Dropdown Seçenekleri
   sortOptionsContainer: {
     backgroundColor: '#fff',
     paddingVertical: 5,

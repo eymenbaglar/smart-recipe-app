@@ -10,10 +10,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function NotificationScreen() {
+  //default constants
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  //get notifications
   const fetchNotifications = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -33,29 +35,31 @@ export default function NotificationScreen() {
     fetchNotifications();
   }, []);
 
+  //marked as all read
   const handleMarkAllRead = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
       await axios.put(`${API_URL}/api/notifications/read-all`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Listeyi güncelle (hepsini okundu yap)
+      //update list
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (error) {
       Alert.alert("Error", "The operation failed.");
     }
   };
 
-  // Bildirim tipine göre ikon ve renk seçimi
+  // Icon and color selection based on notification type
   const getIconAndColor = (type) => {
     switch (type) {
-      case 'success': return { icon: 'checkmark-circle', color: '#4CAF50' }; // Yeşil
-      case 'warning': return { icon: 'alert-circle', color: '#FF9800' };    // Turuncu
-      case 'error':   return { icon: 'close-circle', color: '#F44336' };    // Kırmızı
-      default:        return { icon: 'information-circle', color: '#2196F3' }; // Mavi
+      case 'success': return { icon: 'checkmark-circle', color: '#4CAF50' }; 
+      case 'warning': return { icon: 'alert-circle', color: '#FF9800' };   
+      case 'error':   return { icon: 'close-circle', color: '#F44336' };   
+      default:        return { icon: 'information-circle', color: '#2196F3' }; 
     }
   };
 
+  //render notifications
   const renderItem = ({ item }) => {
     const { icon, color } = getIconAndColor(item.type);
     

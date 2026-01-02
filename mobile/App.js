@@ -34,12 +34,12 @@ import TabNavigator from './src/navigation/tabNavigator';
 
 const Stack = createStackNavigator();
 
-// Profil ikonu
+// Profil icon
 const HeaderRightButton = () => {
   const navigation = useNavigation();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Sayfa her odaklandığında veya navigasyon değiştiğinde bildirim sayısını çek
+  //Retrieve the notification count whenever the page is focused or navigation changes
   useFocusEffect(
     useCallback(() => {
       const checkUnread = async () => {
@@ -68,14 +68,14 @@ const HeaderRightButton = () => {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
       
-      {/* --- BİLDİRİM BUTONU --- */}
+      {/* Notification Button */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Notifications')} 
         style={{ marginRight: 15, position: 'relative' }} 
       >
         <Ionicons name="notifications-outline" size={28} color="#000" />
         
-        {/* Kırmızı Badge (Sayı) */}
+        {/* Red Badge (Number) */}
         {unreadCount > 0 && (
           <View style={{
             position: 'absolute',
@@ -97,7 +97,7 @@ const HeaderRightButton = () => {
         )}
       </TouchableOpacity>
 
-      {/* --- PROFİL BUTONU  --- */}
+      {/* Profile Button */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Profile')}
       >
@@ -109,13 +109,16 @@ const HeaderRightButton = () => {
 };
 
 export default function App() {
+  //constant defaults
   const [isLoggedIn, setIsLoggedIn] =useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
 
   useEffect(() => {
     checkLoginStatus();
   }, []);
 
+  //checking token status
   const checkLoginStatus = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -127,12 +130,12 @@ export default function App() {
     }
   };
 
-  // Giriş yap
+  // Log in
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
   };
 
-  // Çıkış yap
+  // Log out
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('token');
@@ -185,7 +188,7 @@ export default function App() {
           </>
         ) : (
           <>
-            {/* Ana ekran(giriş yapmış)*/}
+            {/* Home Screen*/}
             <Stack.Screen 
               name="Main" 
               component={TabNavigator} 

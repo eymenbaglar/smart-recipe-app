@@ -15,13 +15,14 @@ import { CommonActions } from '@react-navigation/native';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function SettingsScreen({ navigation , onLogout}) {
+  //default constants
   const [user, setUser] = useState(null);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  //Mevcut kullanıcıyı getir
+  //Get the current user 
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -49,7 +50,7 @@ export default function SettingsScreen({ navigation , onLogout}) {
     });
   };
 
-  // --- HESAP SİLME (YENİ) ---
+  //delete account
 const handleDeleteAccount = () => {
     Alert.alert(
       "Account Deletion Request", 
@@ -61,6 +62,7 @@ const handleDeleteAccount = () => {
     );
   };
 
+  // deleting function
   const performDelete = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -68,7 +70,7 @@ const handleDeleteAccount = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Token'ı sil (App.js'deki handleLogout da siliyor ama garanti olsun)
+      //delete token
       await AsyncStorage.removeItem('token');
       
       Alert.alert(
@@ -86,7 +88,7 @@ const handleDeleteAccount = () => {
       Alert.alert("Error", "An error occurred during the process.");
     }
   };
-  //kaydet butonu
+  //save button
   const handleSave = async () => {
     if (!username || !email) {
       Alert.alert('Error', 'All fields must be filled in.');
@@ -95,14 +97,14 @@ const handleDeleteAccount = () => {
 
     setSaving(true);
     try {
-      //token'ı hafızadan getir
+      //get token from memory
       const token = await AsyncStorage.getItem('token');
       if (!token) {
         Alert.alert('Error', 'No entry found. Please log in again.');
         return;
       }
 
-      //backend'e güncelleme isteği gönderme
+      //send update request to backend
       const response = await axios.patch(
         `${API_URL}/api/profile`, 
         {
@@ -116,7 +118,7 @@ const handleDeleteAccount = () => {
         }
       );
 
-      //hafızadaki user'ı güncelle
+      //update user on memory
       const updatedUser = response.data.user;
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
 

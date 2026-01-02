@@ -4,16 +4,17 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function RecipeWizardScreen({ navigation }) {
 
-  // MyStocktan eşleştirme
+  //matching from myStock
   const handleUseStock = () => {
     navigation.navigate('SmartRecipeResults');
   };
 
-  // Manuel girişten eşleştirme
+  //Manual matching
   const handleManualInput = () => {
     navigation.navigate('ManualInput');
   };
 
+  //Let us Suggest you function
   const handleRecommendations = () => {
   navigation.navigate('RecommendedRecipes');
 };
@@ -35,7 +36,7 @@ export default function RecipeWizardScreen({ navigation }) {
       {/* options */}
       <View style={styles.optionsContainer}>
 
-        {/* seçenek1: dolabımdan */}
+        {/* option 1: mystock*/}
         <TouchableOpacity style={[styles.card, styles.stockCard]} onPress={handleUseStock}>
           <View style={styles.cardContent}>
             <View style={[styles.cardIcon, { backgroundColor: '#E8F5E9' }]}>
@@ -51,7 +52,7 @@ export default function RecipeWizardScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
-        {/* seçenek2: manuel girişle öneri */}
+        {/* option 2: manual search */}
         <TouchableOpacity style={[styles.card, styles.manualCard]} onPress={handleManualInput}>
           <View style={styles.cardContent}>
             <View style={[styles.cardIcon, { backgroundColor: '#F5F5F5' }]}>
@@ -67,6 +68,7 @@ export default function RecipeWizardScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
+        {/* option 3: Let us Suggest You */}
         <TouchableOpacity style={[styles.card, styles.recommendCard]} onPress={handleRecommendations}>
       <View style={styles.cardContent}>
           <View style={[styles.cardIcon, { backgroundColor: '#E3F2FD' }]}>

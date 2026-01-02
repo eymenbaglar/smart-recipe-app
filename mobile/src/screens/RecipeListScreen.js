@@ -20,23 +20,21 @@ export default function RecipeListScreen({ route, navigation }) {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-    // --- FAVORİLEME FONKSİYONU ---
+  //favorite list
   const handleToggleFavorite = async (recipe) => {
-    // 1. Optimistic Update (Anında UI Güncelleme)
-    // Listeyi map ile dönüyoruz, ID'si eşleşen tarifin 'is_favorited' değerini tersine çeviriyoruz.
     const updatedList = recipes.map((item) => {
       if (item.id === recipe.id) {
         return { 
             ...item, 
-            is_favorited: !item.is_favorited // True ise False, False ise True yap
+            is_favorited: !item.is_favorited
         };
       }
       return item;
     });
     
-    setRecipes(updatedList); // State'i güncelle (Ekranda kalp anında değişir)
+    setRecipes(updatedList); //update state
 
-    // 2. API İsteği (Arka Planda)
+    //API call
     try {
       const token = await AsyncStorage.getItem('token');
       await axios.post(
@@ -46,16 +44,16 @@ export default function RecipeListScreen({ route, navigation }) {
       );
     } catch (error) {
       console.error('Fav Error:', error);
-      // Hata olursa işlemi geri al (Rollback)
-      // Burada eski listeyi geri yükleyebilirsin veya kullanıcıya uyarı verebilirsin.
       alert("The operation failed.");
     }
   };
 
+  //prevent unneccessary calls
   useEffect(() => {
     fetchRecipes();
   }, []);
 
+  //fetch the recipes coming from backend
   const fetchRecipes = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -73,6 +71,7 @@ export default function RecipeListScreen({ route, navigation }) {
     }
   };
 
+  //print grind carts
   const renderGridCard = ({ item }) => {
     const authorName = item.username || 'Admin';
 
@@ -89,22 +88,22 @@ export default function RecipeListScreen({ route, navigation }) {
         cachePolicy="memory-disk" 
         />
         
-        {/* Kalp İkonu */}
+        {/* Heart Icon */}
         <TouchableOpacity 
         style={styles.favoriteButton} 
         onPress={() => handleToggleFavorite(item)} 
         >
         <Ionicons 
-          // Eğer is_favorited true ise dolu kalp, değilse boş kalp
+          //is_varified=true heart, false just outline
           name={item.is_favorited ? "heart" : "heart-outline"} 
           size={24} 
-          // Doluysa Kırmızı (#FF6F61), Boşsa Gri/Beyaz
+          // if fill make it red, if only outline gray
           color={item.is_favorited ? "#FF6F61" : "#fff"} 
           />
         </TouchableOpacity>
   
         <View style={styles.gInfo}>
-          {/* 1. BAŞLIK VE TİK */}
+          {/* 1. title and thick */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <Text style={[styles.gTitle, { flex: 1 }]} numberOfLines={2}>
                   {item.title}
@@ -114,7 +113,7 @@ export default function RecipeListScreen({ route, navigation }) {
               )}
           </View>
 
-          {/* 2. RATING (ARA SATIR) */}
+          {/* 2. rating */}
           <View style={styles.gridRatingRow}>
              <Ionicons name="star" size={12} color="#FFD700" />
              <Text style={styles.gridRatingText}>
@@ -125,7 +124,7 @@ export default function RecipeListScreen({ route, navigation }) {
              <Text style={styles.gridRatingCount}></Text> 
           </View>
 
-          {/* 3. KULLANICI İSMİ */}
+          {/* 3. user' username */}
           <View style={styles.row}>
               <Ionicons name="person-circle-outline" size={14} color="#888" />
               <Text style={styles.gUser} numberOfLines={1}>{authorName}</Text>
@@ -139,7 +138,7 @@ export default function RecipeListScreen({ route, navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       
-      {/* Header (SocialScreen HeaderBlock tarzında) */}
+      {/* Header */}
       <View style={styles.headerBlock}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
@@ -163,9 +162,10 @@ export default function RecipeListScreen({ route, navigation }) {
                 No recipe has been added yet.
             </Text>
           }
-          initialNumToRender={6}      // İlk açılışta sadece 6 kart render et (Hızlanır)
-          maxToRenderPerBatch={4}     // Kaydırdıkça dörder dörder yükle
-          windowSize={5}              // Ekranın sadece 5 katı kadar alanı hafızada tut
+          //for speeding up image render
+          initialNumToRender={6}
+          maxToRenderPerBatch={4}     
+          windowSize={5}              
           removeClippedSubviews={true}
         />
       )}
@@ -174,10 +174,7 @@ export default function RecipeListScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  // SocialScreen ile aynı Arka Plan Rengi
   container: { flex: 1, backgroundColor: '#F5F7FA' },
-
-  // --- HEADER (SocialScreen Tarzı) ---
   headerBlock: {
     backgroundColor: '#fff',
     flexDirection: 'row',
@@ -185,7 +182,6 @@ const styles = StyleSheet.create({
     paddingTop: 50, 
     paddingBottom: 15,
     paddingHorizontal: 15,
-    // Header Gölgesi
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -195,14 +191,11 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 5, marginRight: 10 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#1A1A1A', letterSpacing: -0.5 },
-  
-  // --- GRID KART STİLLERİ (SocialScreen Aynısı) ---
   gridCard: { 
     width: CARD_WIDTH, 
     marginBottom: 20, 
     backgroundColor: '#fff', 
     borderRadius: 16, 
-    // Soft Shadow
     shadowColor: "#000", 
     shadowOffset: { width: 0, height: 2 }, 
     shadowOpacity: 0.08, 
@@ -211,21 +204,17 @@ const styles = StyleSheet.create({
   },
   gImage: { width: '100%', height: CARD_WIDTH, borderTopLeftRadius: 16, borderTopRightRadius: 16 }, 
   gInfo: { padding: 12 },
-  
   gTitle: { 
     fontSize: 14, fontWeight: '700', color: '#222', 
     marginBottom: 0, 
     height: 18, lineHeight: 19 
   }, 
-  
-  // Rating Satırı
   gridRatingRow: {
     flexDirection: 'row', alignItems: 'center',
     marginTop: 6, marginBottom: 6 
   },
   gridRatingText: { fontSize: 12, fontWeight: '700', color: '#333', marginLeft: 4 },
   gridRatingCount: { fontSize: 10, color: '#999', marginLeft: 2 },
-
   row: { flexDirection: 'row', alignItems: 'center' },
   gUser: { fontSize: 11, color: '#888', marginLeft: 4, fontWeight: '500' },
   favoriteButton: {

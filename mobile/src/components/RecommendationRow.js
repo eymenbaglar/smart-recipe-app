@@ -12,15 +12,19 @@ import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function RecommendationRow() {
+  //default constant values
   const navigation = useNavigation();
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [type, setType] = useState('random'); // 'random' veya 'algorithm'
+  const [type, setType] = useState('random'); 
 
+  //unneccessary API calls preventer
+  //operations only performed when page loads
   useEffect(() => {
     fetchRecommendations();
   }, []);
 
+  //fetching the recommendations comes from backend
   const fetchRecommendations = async () => {
     try {
       const token = await AsyncStorage.getItem('token');

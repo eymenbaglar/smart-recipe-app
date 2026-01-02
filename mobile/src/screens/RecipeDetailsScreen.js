@@ -15,40 +15,41 @@ import RateRecipeModal from '../components/RateRecipeModal';
 export default function RecipeDetailsScreen({ route, navigation }) {
   const recipe = route.params.item || route.params.recipe;
   
-  // state tanımları
+  // states
   const [fullIngredients, setFullIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // Porsiyon State'leri
+  //serving states
   const [currentServings, setCurrentServings] = useState(recipe.serving || 1);
   const originalServings = recipe.serving || 1;
 
-  // Puanlama State'leri
+  //rating states
   const [ratingStats, setRatingStats] = useState({ avg: 0, count: 0, comments: 0 });
   const [userReview, setUserReview] = useState(null);
   const [showRateModal, setShowRateModal] = useState(false);
 
-  //yorum statei
+  //review state
   const [reviews, setReviews] = useState([]);
 
-  // --- GEÇMİŞE KAYDETME 
+  //add to history call
   useEffect(() => {
     if (recipe) {
       addToHistory(recipe);
     }
   }, [recipe]);
 
+  //add to history function
   const addToHistory = async (item) => {
     try {
-      // 1. Mevcut geçmişi çek
+      //get meal_history
       const existingHistory = await AsyncStorage.getItem('recipe_history');
       let newHistory = existingHistory ? JSON.parse(existingHistory) : [];
 
-      // 2. Bu tarif daha önce listede varsa onu çıkar (En başa eklemek için)
+      //If this recipe is already on the list, remove it (to add it to the top)
       newHistory = newHistory.filter(h => h.id !== item.id);
 
-      // 3. Tarifi listenin başına ekle (Sadece gerekli bilgileri alarak)
+      //Add recipe to top of the list
       newHistory.unshift({
         id: item.id,
         title: item.title,
@@ -57,12 +58,12 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         calories: item.calories
       });
 
-      // 4. Listeyi 10 elemanla sınırla (Hafıza şişmesin)
+      //limit list by 10
       if (newHistory.length > 10) {
         newHistory = newHistory.slice(0, 10);
       }
 
-      // 5. Geri kaydet
+      //Save back
       await AsyncStorage.setItem('recipe_history', JSON.stringify(newHistory));
     } catch (error) {
       console.log("Could not be saved to history:", error);
@@ -70,7 +71,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
   };
   // ---------------------------------------------
 
-  //başlangıç
+  //Start
   useEffect(() => {
     fetchIngredients();
     checkIfFavorite();
@@ -78,8 +79,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     fetchReviews();
   }, []);
 
-  //API fonksiyonları
-  
+  //fetch recipe ingredients
   const fetchIngredients = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -94,6 +94,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
+  //fetch stats of the recipe
   const fetchRatingStats = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -114,6 +115,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
+  //fecth reviews of the recipe
   const fetchReviews = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -126,6 +128,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
+  //is user favorited this recipe
   const checkIfFavorite = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -139,8 +142,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
-  //etkileşim fonksiyonları
-
+  //interaction functions
   const toggleFavorite = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -155,6 +157,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
+  //submit review
   const handleRateSubmit = async (rating, comment) => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -169,6 +172,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
+  //changing serving
   const updateServings = (direction) => {
     if (direction === 'increase') {
       setCurrentServings(prev => prev + 1);
@@ -179,8 +183,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
-  //cooking mantığı
-
+  //cooking logic
   const handleCookPress = () => {
     Alert.alert(
       "Confirm Cooking",
@@ -219,12 +222,13 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
+  //Close modal navigate to Mystock
   const handleModalClose = () => {
     setShowRateModal(false);
     navigation.navigate('Main', { screen: 'MyStock' });
   };
 
-  //hesaplama ve render yardımcıları
+  //helper function
   const calculateRequiredAmount = (baseQty, unitType) => {
     const multiplier = currentServings / originalServings;
     const rawAmount = baseQty * multiplier;
@@ -238,6 +242,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
     }
   };
 
+  //print stars
   const renderStars = (rating) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -306,7 +311,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
       <View key={index} style={styles.reviewCard}>
         <View style={styles.reviewHeader}>
           <View style={styles.userInfo}>
-            {/* Profil Resmi Yerine Baş Harf (Sonradan Düzenlenecek) */}
+            {/* Profile Picture */}
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>
                 {item.username ? item.username.charAt(0).toUpperCase() : 'U'}
@@ -317,12 +322,12 @@ export default function RecipeDetailsScreen({ route, navigation }) {
           <Text style={styles.reviewDate}>{date}</Text>
         </View>
 
-        {/* Yıldızlar */}
+        {/* Ratings */}
         <View style={styles.reviewStars}>
           {renderStars(item.rating)}
         </View>
 
-        {/* Yorum Metni */}
+        {/* Comment area */}
         {item.comment ? (
           <Text style={styles.reviewComment}>{item.comment}</Text>
         ) : (
@@ -342,7 +347,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         transition={500}
         cachePolicy="memory-disk" />
         
-        {/* Üst Butonlar */}
+        {/* Top Buttons */}
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
@@ -354,7 +359,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         <View style={styles.content}>
           <Text style={styles.title}>{recipe.title}{recipe.is_verified ?  <MaterialIcons name="verified" size={24} color="green" /> : ''}</Text>
           
-          {/* Puanlama Satırı */}
+          {/* Review */}
           <View style={styles.ratingRow}>
             <View style={styles.starsWrapper}>
               {renderStars(ratingStats.avg)}
@@ -372,7 +377,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
             </View>
           </View>
 
-          {/* Meta Bilgileri ve Porsiyon */}
+          {/* Meta Information and Portion */}
           <View style={styles.metaContainer}>
             <View style={styles.metaItem}>
               <Ionicons name="time-outline" size={18} color="#666" />
@@ -432,7 +437,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         </View>
         <View style={styles.divider} />
 
-          {/* Yorumlar Bölümü*/}
+          {/* Comments section*/}
           <Text marginLeft='25' style={styles.sectionTitle}>Reviews ({ratingStats.count})</Text>
           
           {reviews.length === 0 ? (
@@ -448,7 +453,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
           <View style={{height: 20}} />
       </ScrollView>
 
-      {/* Alt Sabit Buton */}
+      {/* Lower Fixed Button */}
       <View style={styles.footerButtonContainer}>
         <TouchableOpacity style={styles.cookButton} onPress={handleCookPress}>
           <Text style={styles.cookButtonText}>I Cooked This Meal</Text>
@@ -456,7 +461,7 @@ export default function RecipeDetailsScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Puanlama Modalı */}
+      {/* Rating modal */}
       <RateRecipeModal 
         visible={showRateModal}
         onClose={handleModalClose}

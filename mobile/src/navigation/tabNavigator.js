@@ -13,7 +13,7 @@ import SocialScreen from '../screens/SocialScreen';
 
 const Tab = createBottomTabNavigator();
 
-// Wizard butonu
+// Wizard button
 const CustomTabBarButton = ({ children, onPress }) => (
   <TouchableOpacity
     style={styles.customButtonContainer}
@@ -41,7 +41,7 @@ export default function TabNavigator() {
         headerShown: false, 
       }}
     >
-      {/* 1. Home */}
+      {/* 1. Home Screen */}
       <Tab.Screen 
         name="Home" 
         component={HomeScreen}
@@ -51,7 +51,7 @@ export default function TabNavigator() {
           ),
         }} 
       />
-      {/* 2. Social */}
+      {/* 2. Social Screen */}
       <Tab.Screen 
         name="Social" 
         component={SocialScreen}
@@ -61,7 +61,7 @@ export default function TabNavigator() {
           ),
         }} 
       />
-      {/* 3. Recipe Wizard (Özel Buton) */}
+      {/* 3. Recipe Wizard (Big Button) */}
       <Tab.Screen 
         name="Wizard" 
         component={RecipeWizardScreen}
@@ -74,7 +74,7 @@ export default function TabNavigator() {
           ),
         }}
       />
-      {/* 4. Favorites */}
+      {/* 4. Favorites Screen*/}
       <Tab.Screen 
         name="Favorites" 
         component={FavoritesScreen}
@@ -84,7 +84,7 @@ export default function TabNavigator() {
           ),
         }} 
       />
-      {/* 5. MyStock */}
+      {/* 5. MyStock Screen*/}
       <Tab.Screen 
         name="MyStock" 
         component={MyStockScreen}

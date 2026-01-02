@@ -19,17 +19,21 @@ import { Ionicons } from '@expo/vector-icons';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function VerificationScreen({ route, navigation }) {
+  // default constants
   const { email } = route.params;
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
+  //verify process
   const handleVerify = async () => {
+    //code length check
     if (code.length !== 6) {
       Alert.alert("Error", "Please enter the 6-digit code.");
       return;
     }
 
     setLoading(true);
+    //API call
     try {
       await axios.post(`${API_URL}/api/auth/verify`, { email, code });
       
@@ -47,22 +51,22 @@ export default function VerificationScreen({ route, navigation }) {
   };
 
   return (
-    // 1. ADIM: Klavye açılınca ekranı ittiren kapsayıcı
+    //{/*Container that pushes the screen when the keyboard opens */}
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      {/* 2. ADIM: Boşluğa tıklayınca klavyeyi kapatan kapsayıcı */}
+      {/*  Container that closes the keyboard when you click on the space */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         
-        {/* 3. ADIM: Küçük ekranlarda kaydırma özelliği sağlayan kapsayıcı */}
+        {/* Container that enables scrolling on small screens  */}
         <ScrollView 
           contentContainerStyle={styles.scrollContainer} 
-          keyboardShouldPersistTaps="handled" // Butonların çalışmasını engellemesin diye
+          keyboardShouldPersistTaps="handled" 
           showsVerticalScrollIndicator={false}
         >
 
-          {/* --- İÇERİK BAŞLANGICI --- */}
+          {/* Content Begins */}
           <View style={styles.iconContainer}>
             <Ionicons name="shield-checkmark-outline" size={80} color="#333" />
           </View>
@@ -86,7 +90,7 @@ export default function VerificationScreen({ route, navigation }) {
           <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify</Text>}
           </TouchableOpacity>
-          {/* --- İÇERİK BİTİŞİ --- */}
+          {/* Content end */}
 
         </ScrollView>
       </TouchableWithoutFeedback>

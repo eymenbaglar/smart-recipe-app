@@ -6,10 +6,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RateRecipeModal({ visible, onClose, onSubmit, initialData }) {
+  
+
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  //form synchronization
+  //handles distinction between creating a new review and editing an existing one
   useEffect(() => {
     if (visible) {
       setRating(initialData?.rating || 0);
@@ -17,6 +21,7 @@ export default function RateRecipeModal({ visible, onClose, onSubmit, initialDat
     }
   }, [visible, initialData]);
 
+  //submitting the modal informations
   const handleSubmit = async () => {
     if (rating === 0) return;
     setSubmitting(true);
@@ -27,27 +32,27 @@ export default function RateRecipeModal({ visible, onClose, onSubmit, initialDat
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      {/* 1. Klavye Açılınca Ekranı Yukarı İt */}
+      {/* Push the Screen Up When the Keyboard Opens */}
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        {/* 2. Boşluğa Tıklayınca Klavyeyi Kapat */}
+        {/* Close the keyboard by clicking on the space */}
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.overlay}>
             
             <View style={styles.modalContent}>
-              {/* 3. İçerik Taşarsa Kaydır */}
+              {/* If the content overflows, scroll */}
               <ScrollView 
                 contentContainerStyle={{ alignItems: 'center' }}
                 showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled" // Klavye açıkken butona basılabilmesi için
+                keyboardShouldPersistTaps="handled"
               >
                 
                 <Text style={styles.title}>Rate this Recipe</Text>
                 <Text style={styles.subtitle}>How was your meal?</Text>
 
-                {/* Yıldızlar */}
+                {/* Ratings */}
                 <View style={styles.starsContainer}>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <TouchableOpacity key={star} onPress={() => setRating(star)}>
@@ -60,19 +65,18 @@ export default function RateRecipeModal({ visible, onClose, onSubmit, initialDat
                   ))}
                 </View>
 
-                {/* Yorum Alanı */}
+                {/* Comment Space */}
                 <TextInput
                   style={styles.input}
                   placeholder="Write a comment (optional)..."
                   multiline
                   value={comment}
                   onChangeText={setComment}
-                  // iOS'te klavye kapatma butonu ekler
                   returnKeyType="done" 
                   blurOnSubmit={true}
                 />
 
-                {/* Butonlar */}
+                {/* Buttons */}
                 <View style={styles.buttonContainer}>
                   <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
                     <Text style={styles.cancelText}>Not Now</Text>
@@ -110,11 +114,10 @@ const styles = StyleSheet.create({
   },
   modalContent: { 
     width: '85%', 
-    maxHeight: '80%', // Ekranın %80'inden fazla yer kaplamasın
+    maxHeight: '80%',
     backgroundColor: 'white', 
     borderRadius: 20, 
     padding: 25,
-    // Gölge
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

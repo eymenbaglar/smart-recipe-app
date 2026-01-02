@@ -14,29 +14,32 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
-import { useFocusEffect } from '@react-navigation/native'; // EKLENDİ
+import { useFocusEffect } from '@react-navigation/native';
 
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function ProfileScreen({ navigation, onLogout }) { 
+  //Default constans
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   
-  // EKLENDİ: Tarif Sayısı State'i
+  //recipe state
   const [recipeCount, setRecipeCount] = useState(0);
 
+  //get user's data
   useEffect(() => {
     loadUserData();
   }, []);
 
-  // EKLENDİ: Sayfa her odaklandığında tarif sayısını güncelle
+  // Update the number of recipes each time the page is focused
   useFocusEffect(
     useCallback(() => {
       fetchRecipeCount();
     }, [])
   );
 
+  //load user's info
   const loadUserData = async () => {
     setIsLoading(true);
     try {
@@ -51,14 +54,11 @@ export default function ProfileScreen({ navigation, onLogout }) {
     }
   };
 
-  // EKLENDİ: Tarif Sayısını Çeken Fonksiyon
+  //Function that Pulls the Number of Recipes
   const fetchRecipeCount = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
-
-      // '/api/recipes/my-recipes' endpoint'inin kullanıcının tariflerini döndürdüğünü varsayıyoruz.
-      // Eğer endpoint ismin farklıysa burayı güncelle (Örn: '/api/user/recipes' vb.)
       const response = await axios.get(`${API_URL}/my-recipes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -67,11 +67,11 @@ export default function ProfileScreen({ navigation, onLogout }) {
         setRecipeCount(response.data.length);
       }
     } catch (error) {
-      // Hata olursa konsola yazdır ama kullanıcıya hata gösterme (Sayı 0 kalır)
       console.log('Number of recipes not found:', error);
     }
   };
 
+  //get image
   const handlePickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -92,6 +92,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
     }
   };
 
+  //change profile photo
   const uploadProfilePhoto = async (imageAsset) => {
     setUploading(true);
     try {
@@ -131,6 +132,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
     }
   };
 
+
   const getProfileImage = () => {
     if (user?.profile_picture) {
       const cleanPath = user.profile_picture.replace(/\\/g, '/');
@@ -139,6 +141,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
     return { uri: 'https://placehold.co/150x150/E0E0E0/B0B0B0?text=Profil' };
   };
 
+  //Log out
   const handleLogoutPress = () => {
     Alert.alert(
       "Log out",
@@ -201,7 +204,6 @@ export default function ProfileScreen({ navigation, onLogout }) {
         
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            {/* GÜNCELLENDİ: Dinamik Sayı */}
             <Text style={styles.statNumber}>{recipeCount}</Text>
             <Text style={styles.statLabel}>Recipes</Text>
           </View>

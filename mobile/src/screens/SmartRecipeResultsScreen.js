@@ -11,11 +11,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function SmartRecipeResultsScreen({ navigation, route }) {
+  //default constants
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [modalVisible, setModalVisible] = useState(false);
-  // varsayılan sort : eşleşme
+  //dafult sort: match
   const [sortBy, setSortBy] = useState('match'); 
 
   useEffect(() => {
@@ -31,14 +32,14 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
       let response;
 
       if (type === 'manual') {
-        // manuel recipe önerisi
+        // manuel recipe suggestion
         response = await axios.post(
           `${API_URL}/api/recipes/match-manual`, 
           { selectedIds: selectedIds },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        // MyStocktan recipe önerisi
+        // MyStock recipe suggestion
         response = await axios.get(
           `${API_URL}/api/recipes/match`, 
           { headers: { Authorization: `Bearer ${token}` } }
@@ -53,7 +54,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
     }
   };
 
-  //sıralama mantığı
+  //sorting logic
   const sortedRecipes = useMemo(() => {
     let sorted = [...recipes];
 
@@ -201,7 +202,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
               <Text style={styles.modalTitle}>Ranking Criterion</Text>
               
               <ScrollView>
-                {/* eşleşme oranı */}
+                {/* matching rate */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('match'); setModalVisible(false); }}
@@ -212,7 +213,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
 
                 <View style={styles.divider} />
 
-                {/*ratinge göre */}
+                {/*sort by rating*/}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('rating_high'); setModalVisible(false); }}
@@ -231,7 +232,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
 
                 <View style={styles.divider} />
 
-                {/* kalori (Azdan Çoğa) */}
+                {/* calories low to high */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('calories_low'); setModalVisible(false); }}
@@ -240,7 +241,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
                   <Text style={styles.optionText}>Calories (Low to High)</Text>
                 </TouchableOpacity>
 
-                {/* kalori (Çoktan Aza) */}
+                {/* calories high to low */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('calories_high'); setModalVisible(false); }}
@@ -251,7 +252,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
 
                 <View style={styles.divider} />
 
-                {/* süre (Kısadan Uzuna) */}
+                {/* Time short to long */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('time_short'); setModalVisible(false); }}
@@ -260,7 +261,7 @@ export default function SmartRecipeResultsScreen({ navigation, route }) {
                   <Text style={styles.optionText}>Time (Shortest to Longest)</Text>
                 </TouchableOpacity>
 
-                {/* süre (Uzundan Kısaya) */}
+                {/* time long to short */}
                 <TouchableOpacity 
                   style={styles.modalOption} 
                   onPress={() => { setSortBy('time_long'); setModalVisible(false); }}
@@ -319,8 +320,6 @@ const styles = StyleSheet.create({
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   metaText: { fontSize: 12, color: '#666' },
   emptyText: { textAlign: 'center', color: '#999', marginTop: 50 },
-
-  // modal stil
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

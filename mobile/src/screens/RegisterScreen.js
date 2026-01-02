@@ -19,18 +19,19 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev';
 
 export default function RegisterScreen({ navigation }) {
+  //Default constants
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // ToS State'leri
+  // ToS States
   const [isChecked, setChecked] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleRegister = async () => {
-    // 1. Validasyonlar
+    //validations
     if (!username || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
@@ -46,7 +47,7 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
-    // 2. Kullanım Koşulları Onayı Kontrolü
+    //Terms of Use Agreement Check
     if (!isChecked) {
       Alert.alert("Terms Required", "Please read and accept the Terms of Service to continue.");
       return;
@@ -154,7 +155,7 @@ export default function RegisterScreen({ navigation }) {
             placeholderTextColor="#999"
           />
 
-          {/* --- Terms of Service Checkbox --- */}
+          {/* Terms of Service Checkbox */}
           <View style={styles.checkboxContainer}>
             <Checkbox
               style={styles.checkbox}
@@ -169,7 +170,6 @@ export default function RegisterScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
-          {/* --------------------------------- */}
 
           <TouchableOpacity 
             style={[styles.button, (loading || !isChecked) && styles.buttonDisabled]}
@@ -189,7 +189,7 @@ export default function RegisterScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* --- Terms of Service Modal --- */}
+        {/* Terms of Service Modal */}
         <Modal
           animationType="slide"
           transparent={true}
@@ -276,8 +276,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
-  
-  // Checkbox Stilleri
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -322,8 +320,6 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 16,
   },
-
-  // Modal Stilleri
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

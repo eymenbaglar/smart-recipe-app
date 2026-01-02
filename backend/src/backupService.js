@@ -5,20 +5,20 @@ const cron = require('node-cron');
 const nodemailer = require('nodemailer');
 const archiver = require('archiver');
 
-// KONTROL İÇİN (Eğer hala undefined gelirse bunu terminalde göreceğiz)
+//Its for control
 console.log("Backup Service has started. DB_USER:", process.env.DB_USER ? "READ ✅" : "UNREADABLE ❌");
 
-// Yedeklerin geçici olarak tutulacağı klasör
+//Folder where backups will be temporarily stored
 const BACKUP_DIR = path.join(__dirname, '../backups');
-// Resimlerin olduğu klasör
+//Folder where images stored
 const UPLOADS_DIR = path.join(__dirname, '../uploads');
 
-// Klasör yoksa oluştur
+//Make a folder if not exist
 if (!fs.existsSync(BACKUP_DIR)) {
     fs.mkdirSync(BACKUP_DIR);
 }
 
-// Mail Ayarları (Server.js'deki ile aynı transporter)
+//Mail Settings
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -27,7 +27,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// --- YEDEKLEME FONKSİYONU ---
+// * Backup Function *
 const performBackup = async () => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const dumpFileName = `db-backup-${timestamp}.sql`;
@@ -38,12 +38,11 @@ const performBackup = async () => {
 
     console.log(`[Backup] Process started: ${timestamp}`);
 
-    // İYİLEŞTİRME: Şifreyi komut satırına yazmak yerine environment variable olarak exec'e veriyoruz.
-    // Bu yöntem hem Windows hem Linux'ta daha stabil çalışır ve boş dosya sorununu engeller.
+    //The method works more stably on Windows
     const pgCommand = `pg_dump -U ${process.env.DB_USER} -h ${process.env.DB_HOST} -p ${process.env.DB_PORT} ${process.env.DB_NAME} > "${dumpPath}"`;
 
     exec(pgCommand, {
-        env: { ...process.env, PGPASSWORD: process.env.DB_PASSWORD } // Şifreyi buradan veriyoruz
+        env: { ...process.env, PGPASSWORD: process.env.DB_PASSWORD }
     }, async (error, stdout, stderr) => {
         if (error) {
             console.error(`[Backup Error] DB dump failed: ${error.message}`);
@@ -51,7 +50,7 @@ const performBackup = async () => {
         }
 
         console.log('[Backup] DB Dump created. Files are being zipped....');
-
+        //ZIP the file
         const output = fs.createWriteStream(zipPath);
         const archive = archiver('zip', { zlib: { level: 9 } });
 
@@ -75,16 +74,11 @@ const performBackup = async () => {
             } catch (mailErr) {
                 console.error('[Backup Error] Mail could not be sent:', mailErr);
             } finally {
-                // DÜZELTME BURADA:
-                // Sadece ham SQL dosyasını siliyoruz, Zip dosyasını SİLMİYORUZ.
-                
+                //Clean delete for SQL file                
                 try {
                     if (fs.existsSync(dumpPath)) {
-                        fs.unlinkSync(dumpPath); // SQL dosyasını temizle (yer kaplamasın)
+                        fs.unlinkSync(dumpPath);
                     }
-                    
-                    // AŞAĞIDAKİ SATIRI YORUMA ALDIK/SİLDİK:
-                    // fs.unlinkSync(zipPath); 
                     
                     console.log('[Backup] Temporary SQL file cleared. Zip backup saved locally.');
                 } catch (cleanupErr) {
@@ -99,10 +93,10 @@ const performBackup = async () => {
 
         archive.pipe(output);
 
-        // SQL dosyasını ekle
+        //Add SQL file
         archive.file(dumpPath, { name: dumpFileName });
 
-        // Uploads klasörünü ekle
+        //Add uploads folder
         if (fs.existsSync(UPLOADS_DIR)) {
             archive.directory(UPLOADS_DIR, 'uploads');
         } else {
@@ -113,9 +107,7 @@ const performBackup = async () => {
     });
 };
 
-// --- ZAMANLAYICI (CRON JOB) ---
-// Her gece 04:00'te çalışır ('0 4 * * *')
-// Test için '*/1 * * * *' yaparsan her dakika çalışır.
+//CRON JOB (at 04:00 AM everyday)
 const scheduleBackup = () => {
     cron.schedule('0 4 * * *', () => {
         console.log('[Cron] Automatic backup triggered.');

@@ -19,10 +19,12 @@ import { Ionicons } from '@expo/vector-icons';
 const API_URL = 'https://electrothermal-zavier-unelastic.ngrok-free.dev'; 
 
 export default function ResetVerificationScreen({ route, navigation }) {
+  //Default constants
   const { email } = route.params;
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
+  //verify process
   const handleVerify = async () => {
     if (code.length !== 6) {
       Alert.alert("Error", "Please enter the 6-digit code.");
@@ -31,10 +33,10 @@ export default function ResetVerificationScreen({ route, navigation }) {
 
     setLoading(true);
     try {
-      // Kodu doğrula
+      //verify the code
       await axios.post(`${API_URL}/api/auth/verify-reset-code`, { email, code });
       
-      // Başarılıysa Yeni Şifre ekranına git
+      //If succes go to new password page
       navigation.navigate('NewPassword', { email: email, code: code });
 
     } catch (error) {
@@ -47,22 +49,22 @@ export default function ResetVerificationScreen({ route, navigation }) {
   };
 
   return (
-    // 1. ADIM: Klavye Yönetimi
+    //Keyboard management
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      {/* 2. ADIM: Boşluğa tıklayınca klavyeyi kapat */}
+      {/* Close the keyboard by clicking on the space */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         
-        {/* 3. ADIM: Kaydırma ve Merkezleme */}
+        {/* Sliding and Centering */}
         <ScrollView 
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
 
-          {/* İkon: Kilit Açılıyor Sembolü */}
+          {/* Icon: Unlock Symbol */}
           <View style={styles.iconContainer}>
             <Ionicons name="lock-open-outline" size={80} color="#333" />
           </View>
